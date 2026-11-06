@@ -38,8 +38,9 @@ import java.util.UUID;
  *   {@link #LINGER} for those who follow, open {@link #MAX_OPEN} at most.</li>
  *   <li><b>Who passes.</b> Void Shattering and above; Dao Integration only through a breach someone stronger holds open (the user's
  *   rule: every breach's opener is), below Dao Integration no one: the void's pressure turns them back ({@link #mayPass}).</li>
- *   <li><b>The climb.</b> Shattered space (ModDimensions#VOID_BREACH): no flight holds there (QiFlight); the breach's current carries
- *   one from {@link #ENTER_Y} to {@link #EXIT_Y} in {@link #CLIMB_SECONDS} seconds, steering as one may. The void presses all the
+ *   <li><b>The climb.</b> Shattered space (ModDimensions#VOID_BREACH): no flight holds there but Meteor Flight's from Entering Nirvana on
+ *   (QiFlight#carried); the breach's current carries everyone else
+ *   from {@link #ENTER_Y} to {@link #EXIT_Y} in {@link #CLIMB_SECONDS} seconds, steering as one may. The void presses all the
  *   while ({@link #PRESSURE}, armour no help); shards of broken space fall where light first marks them ({@link #SHARD_DAMAGE}); and
  *   Vestiges of the Void come out of the dark for the climbers, of each one's own might (VoidVestige#setMight).</li>
  *   <li><b>Out.</b> At the top, onto the Great Void's land nearest where the breach was torn (SpatialArrivals#target, its continents'
@@ -293,7 +294,14 @@ public final class VoidBreach {
 			arrive(server, p, c);
 			return;
 		}
-		// The current: up at the climb's pace, whatever one does (no flight holds here: QiFlight lands everyone).
+		// Flown down out of the bottom of it (Meteor Flight: the current takes no one down): out into the Jade Firmament's sky.
+		if (p.getY() < ModDimensions.VOID_BREACH_MIN_Y) {
+			p.removeEffect(MobEffects.LEVITATION);
+			fallOut(p);
+			return;
+		}
+		// The current: up at the climb's pace, whatever one does (no flight but Meteor Flight's holds here, and the current can't touch that:
+		// QiFlight#carried).
 		MobEffectInstance lift = p.getEffect(MobEffects.LEVITATION);
 		if (lift == null || lift.getAmplifier() != LIFT_AMPLIFIER || lift.getDuration() < 20) {
 			p.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 60, LIFT_AMPLIFIER, false, false, false));

@@ -912,7 +912,9 @@ public final class Codex {
 				Qi Flight's fast mode, off until you switch it on. With it on, hold {forward} to fly where you look, and hold {sprint} to \
 				build up to your realm's top speed.
 				From Nascent Soul, you blaze across the sky and can smash through whatever stands in your way, if the world's settings \
-				allow it.""");
+				allow it.
+				It flies in the Spatial Gap from Void Shattering on, and in a Void Breach from Entering Nirvana on, where it outflies the \
+				current. Below those realms the gap is flown at normal speed and a breach only carries you.""");
 		page("qi_sense", Items.GLOW_INK_SAC, CF, "Qi Sense", """
 				You can see the plane of qi. While Qi Sense is on, the world turns grey and its qi appears as motes in the colours of their \
 				elements, crowded where qi is thick. Spirit treasures keep their colours.
@@ -1283,7 +1285,8 @@ public final class Codex {
 				A Formation Core raises a barrier around itself that only its sect (or its owner) can pass, and no monsters spawn inside it. \
 				A cultivator at least as strong as the formation can slowly break through. Break the core, or let it run out of qi, and the \
 				whole barrier falls.
-				Craft a Formation Core of your own to raise a barrier for yourself and the people you trust.
+				Craft a Formation Core of your own to raise a barrier for yourself and the people you trust. It rises with you as you break \
+				through, and keeps its strength if your realm ever falls.
 				@craft formation_core""");
 		page("concealment", ModBlocks.FORMATION_CORE, null, "Concealment", """
 				A Formation Core you own can also raise a concealment: its second tab. Inside its sphere, everyone else sees the land as it \
@@ -1293,6 +1296,12 @@ public final class Codex {
 				- It hides, but it doesn't block: outsiders walk straight through what they can't see, and over the ground they see. They \
 				can't mine or use the hidden blocks. Raise the barrier as well to keep them out: with both up, your home is unseen and \
 				no one can enter.
+				- It keeps your land: what anyone but you and the players you trust mines, blasts, burns or breaks with a spell inside it \
+				only looks done, to them and everyone else. For you and the players you trust it never happened, and when the concealment \
+				comes down the land is as you know it. Outside its sphere, their destruction is real.
+				- A new block they place inside it, on empty air or over grass, is there for them and everyone else, but not for you and \
+				the players you trust: you can't see or touch it, you walk straight through it, and building on the spot pops it off. When \
+				the concealment comes down, it is simply there.
 				- It has its own radius and switch, and costs three quarters of a barrier's upkeep, from the same Qi Veins and store. Both \
 				can run at once if your veins carry them. When the qi runs short, the concealment falls before the barrier does.
 				- Mastery of formations lowers both upkeeps, and keeping them up teaches it.
@@ -1552,9 +1561,9 @@ public final class Codex {
 				@craft world_seed
 				After that, you can open its door wherever you stand, for yourself and the guests you allow.
 				Your world travels with you. Anyone inside it when you go through the Spatial Gap, the Void Breach or the Immortal Gate \
-				comes through with you, whatever their realm, and its gate then leads out beside you. As with Universe in a Sleeve, the \
-				spatial pressure on you doubles for each of them. If you die on the way, they stay safe inside, and its gate still leads \
-				back to where they came in.""");
+				comes through with you, whatever their realm, and its gate then leads out to your open door, or else beside you, on the \
+				ground if you are in the air. As with Universe in a Sleeve, the spatial pressure on you doubles for each of them. If you \
+				die on the way, they stay safe inside, and its gate still leads back to where they came in.""");
 
 		// ================================================== The Secret Realms ===================================================
 		chapter("secret_realms", ModItems.DEPARTURE_JADE, Hint.VENTURE, "Secret Realms");

@@ -9,7 +9,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -20,9 +22,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(ServerPlayerGameMode.class)
 public abstract class ServerPlayerGameModeLedgerMixin {
+	@Shadow @Final protected ServerPlayer player;
+
 	@Inject(method = "destroyBlock", at = @At("HEAD"))
 	private void dth$breakBegins(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-		LandLedger.begin();
+		LandLedger.begin(player);
 	}
 
 	@Inject(method = "destroyBlock", at = @At("RETURN"))
@@ -33,7 +37,7 @@ public abstract class ServerPlayerGameModeLedgerMixin {
 	@Inject(method = "useItemOn", at = @At("HEAD"))
 	private void dth$useOnBegins(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand, BlockHitResult hit,
 			CallbackInfoReturnable<InteractionResult> cir) {
-		LandLedger.begin();
+		LandLedger.begin(player);
 	}
 
 	@Inject(method = "useItemOn", at = @At("RETURN"))
@@ -44,7 +48,7 @@ public abstract class ServerPlayerGameModeLedgerMixin {
 
 	@Inject(method = "useItem", at = @At("HEAD"))
 	private void dth$useBegins(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
-		LandLedger.begin();
+		LandLedger.begin(player);
 	}
 
 	@Inject(method = "useItem", at = @At("RETURN"))

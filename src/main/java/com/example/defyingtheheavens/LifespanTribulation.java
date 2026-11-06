@@ -366,13 +366,17 @@ public final class LifespanTribulation {
 	}
 
 	/**
-	 * JOIN: one marked as ended by a spent life who is somehow still about (a crash between the death and the respawn, one of the dead
-	 * gone before it could scatter) is born anew now.
+	 * Just joined, standing in the world (CultivationEvents#arrived): one marked as ended by a spent life who is somehow still about (a crash
+	 * between the death and the respawn, one of the dead gone before it could scatter) is born anew now.
 	 */
 	public static void onJoin(ServerPlayer p) {
 		if (!p.isAlive() || !CultivationManager.own(p).lifeEnded()) return;
-		if (GhostSystem.isGhost(p)) Lifespan.soulScatters(p);
-		else onRespawn(p);
+		if (GhostSystem.isGhost(p)) {
+			Lifespan.soulScatters(p);
+			return;
+		}
+		onRespawn(p);
+		FiveDecays.onRespawn(p); // a Decay's stained robes go with the old life
 	}
 
 	// --- Bookkeeping ---

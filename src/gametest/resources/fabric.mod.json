@@ -120,7 +120,8 @@
       "com.example.defyingtheheavens.BodyCultivatorsGameTests",
       "com.example.defyingtheheavens.BodyWayUpGameTests",
       "com.example.defyingtheheavens.BodyLadderGameTests",
-      "com.example.defyingtheheavens.BodyHeavenTechniquesGameTests"
+      "com.example.defyingtheheavens.BodyHeavenTechniquesGameTests",
+      "com.example.defyingtheheavens.LoginGameTests"
     ]
   }
 }

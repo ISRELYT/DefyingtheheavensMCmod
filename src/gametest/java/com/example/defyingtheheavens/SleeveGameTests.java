@@ -247,7 +247,7 @@ public class SleeveGameTests implements FabricGameTest {
 			helper.assertTrue(back != null && back.getString("Dimension").equals(Level.NETHER.location().toString())
 					&& Math.hypot(back.getDouble("X") - 8.5, back.getDouble("Z") - 8.5) < 2, "Its gate leads out beside its owner where they came out");
 			SmallWorlds.leave(guest);
-			helper.assertTrue(guest.level() == nether && guest.distanceTo(owner) < 2, "...and the guest comes out there");
+			helper.assertTrue(guest.level() == nether && Math.hypot(guest.getX() - owner.getX(), guest.getZ() - owner.getZ()) < 2, "...and the guest comes out there");
 			// Slain on the way: those in it left as they were.
 			helper.assertTrue(SmallWorlds.enter(guest, w), "The guest in again, from the Nether");
 			SmallWorlds.tick(server);
@@ -267,6 +267,88 @@ public class SleeveGameTests implements FabricGameTest {
 			leave(guest);
 			leave(held);
 			leave(owner);
+		}
+	}
+
+	/** The sweep of 2026-11-06: one set down in the air keeps their harmless landing in any world, not only the Overworld, the Upper Realm and the planets; not on a way. */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "sleeves_landing", timeoutTicks = 200)
+	public void aHarmlessLandingLastsInAnyWorld(GameTestHelper helper) {
+		MinecraftServer server = helper.getLevel().getServer();
+		ServerLevel nether = server.getLevel(Level.NETHER), passage = server.getLevel(ModDimensions.IMMORTAL_PASSAGE);
+		ServerPlayer p = player(helper, Realm.QI_REFINING, "test-sleeve-l");
+		PlayerCultivation c = CultivationManager.get(p);
+		p.teleportTo(nether, 8.5, 200, 8.5, 0, 0);
+		p.setOnGround(false);
+		c.setFallProtected(true);
+		helper.runAfterDelay(3, () -> {
+			boolean kept = c.isFallProtected();
+			p.teleportTo(passage, 0.5, 100, 0.5, 0, 0);
+			helper.runAfterDelay(3, () -> {
+				boolean onTheWay = c.isFallProtected();
+				leave(p);
+				home(helper, p);
+				helper.assertTrue(kept, "Falling in the Nether, it is kept");
+				helper.assertTrue(!onTheWay, "...and goes on a way between the worlds");
+				helper.succeed();
+			});
+		});
+	}
+
+	/**
+	 * The user's report, 2026-11-06: a world brought down through the gap's floor comes out with its owner high in the Overworld's sky, and those in it came
+	 * out up there, "they fell from the sky and died ... they didnt exit it where i summoned the entrance or next to me like the technique does".
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "sleeves_world_down", timeoutTicks = 400)
+	public void aWorldBroughtDownSetsThoseInItByItsOwner(GameTestHelper helper) {
+		MinecraftServer server = helper.getLevel().getServer();
+		ServerLevel level = helper.getLevel(), passage = server.getLevel(ModDimensions.IMMORTAL_PASSAGE);
+		ServerPlayer owner = player(helper, Realm.TRUE_IMMORTAL, "test-sleeve-d"), guest = player(helper, Realm.QI_REFINING, "test-sleeve-e");
+		SmallWorlds.Data data = SmallWorlds.Data.get(server);
+		BlockPos ground = helper.absolutePos(new BlockPos(4, 1, 4));
+		for (BlockPos pos : BlockPos.betweenClosed(ground.offset(-4, 0, -4), ground.offset(4, 0, 4))) level.setBlock(pos, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+		double x = ground.getX() + 0.5, z = ground.getZ() + 0.5, top = ground.getY() + 1, sky = top + 200;
+		try {
+			helper.assertTrue(passage != null && SmallWorlds.refine(owner), "Refined");
+			SmallWorlds.World w = data.of(owner.getUUID());
+			SmallWorlds.addGuest(owner, guest);
+			helper.assertTrue(SmallWorlds.enter(guest, w), "The guest in the world");
+			owner.teleportTo(level, x, top, z, 0, 0);
+			SmallWorlds.tick(server);
+			owner.teleportTo(passage, 0.5, 100, 0.5, 0, 0);
+			SmallWorlds.tick(server);
+			owner.teleportTo(level, x, sky, z, 0, 0);
+			SmallWorlds.tick(server);
+			helper.assertTrue(data.peekReturn(guest.getUUID()).getDouble("Y") == sky, "Its owner out in the sky, as through the gap's floor");
+			SmallWorlds.leave(guest);
+			helper.assertTrue(guest.level() == level && Math.abs(guest.getY() - top) < 0.01 && Math.hypot(guest.getX() - x, guest.getZ() - z) < 2,
+					"The guest comes out beside them, on the ground under them, not in the sky: y " + guest.getY());
+			helper.assertTrue(CultivationManager.get(guest).isFallProtected(), "...set down, as out of a sleeve");
+
+			helper.assertTrue(SmallWorlds.enter(guest, w), "The guest in again");
+			SmallWorlds.tick(server);
+			owner.teleportTo(passage, 0.5, 100, 0.5, 0, 0);
+			SmallWorlds.tick(server);
+			owner.teleportTo(level, x, top, z, 0, 0);
+			SmallWorlds.tick(server);
+			SmallWorlds.toggle(owner);
+			helper.assertTrue(SmallWorlds.isOpen(owner.getUUID()), "Its owner on the ground, its door open before them");
+			owner.moveTo(x + 30, top, z);
+			SmallWorlds.leave(guest);
+			helper.assertTrue(Math.hypot(guest.getX() - x, guest.getZ() - z) < SmallWorlds.DOOR_AHEAD + 2 && Math.abs(guest.getY() - top) < 0.01,
+					"The guest comes out where it was summoned, though its owner has walked on");
+			helper.assertTrue(Math.hypot(guest.getX() - x, guest.getZ() - (z + SmallWorlds.DOOR_AHEAD)) > 1, "...a step before it, not back through it");
+
+			SmallWorlds.close(server, owner.getUUID(), false);
+			helper.assertTrue(SmallWorlds.enter(guest, w), "In once more, this time by no way at all");
+			SmallWorlds.leave(guest);
+			helper.assertTrue(Math.hypot(guest.getX() - x, guest.getZ() - (z + SmallWorlds.DOOR_AHEAD - 1.5)) < 1, "One who wasn't carried comes out where they came in");
+			helper.succeed();
+		} finally {
+			SmallWorlds.close(server, owner.getUUID(), false);
+			data.forget(owner.getUUID());
+			leave(guest);
+			leave(owner);
+			for (BlockPos pos : BlockPos.betweenClosed(ground.offset(-4, 0, -4), ground.offset(4, 0, 4))) level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
 		}
 	}
 }

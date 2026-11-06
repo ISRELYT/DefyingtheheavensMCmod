@@ -391,6 +391,8 @@ public class SoulProjectionGameTests implements FabricGameTest {
 			c.setAbilityEnabled(Ability.SOUL_PROJECTION, true);
 			p.setPos(p.getX() + 20, p.getY() + 5, p.getZ()); // where the soul was when it all went down
 			SoulProjection.onJoin(p);
+			helper.assertTrue(c.getSoulReturn() != null, "Nothing moved until the world has taken them in");
+			SoulProjection.arrived(p);
 			helper.assertTrue(p.blockPosition().equals(at) && p.getHealth() == 7, "Back where the body sat, with its health");
 			helper.assertTrue(c.getSoulReturn() == null && !c.isAbilityEnabled(Ability.SOUL_PROJECTION) && c.getRealm() == Realm.NASCENT_SOUL,
 					"And no penalty");

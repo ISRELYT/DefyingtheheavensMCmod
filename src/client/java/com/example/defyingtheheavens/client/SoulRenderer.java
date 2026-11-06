@@ -250,8 +250,6 @@ public final class SoulRenderer {
 		model.riding = body.isPassenger();
 		model.young = false;
 		model.crouching = body.isCrouching();
-		model.rightLeg.resetPose();
-		model.leftLeg.resetPose();
 		model.setupAnim(body, body.walkAnimation.position(partial), Math.min(1, body.walkAnimation.speed(partial)), age,
 				Mth.wrapDegrees(headYaw - bodyYaw), pitch);
 		// A demon's body veiled whole: its beast's head and tail in the veil too, in place of a man's head.
@@ -332,10 +330,6 @@ public final class SoulRenderer {
 		model.riding = false;
 		model.young = false;
 		model.crouching = false;
-		// The model is shared by every figure drawn: the legs' spread (which setupAnim leaves alone and the drifting pose narrows)
-		// back to the model's own, so one sitting in meditation doesn't take it from whoever was drawn before.
-		model.rightLeg.resetPose();
-		model.leftLeg.resetPose();
 		model.setupAnim(soul, 0, 0, age, look == Look.SOUL ? 0 : Mth.wrapDegrees(headYaw - yaw), pitch);
 		if (!seated) {
 			ghostPose(model, age);
@@ -804,14 +798,33 @@ public final class SoulRenderer {
 		model.hat.copyFrom(model.head);
 	}
 
+	/**
+	 * The model every soul, ghost and spell's dead is drawn with, one of each build shared by them all, handed out whole and at its rest
+	 * whatever the figure before it did with it. A spell draws only parts of a man with it (a Ghostly Wail's flung heads, an Avatar from the
+	 * waist up, its falling arm), and what it hid stayed hidden: once a wail had been seen, every ghost of the build its heads last wore was
+	 * only a head on that client until the game was restarted (the user's friend's screen, 2026-11-05). So too a meditating ghost's legs, which
+	 * setupAnim leaves alone and the drifting pose narrows.
+	 */
 	static PlayerModel<Player> model(boolean slimModel) {
 		Minecraft mc = Minecraft.getInstance();
-		if (slimModel) {
-			if (slim == null) slim = new PlayerModel<>(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER_SLIM), true);
-			return slim;
+		if (slimModel && slim == null) slim = new PlayerModel<>(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER_SLIM), true);
+		if (!slimModel && wide == null) wide = new PlayerModel<>(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER), false);
+		PlayerModel<Player> model = slimModel ? slim : wide;
+		rest(model);
+		return model;
+	}
+
+	/** Every part of {@code model} back to its rest, shown. */
+	private static void rest(PlayerModel<?> model) {
+		for (ModelPart part : new ModelPart[] {model.head, model.hat, model.body, model.jacket, model.rightArm, model.leftArm, model.rightSleeve, model.leftSleeve,
+				model.rightLeg, model.leftLeg, model.rightPants, model.leftPants}) {
+			part.resetPose();
+			part.visible = true;
 		}
-		if (wide == null) wide = new PlayerModel<>(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER), false);
-		return wide;
+		model.attackTime = 0;
+		model.riding = false;
+		model.young = false;
+		model.crouching = false;
 	}
 
 	// --- The tether ---

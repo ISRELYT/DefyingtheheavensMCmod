@@ -159,19 +159,6 @@ final class SpellGhosts {
 		return e instanceof AbstractClientPlayer player && "slim".equals(player.getModelName());
 	}
 
-	/** Every part of {@code model} back to its rest, shown. */
-	private static void rest(PlayerModel<?> model) {
-		for (ModelPart part : new ModelPart[] {model.head, model.hat, model.body, model.jacket, model.rightArm, model.leftArm, model.rightSleeve, model.leftSleeve,
-				model.rightLeg, model.leftLeg, model.rightPants, model.leftPants}) {
-			part.resetPose();
-			part.visible = true;
-		}
-		model.attackTime = 0;
-		model.riding = false;
-		model.young = false;
-		model.crouching = false;
-	}
-
 	/** The outer layers (hat, jacket, sleeves, trousers) laid over the parts as they were posed. */
 	private static void layers(PlayerModel<?> model) {
 		model.hat.copyFrom(model.head);
@@ -196,7 +183,6 @@ final class SpellGhosts {
 		if (shader == null) return;
 		PlayerModel model = SoulRenderer.model(slim);
 		if (model == null) return;
-		rest(model);
 		posing.pose(model, age);
 		layers(model);
 		pose.pushPose();
@@ -736,7 +722,6 @@ final class SpellGhosts {
 		if (alpha <= 0.01f || spiritShader == null) return;
 		PlayerModel model = SoulRenderer.model(slim);
 		if (model == null) return;
-		rest(model);
 		posing.pose(model, age);
 		layers(model);
 		pose.pushPose();
@@ -808,7 +793,6 @@ final class SpellGhosts {
 		if (alpha <= 0.01f || spiritShader == null) return;
 		PlayerModel model = SoulRenderer.model(slim);
 		if (model == null) return;
-		rest(model);
 		for (ModelPart part : new ModelPart[] {model.head, model.hat, model.body, model.jacket, model.rightLeg, model.leftLeg, model.rightPants, model.leftPants,
 				right ? model.leftArm : model.rightArm, right ? model.leftSleeve : model.rightSleeve}) part.visible = false;
 		ModelPart arm = right ? model.rightArm : model.leftArm;

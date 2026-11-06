@@ -623,7 +623,7 @@ public final class Devastation {
 				if (!plant.isAir() && !plant.is(BlockTags.LEAVES) && (plant.is(BlockTags.FLOWERS) || plant.is(BlockTags.SAPLINGS) || plant.is(Blocks.GRASS) || plant.is(Blocks.FERN)
 						|| plant.is(Blocks.TALL_GRASS) || plant.is(Blocks.LARGE_FERN) || plant.is(Blocks.MOSS_CARPET)) && mayChange(p, level, above)) {
 					boolean tall = plant.is(Blocks.TALL_GRASS) || plant.is(Blocks.LARGE_FERN) || plant.is(BlockTags.TALL_FLOWERS);
-					if (tall) level.setBlock(above.above(), Blocks.AIR.defaultBlockState(), 2 | 16);
+					if (tall && mayChange(p, level, above.above())) level.setBlock(above.above(), Blocks.AIR.defaultBlockState(), 2 | 16);
 					level.setBlock(above, level.random.nextInt(5) == 0 ? Blocks.DEAD_BUSH.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
 				}
 			}
@@ -809,7 +809,7 @@ public final class Devastation {
 	 * (whose fruit only its loot table gives back, never a removal) lets its fruit fall.
 	 */
 	private static void obliterate(ServerLevel level, BlockPos pos) {
-		net.minecraft.world.level.block.entity.BlockEntity held = level.getBlockEntity(pos);
+		net.minecraft.world.level.block.entity.BlockEntity held = LandLedger.forShow(pos) ? null : level.getBlockEntity(pos); // a stranger's under a veil takes nothing
 		if (held instanceof SpiritPedestalBlockEntity pedestal && pedestal.hasFruit()) {
 			Block.popResource(level, pos, pedestal.getFruit().copy());
 		} else if (held instanceof net.minecraft.world.Container container && !container.isEmpty()) {
@@ -1039,7 +1039,7 @@ public final class Devastation {
 		if (!mayChange(p, level, above)) return;
 		// What grew there buried under it (a tall plant's top too, never left hanging).
 		if (!over.isAir()) {
-			if (over.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+			if (over.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF) && mayChange(p, level, above.above())) {
 				level.setBlock(above.above(), Blocks.AIR.defaultBlockState(), 2 | 16);
 			}
 			level.setBlock(above, Blocks.AIR.defaultBlockState(), 2 | 16);
@@ -1105,7 +1105,7 @@ public final class Devastation {
 		LongArrayList lake = new LongArrayList();
 		for (Map.Entry<Long, Integer> e : lowest.entrySet()) {
 			BlockPos below = new BlockPos(BlockPos.getX(e.getKey()), e.getValue() - 1, BlockPos.getZ(e.getKey()));
-			if (!level.isLoaded(below) || !level.getBlockState(below.above()).isAir()) continue;
+			if (!level.isLoaded(below) || !Concealments.emptyFor(level, below.above(), p)) continue;
 			if (floor == Floor.LAKE) {
 				for (BlockPos water = below.above(); water.getY() <= surfaceY - 2 && water.getY() <= below.getY() + 3; water = water.above()) {
 					if (!level.getBlockState(water).isAir() || !mayChange(p, level, water)) break;
@@ -1197,7 +1197,10 @@ public final class Devastation {
 		if (p == null) return true;
 		if (!(p instanceof ServerPlayer player)) return false; // a cultivator's spells set nothing in the land (HeavenSpells#carvesLand)
 		if (Formations.protectsGroundQuietly(player, pos) || !player.mayBuild() || !level.mayInteract(player, pos)) return false;
-		if (taking) SectManager.spoiled(level, player, pos);
+		if (taking) {
+			SectManager.spoiled(level, player, pos);
+			LandLedger.markSpell(level, pos, player); // a stranger's under a veil goes no further than their eyes (Concealments#wreck)
+		}
 		return true;
 	}
 

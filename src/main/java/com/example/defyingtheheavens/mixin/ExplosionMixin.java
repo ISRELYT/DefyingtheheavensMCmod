@@ -34,8 +34,9 @@ public abstract class ExplosionMixin {
 
 	@Inject(method = "finalizeExplosion", at = @At("HEAD"))
 	private void dth$playersBlastBegins(boolean particles, CallbackInfo ci) {
-		dth$players = !level.isClientSide && getIndirectSourceEntity() instanceof net.minecraft.world.entity.player.Player;
-		if (dth$players) com.example.defyingtheheavens.LandLedger.begin();
+		net.minecraft.world.entity.LivingEntity source = getIndirectSourceEntity();
+		dth$players = !level.isClientSide && source instanceof net.minecraft.world.entity.player.Player;
+		if (dth$players) com.example.defyingtheheavens.LandLedger.begin(source instanceof net.minecraft.server.level.ServerPlayer player ? player : null);
 	}
 
 	@Inject(method = "finalizeExplosion", at = @At("RETURN"))

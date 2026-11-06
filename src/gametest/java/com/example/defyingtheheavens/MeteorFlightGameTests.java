@@ -383,6 +383,34 @@ public class MeteorFlightGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	/** The user's ask, 2026-11-06: flown in the Spatial Gap from Void Shattering on, in a Void Breach from Entering Nirvana on, its current left behind. */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theGapsAreFlownFromTheirRealms(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		ServerPlayer integrator = cultivator(level, Realm.DAO_INTEGRATION, Stage.GRAND_PERFECTION), shatterer = cultivator(level, Realm.VOID_SHATTERING, Stage.EARLY);
+		ServerPlayer vessel = cultivator(level, Realm.SACRED_VESSEL, Stage.GRAND_PERFECTION), nirvana = cultivator(level, Realm.ENTERING_NIRVANA, Stage.EARLY);
+		try {
+			PlayerCultivation below = CultivationManager.get(integrator), from = CultivationManager.get(shatterer), v = CultivationManager.get(vessel), n = CultivationManager.get(nirvana);
+			helper.assertTrue(!MeteorFlight.flownIn(ModDimensions.SPATIAL_GAP, below) && MeteorFlight.flownIn(ModDimensions.SPATIAL_GAP, from),
+					"In the Spatial Gap from Void Shattering, not before");
+			helper.assertTrue(!MeteorFlight.flownIn(ModDimensions.VOID_BREACH, v) && MeteorFlight.flownIn(ModDimensions.VOID_BREACH, n),
+					"In a Void Breach from Entering Nirvana, not before");
+			helper.assertTrue(MeteorFlight.flownIn(ModDimensions.SPATIAL_GAP, n) && !MeteorFlight.flownIn(ModDimensions.ASTRAL_VOID, n) && !MeteorFlight.flownIn(ModDimensions.SOUL_RIVER, n)
+					&& MeteorFlight.flownIn(ModDimensions.UPPER_REALM, below), "Space and the Soul River as ever, and the worlds with land");
+			flying(nirvana, false);
+			helper.assertTrue(QiFlight.carried(ModDimensions.VOID_BREACH, n), "Switched off, a breach's current carries even one who could outfly it");
+			flying(vessel, true);
+			flying(nirvana, true);
+			helper.assertTrue(QiFlight.carried(ModDimensions.VOID_BREACH, v) && !QiFlight.carried(ModDimensions.VOID_BREACH, n),
+					"Switched on, it carries all but those it is flown by");
+			helper.assertTrue(QiFlight.carried(ModDimensions.SOUL_RIVER, n) && QiFlight.carried(ModDimensions.IMMORTAL_PASSAGE, n) && !QiFlight.carried(ModDimensions.SPATIAL_GAP, n),
+					"The Soul River and the Gate's passage carry everyone, the Spatial Gap no one");
+		} finally {
+			forget(integrator, shatterer, vessel, nirvana);
+		}
+		helper.succeed();
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void flownWhereItMayAndRoomForItOnTheServer(GameTestHelper helper) {
 		helper.assertTrue(MeteorFlight.flownIn(Level.OVERWORLD) && MeteorFlight.flownIn(Level.NETHER) && MeteorFlight.flownIn(ModDimensions.UPPER_REALM),

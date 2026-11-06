@@ -2,6 +2,7 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.features.TreeFeatures;
@@ -18,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -25,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,7 +63,8 @@ import java.util.UUID;
  *   effects as they would with the technique)"): a world goes with its owner. Its owner on one of the ways between the worlds
  *   (ModDimensions#isPassage), its door shuts behind them, and those in it ({@link #inside}) are borne up with them as those in a sleeve
  *   are, every spatial pressure on the owner doubled for each (Sleeves#pressureFactor; at the Immortal Gate, ImmortalGate#carriedShare).
- *   The owner come out into a world, the way out of everyone in theirs then is beside them there ({@link #cameOut}), whatever their realm.
+ *   The owner come out into a world, the way out of everyone in theirs then is by the owner, whatever their realm: a step before their door if it
+ *   stands open, else beside them, on the ground under them if they hang in the air ({@link #cameOut}, {@link #carriedOut}).
  *   The owner slain on the way, those in it stay safe in it, and their way out where it was.</li>
  * </ul>
  */
@@ -75,6 +79,8 @@ public final class SmallWorlds {
 	/** A door stands open so long (ticks), this far before the one who opened it. */
 	public static final int DOOR_TICKS = 600;
 	public static final double DOOR_AHEAD = 2.5;
+	/** How far before its door one borne in the world comes out (clear of its plane, or it would take them in again). */
+	private static final double DOOR_STEP = 1.5;
 	/** Holding a World Seed so long (ticks) refines it (WorldSeedItem). */
 	public static final int REFINE_TICKS = 200;
 	/** Blocks laid (and columns looked at) a tick while a world's land is laid out. */
@@ -310,11 +316,24 @@ public final class SmallWorlds {
 		return true;
 	}
 
-	/** {@code p} out of the small worlds, where they came in (or, that lost, at their spawn); their switch off if it's their world they left. */
+	/**
+	 * {@code p} out of the small worlds, where they came in, or, borne along a way with its owner since, by the owner now ({@link #carriedOut}), or, that
+	 * lost, at their spawn; set down, not dropped (a way out may hang in the air), and their switch off if it's their world they left.
+	 */
 	public static void leave(ServerPlayer p) {
 		Data data = Data.get(p.server);
+		World from = worldAt(p);
 		CompoundTag back = data.takeReturn(p.getUUID());
 		ServerLevel level = back == null ? null : p.server.getLevel(dimension(back));
+		Vec3 out = back == null ? null : new Vec3(back.getDouble("X"), back.getDouble("Y"), back.getDouble("Z"));
+		if (back != null && back.getBoolean("Borne")) {
+			Sleeves.Place now = from == null ? null : carriedOut(from, p);
+			if (now != null) {
+				level = p.server.getLevel(now.level());
+				out = now.at();
+			}
+			if (level != null) out = grounded(level, out);
+		}
 		p.stopRiding();
 		if (level == null) {
 			ServerLevel spawn = p.server.getLevel(p.getRespawnDimension());
@@ -322,10 +341,13 @@ public final class SmallWorlds {
 			BlockPos at = p.getRespawnPosition() != null && spawn.dimension() == p.getRespawnDimension() ? p.getRespawnPosition() : spawn.getSharedSpawnPos();
 			p.teleportTo(spawn, at.getX() + 0.5, at.getY() + 0.1, at.getZ() + 0.5, p.getYRot(), p.getXRot());
 		} else {
-			p.teleportTo(level, back.getDouble("X"), back.getDouble("Y"), back.getDouble("Z"), back.getFloat("YRot"), back.getFloat("XRot"));
+			p.teleportTo(level, out.x, out.y, out.z, back.getFloat("YRot"), back.getFloat("XRot"));
 		}
 		p.setDeltaMovement(Vec3.ZERO);
 		p.fallDistance = 0;
+		p.setOnGround(false);
+		CultivationManager.get(p).setFallProtected(true); // the first fall after is harmless, as out of a sleeve (Sleeves#letOut)
+		CultivationManager.markDirty(p.server);
 		if (data.of(p.getUUID()) != null && !isOpen(p.getUUID())) switchTo(p, false);
 		p.displayClientMessage(Component.translatable(ModLang.MSG_WORLD_LEFT), true);
 		p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.CHORUS_FRUIT_TELEPORT, SoundSource.PLAYERS, 0.8f, 0.8f);
@@ -475,7 +497,7 @@ public final class SmallWorlds {
 		}
 	}
 
-	/** Coming back into the world: their switch as it stands (a door doesn't outlast a logout), and out of a world not theirs to be in. */
+	/** Coming back into the world: their switch as it stands (a door doesn't outlast a logout). */
 	public static void onJoin(ServerPlayer p) {
 		Data data = Data.get(p.server);
 		World own = data.of(p.getUUID());
@@ -487,6 +509,12 @@ public final class SmallWorlds {
 		}
 		World here = worldAt(p);
 		c.setAbilityEnabled(Ability.SMALL_WORLD, own != null && here == own);
+	}
+
+	/** Standing in the world now, wherever they came back to from an Inner Realm: their switch as it stands, and out of a world not theirs to be in. */
+	public static void arrived(ServerPlayer p) {
+		World own = Data.get(p.server).of(p.getUUID()), here = worldAt(p);
+		switchTo(p, own != null && here == own);
 		if (ModDimensions.isSmallWorld(p.level().dimension()) && !mayEnter(here, p) && !Sleeves.isCarried(p.getUUID())) sendOut(p);
 	}
 
@@ -536,7 +564,10 @@ public final class SmallWorlds {
 		}
 	}
 
-	/** {@code owner} come out of a way into a world: the way out of everyone in theirs now beside them there, each told; they told how many. */
+	/**
+	 * {@code owner} come out of a way into a world: everyone in theirs now borne there, their way out by the owner from here on ({@link #carriedOut}), and
+	 * beside them here should the owner be gone by then; each told, and they told how many.
+	 */
 	static void cameOut(ServerPlayer owner, ServerLevel sw, World own) {
 		List<ServerPlayer> in = inside(sw, own);
 		if (in.isEmpty()) return;
@@ -544,10 +575,46 @@ public final class SmallWorlds {
 		int i = 0;
 		for (ServerPlayer p : in) {
 			Sleeves.Place at = Sleeves.beside(owner, i++); // a step beside them, not in them
-			data.keepReturn(p.getUUID(), at.level(), at.at(), owner.getYRot(), owner.getXRot());
+			data.keepReturn(p.getUUID(), at.level(), at.at(), owner.getYRot(), owner.getXRot(), true);
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_WORLD_CARRIED_UP, owner.getDisplayName()).withStyle(ChatFormatting.LIGHT_PURPLE));
 		}
 		owner.sendSystemMessage(Component.translatable(ModLang.MSG_WORLD_BROUGHT, in.size()).withStyle(ChatFormatting.LIGHT_PURPLE));
+	}
+
+	/**
+	 * Where {@code p}, borne along a way in {@code w}, comes out now: a step before its door if it stands open, else beside its owner, out in a world; null
+	 * if neither (the owner away, slain, on a way, their soul out of their body), for where it last came out. (The user's report, 2026-11-06: one brought
+	 * down through the gap's floor comes out in the Overworld's sky, and those in their world came out there, "they fell from the sky and died ... they
+	 * didnt exit it where i summoned the entrance or next to me like the technique does".)
+	 */
+	private static Sleeves.Place carriedOut(World w, ServerPlayer p) {
+		SmallWorldDoor door = DOORS.get(w.owner);
+		if (door != null && !door.isRemoved()) {
+			Vec3 front = Vec3.directionFromRotation(0, door.getYRot()).scale(DOOR_STEP);
+			for (Vec3 step : new Vec3[] {front, front.reverse()}) {
+				Vec3 at = door.position().add(step);
+				if (door.level().noCollision(p.getDimensions(Pose.STANDING).makeBoundingBox(at))) return new Sleeves.Place(door.level().dimension(), at);
+			}
+		}
+		ServerPlayer owner = p.server.getPlayerList().getPlayer(w.owner);
+		if (owner == null || !owner.isAlive() || owner.isSpectator() || SoulProjection.isActive(w.owner)) return null;
+		ResourceKey<Level> dimension = owner.level().dimension();
+		if (ModDimensions.isPassage(dimension) || ModDimensions.isInnerRealm(dimension) || ModDimensions.isSmallWorld(dimension) || ModDimensions.isSecretRealm(dimension)) return null;
+		return Sleeves.beside(owner, 0);
+	}
+
+	/** {@code at} let down onto what stands under it in {@code level} (hanging in the air, whoever was borne there would drop from it), or as it is over nothing. */
+	private static Vec3 grounded(ServerLevel level, Vec3 at) {
+		BlockPos.MutableBlockPos pos = BlockPos.containing(at).mutable();
+		level.getChunk(pos);
+		for (int y = pos.getY(); y >= level.getMinBuildHeight(); y--) {
+			pos.setY(y);
+			BlockState state = level.getBlockState(pos);
+			VoxelShape shape = state.getCollisionShape(level, pos);
+			if (!shape.isEmpty()) return new Vec3(at.x, y + shape.max(Direction.Axis.Y), at.z);
+			if (!state.getFluidState().isEmpty()) return new Vec3(at.x, y + 1, at.z);
+		}
+		return at;
 	}
 
 	/** The server stopped: nothing of this world's kept (the doors went with it; the land's laying goes on next time). */
@@ -814,12 +881,13 @@ public final class SmallWorlds {
 
 		/** Where {@code p} stands now, kept as where they came in from. */
 		void keepReturn(ServerPlayer p) {
-			keepReturn(p.getUUID(), p.level().dimension(), p.position(), p.getYRot(), p.getXRot());
+			keepReturn(p.getUUID(), p.level().dimension(), p.position(), p.getYRot(), p.getXRot(), false);
 		}
 
-		/** {@code at} in {@code level} (beside their world's owner, come out of a way: {@link #cameOut}), kept as {@code player}'s way out. */
-		void keepReturn(UUID player, ResourceKey<Level> level, Vec3 at, float yRot, float xRot) {
+		/** {@code at} in {@code level} kept as {@code player}'s way out; {@code borne}, they were carried there in their world, its owner bringing it ({@link #cameOut}). */
+		void keepReturn(UUID player, ResourceKey<Level> level, Vec3 at, float yRot, float xRot, boolean borne) {
 			CompoundTag back = new CompoundTag();
+			if (borne) back.putBoolean("Borne", true);
 			back.putString("Dimension", level.location().toString());
 			back.putDouble("X", at.x);
 			back.putDouble("Y", at.y);

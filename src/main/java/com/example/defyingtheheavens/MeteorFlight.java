@@ -37,8 +37,9 @@ import java.util.UUID;
  * would run into before it gets there and names it here ({@link #bulldoze}), so they keep their speed (the user's ask, 2026-10-23).
  * <p>
  * Flying fast costs {@link #STREAK_COST} times Qi Flight's qi; from Heavenly Being on never more than one gathers, so it never runs
- * one dry ({@link #streakCost}). The dead fly freely, for nothing, as they do. Not in space (its own flight), the Spatial Gap or on
- * the Soul River, nor on a sword. Flying punches are not part of it (the user's call).
+ * one dry ({@link #streakCost}). The dead fly freely, for nothing, as they do. Not in space (its own flight), or on the Soul River, nor
+ * on a sword; in the Spatial Gap only from Void Shattering on, in a Void Breach only from Entering Nirvana on ({@link #flownIn(ResourceKey,
+ * PlayerCultivation)}). Flying punches are not part of it (the user's call).
  */
 public final class MeteorFlight {
 	/** Top speed, blocks a second, at each realm's Early stage (by Realm ordinal: none below Core Formation); each stage {@link #STAGE_STEP} more. */
@@ -82,6 +83,8 @@ public final class MeteorFlight {
 	private static final int SYNC_EVERY = 10;
 	/** How many ticks' moves the speed is the mean of. */
 	private static final int WINDOW = 10;
+	/** It is flown in the Spatial Gap from this rank (TwoPaths#higherRank, as wielded), in a Void Breach from this one (the user's ask, 2026-11-06). */
+	static final int GAP_RANK = PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.EARLY), BREACH_RANK = PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY);
 
 	private static final class State {
 		/** The client says forward is held in Meteor Flight; and that the boost is held down with it (sprinting). */
@@ -177,15 +180,22 @@ public final class MeteorFlight {
 		return cost;
 	}
 
-	/** Where Meteor Flight is flown: not space (its own flight), the Spatial Gap or the Soul River. Both sides. */
+	/** Where Meteor Flight is flown at every realm: not space (its own flight), the Spatial Gap or the Soul River. Both sides. */
 	public static boolean flownIn(ResourceKey<Level> dimension) {
 		return !ModDimensions.isSpace(dimension) && !ModDimensions.isSpatialGap(dimension) && !ModDimensions.isSoulRiver(dimension);
+	}
+
+	/** Where {@code c} flies it: the same, and the Spatial Gap from {@link #GAP_RANK}; a Void Breach only from {@link #BREACH_RANK}. Both sides. */
+	public static boolean flownIn(ResourceKey<Level> dimension, PlayerCultivation c) {
+		if (ModDimensions.isSpatialGap(dimension)) return TwoPaths.higherRank(c, true) >= GAP_RANK;
+		if (ModDimensions.isVoidBreach(dimension)) return TwoPaths.higherRank(c, true) >= BREACH_RANK;
+		return flownIn(dimension);
 	}
 
 	/** Whether {@code p} may fly fast now: switched on, in the air by Qi Flight or freely (not on a sword), and where it is flown. */
 	public static boolean mayStreak(ServerPlayer p, PlayerCultivation c) {
 		return c.isAbilityActive(Ability.METEOR_FLIGHT) && p.getAbilities().flying && p.getAbilities().mayfly && !p.isCreative() && !p.isSpectator()
-				&& !p.isPassenger() && !SwordFlight.isRiding(p) && !SoulProjection.isSoul(p) && flownIn(p.level().dimension());
+				&& !p.isPassenger() && !SwordFlight.isRiding(p) && !SoulProjection.isSoul(p) && flownIn(p.level().dimension(), c);
 	}
 
 	// --- Underway ---

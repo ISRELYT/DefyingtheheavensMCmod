@@ -399,7 +399,7 @@ final class HolyLandPieces {
 	/**
 	 * The alchemy hall, 27 across and 21 deep: a hall of two eaves on a low plinth; inside, three pill furnaces of bronze along the
 	 * back, each a fire under a cauldron in its ring of bronze; brewing tables, herbs drying and potted down the sides, an elder's
-	 * chests of pills; before it a great censer smoking.
+	 * chests of pills; before it two great censers smoking, either side of its steps.
 	 */
 	static void alchemy(SectPiece g, WorldGenLevel level, BoundingBox chunk, SectPalette p) {
 		int w = g.width(), d = g.depth(), cx = w / 2;
@@ -440,8 +440,8 @@ final class HolyLandPieces {
 		g.chest(level, chunk, x1 - 1, floor + 1, z1 - 1, Direction.WEST, SectPiece.ELDER_LOOT);
 		for (int x = x0 + 3; x <= x1 - 3; x += 5) g.lanternHanging(level, chunk, p, x, top - 1, z0 + 3);
 		g.put(level, chunk, cx, floor + 1, z0 + 2, Blocks.HAY_BLOCK); // herbs drying by the door
-		// The great censer before it.
-		g.bigBrazier(level, chunk, p, cx, 1, 3);
+		// The great censers before it, either side of the steps (one stood square at their foot, barring the door: the user's screenshot, 2026-11-05).
+		for (int s : new int[] {-1, 1}) g.bigBrazier(level, chunk, p, cx + s * 6, 1, 3);
 	}
 
 	// --- An elder's court ---

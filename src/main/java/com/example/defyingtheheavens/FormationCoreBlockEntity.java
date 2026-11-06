@@ -64,6 +64,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	private double battery;
 	private int veins;
 	private long shatteredUntil;
+	/** How strong it is (PlayerCultivation#rank; -1 a mortal's): an owner's core has the most its owner has been since they set it ({@link #followOwner}), a sect's its master's. */
 	private int rank = -1;
 	/** Set at worldgen: the sect to found on the first tick (see SectManager#found). */
 	private CompoundTag blueprint;
@@ -244,6 +245,18 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	}
 
 	/**
+	 * Its owner grown stronger than it, it rises with them, by their own record, online or not, wherever they are and whatever body their soul is in.
+	 * It never falls with them (the user, 2026-11-06: "its power shouldnt fall with the owners in case of core detonation or something").
+	 */
+	private void followOwner(ServerLevel level) {
+		if (owner == null || sect != null) return;
+		int now = TwoPaths.weighedRank(CultivationManager.own(level.getServer(), owner));
+		if (now <= rank) return;
+		rank = now;
+		setChanged();
+	}
+
+	/**
 	 * Once a second: the veins fill the battery, the barrier and the concealment draw their upkeep, and each rises or falls accordingly;
 	 * short of qi, the concealment goes first, the barrier only if it still can't be carried.
 	 */
@@ -252,6 +265,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 			Sect served = SectManager.get(level.getServer(), sect);
 			if (served == null || served.extinct) releaseFromSect(level);
 		}
+		followOwner(level);
 		Formation formation = formation(level);
 		Concealments.Veil veil = veilWanted && sect == null ? veil(level) : formationId == null ? null : Concealments.get(level, formationId);
 		double share = upkeepShare();
@@ -472,8 +486,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		veilRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), newVeilRadius));
 		veilWanted = newVeilWanted && sect == null;
 		if (sect == null && owner != null && owner.equals(player.getUUID())) {
-			rank = Formations.rankOf(player); // as strong as its maker now
-			masteryRank = CraftMastery.rank(CultivationManager.own(player), CraftMastery.Craft.FORMATIONS).ordinal(); // and as skilled
+			masteryRank = CraftMastery.rank(CultivationManager.own(player), CraftMastery.Craft.FORMATIONS).ordinal(); // as skilled as its maker now
 		}
 		setChanged();
 		Formation formation = formation(server);

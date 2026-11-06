@@ -2691,12 +2691,16 @@ on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default
   ahead of where you were for up to twenty seconds.
 - **Qi.** Flying fast costs **three times Qi Flight's qi**; from Heavenly Being on never more than you gather, so it never runs
   you dry (Qi Flight never does there either). Hovering in it costs what Qi Flight does. The dead's free flight costs nothing.
-- **Not** in space (its own flight, swifter still), the Spatial Gap or on the Soul River, nor on a sword, nor in creative. So the
-  swiftness isn't lost there (the user's ask, 2026-10-23): **in the Spatial Gap, Meteor Flight switched on gives Qi Flight (and
-  the free flight) the speed it had there before** (`QiFlight#speedIn`: Void Shattering 2.4 to 3 times creative flight's, Sacred
-  Vessel 3.2 to 3.8, Entering Nirvana 4 to 4.9, True Immortal 6 to 7.2; creative speed below Void Shattering, as it always was);
-  switched off, creative speed. Space keeps its own speeds either way, unchanged (The Astral Realm). Nobody flies on the Soul
-  River, whose current carries the living.
+- **Not** in space (its own flight, swifter still) or on the Soul River, nor on a sword, nor in creative. **In the Spatial Gap only
+  from Void Shattering on, in a Void Breach only from Entering Nirvana on** (the user's ask, 2026-11-06; either path as wielded,
+  `MeteorFlight#flownIn`): there it flies as anywhere, and a breach's current no longer carries one who has it switched on
+  (`QiFlight#carried`), its pressure, shards and Vestiges all as ever; flown down out of the bottom of a breach, one comes out in
+  the Jade Firmament's sky. The gap's lower layers stay thick (`LOWER_SINK`) for this flight too. Without it switched on, or
+  below those realms, the gap is flown at Qi Flight's speed and a breach carries one up as ever. In the Spatial Gap, Meteor Flight
+  switched on also gives Qi Flight (and the free flight) the speed it had there before, forward held or not (the user's ask,
+  2026-10-23; `QiFlight#speedIn`: Void Shattering 2.4 to 3 times creative flight's, Sacred Vessel 3.2 to 3.8, Entering Nirvana 4
+  to 4.9, True Immortal 6 to 7.2; creative speed below Void Shattering, as it always was); switched off, creative speed. Space
+  keeps its own speeds either way, unchanged (The Astral Realm). Nobody flies on the Soul River, whose current carries the living.
 - **No flying punches** (the user's call).
 
 Code: `MeteorFlight.java` (speeds, cost, the barrier, the heat, the smashing, the bulldozer's server side, syncing: packets
@@ -3481,8 +3485,13 @@ world: a floating island under the stars.
   cost as Universe in a Sleeve). Your world goes with you. Take the Spatial Gap, the Void Breach or the Immortal Gate and its door
   shuts behind you, and everyone inside (and anyone in their sleeves) comes through with you, whatever their realm. **Every spatial
   pressure on you doubles for each of them**, counted with any in your own sleeve, and a True Immortal takes the Gate's quarter body
-  the same way. When you come out into a world, the world's gate leads out **beside you there**. If you die on the way, they stay
-  safe inside, and the gate still leads back to where they came in. Stepping out partway, a guest comes out where they came in.
+  the same way. From when you come out into a world, the world's gate leads out **to you**: a step before your door if it stands
+  open, else beside you, on the ground under you if you are in the air (you come out of the gap's floor high in the Overworld's sky:
+  the user's report of 2026-11-06, those in it came out up there and fell to their deaths; `SmallWorlds#carriedOut`). With you away,
+  slain or on a way again, it leads to where you came out, brought down to the ground. Anyone leaving a small world is set down, not
+  dropped: their first fall after is harmless, in any world (on a way between the worlds it ends), as out of a sleeve. If you die
+  on the way, they stay safe inside, and the gate still leads back to where they came in. Stepping out partway, a guest comes out
+  where they came in.
 - Art: `java tools/beast-art/BeastArt.java <assets> worlds` (the seed, the ability's icon).
 
 Code: `SmallWorlds`, `SmallWorldDoor`, `SmallWorldGateBlock`, `WorldSeedItem`, `SmallWorldCommand`, client `SmallWorldClient`,
@@ -4648,8 +4657,10 @@ hold it loaded for good, freezing the cultivators in it.
   touch, like redstone dust, form one line; a line from the core to a vein, within 64 blocks of the core, carries its
   qi. The ink is invisible without Qi Sense, which shows it as glowing azure lines.
 - **The core's screen** (right-click your own core): switch the barrier on or off and set its radius (4-64), and see the
-  battery, upkeep and supply. The core is as strong as whoever placed it. Sect cores answer only to their sect; a sect's
-  barrier is as strong as its master.
+  battery, upkeep and supply. The core starts as strong as whoever placed it and rises with them by itself, once a second
+  while it is loaded, by their own record, online or not (`FormationCoreBlockEntity#followOwner`). It never falls with them
+  (the user, 2026-11-06: "its power shouldnt fall with the owners in case of core detonation or something"). Its barrier and
+  concealment share that strength. Sect cores answer only to their sect; a sect's barrier is as strong as its master.
 - **Trusted cultivators.** The screen's **Trusted...** page lists up to 16 players who pass the barrier as
   its owner does (and may dig the ground it runs through). Type a name and press **Trust** (or Enter) to add one: anyone
   online, or anyone who has played on the server before. Press the cross beside a name to strike them off.
@@ -4679,10 +4690,42 @@ players they trust, an operator in creative or spectator, and **anyone stronger 
 is. Walking in reveals nothing. **It hides; it doesn't block** (the user, 2026-10-28: "concealment barriers should no longer
 provide an invisible wall that blocks people", it takes both "to be unseen and not able to enter"): the server reckons the
 movement of those it hides from by what they are shown (`mixin/BlockStateBaseVeilMixin`, `Concealments#illusoryShape`), so they
-walk through hidden work and over the ground they see over a hidden pit, are not smothered inside a hidden wall
-(`mixin/EntityVeilMixin`), and feel nothing hidden (fire, thorns, a pressure plate); they can't mine or use the hidden blocks.
+walk through hidden work and over the ground they see over a hidden pit, are not smothered inside or at the edge of a hidden wall
+(`mixin/EntityVeilMixin`, `Concealments#breathesInHidden`: the same little square at the eyes vanilla looks through, each block as
+they are shown it), and feel nothing hidden (fire, thorns, a pressure plate); they can't mine or use the hidden blocks.
 Only the barrier, raised as well, keeps them out: its cells keep their own rule though hidden. Both can stand at once if the
 veins carry both.
+
+**It keeps the land: a stranger's destruction is for strangers' eyes alone** (the user, 2026-11-06: "the owner shouldnt see the
+changed ground, it should look like a spell never happened, and if the concealment falls, the ground should look like it does for
+the owner, not destroyed. although area outside the barrier that gets destroyed should still have terrain destruction. it should
+look destroyed for the stranger though"). What anyone but its owner and the players they trust does to the land under a raised
+concealment, by hand (mined, hoed), by a blast of theirs, or by a spell or Meteor Flight (`HeavenSpells#carvable`,
+`Devastation#mayChange`), never reaches it: one who merely sees through it (the stronger, an operator) counts as a stranger here.
+The change stops at `LevelChunk#setBlockState` (`LandLedger#setting`, `Concealments#wreck`) and goes into the veil
+(`Veil#wrecked`, saved with it, by chunk): everyone but the owner and those they trust is shown it, walks, falls and is smothered
+by it, and the owner and those they trust, with the land as it was, have nothing to do but live on it, their machines, chests and
+beasts undisturbed. Even a block of the owner's hidden work a stranger's spell cuts through stands, a hole only to strangers' eyes.
+When the concealment falls or its core is broken there is nothing to mend: `Veil#wrecked` is forgotten, strangers are shown the land
+as it stands, and anyone standing in a hole only it showed them is put back on top (`Concealments#bringUp`). Outside the sphere,
+destruction is real, as anywhere.
+What a stranger mined still drops what it would, so the veil doesn't give itself away. Water and fire they set go the same way, so
+nothing runs or burns on past them; a fire is seen a few seconds and goes out. A stranger goes on digging through and building on
+what they made of plain ground (`Concealments#reachesHidden`); they can't set a block into a hole only they see, where the land
+truly stands (one spot holds one block). The same block changed, a door swung or a fence joining a block set beside it, is simply
+there for everyone, and a block of the owner's hidden work that shifts this way stays hidden. A spell's passing char on the ground
+is seen by strangers alone and fades on time (`Concealments#stain`). A spell's own short-lived blocks (an Earth Wall, a tame fire)
+stand for everyone until they go by themselves.
+
+**A new block a stranger places is theirs to see, and doesn't exist for the owner** (the user, 2026-11-06: "a block a stranger places
+should not be hidden to the stranger, it shouldnt exist for the owner though"). That means a solid block set down into air or something
+that gives way to one (grass, water). It is a real block, whole and working for everyone else; the veil keeps what stood there
+before (`Veil#strangers`, saved with it), and its owner and the players they trust are shown that instead, walk through it and can't
+touch it, by the same rewriting that shows strangers the land as it was (`Concealments#shown`). What a stranger then does to their
+own block stays theirs. The owner building on the spot pops it off
+(`Concealments#clearFor`) rather than meet something they can't see, and they are then shown what stood there before. A stranger
+can't place where a hidden block of the owner's truly stands: one spot holds one block, and theirs is refused, kept in hand. When the
+veil comes down or its core is broken, a stranger's blocks are simply there for everyone, for good.
 
 How (`Concealments`): the world keeps a **land ledger** (`LandLedger`): for every block a player's hands (break, place, use an
 item on a block or in the air: `mixin/ServerPlayerGameModeLedgerMixin`), a player's blast (`mixin/ExplosionMixin`) or a

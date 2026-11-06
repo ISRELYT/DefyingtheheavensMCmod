@@ -1310,15 +1310,20 @@ public final class SoulProjection {
 		}
 	}
 
-	/**
-	 * A player joins still marked as out of the body (a crash, or a server killed mid-way): back to where the body sat, with its
-	 * health, no penalty. The body itself removes itself (no soul claims it).
-	 */
+	/** A player joins: no soul's state outlasts a login (one still out of its body comes home a moment later: {@link #arrived}). */
 	public static void onJoin(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.own(player);
-		CompoundTag back = c.getSoulReturn();
 		if (c.isAbilityEnabled(Ability.SOUL_PROJECTION)) c.setAbilityEnabled(Ability.SOUL_PROJECTION, false);
 		c.setSoulState(State.NONE);
+	}
+
+	/**
+	 * A player who joined still marked as out of the body (a crash, or a server killed mid-way), standing in the world now: back to where
+	 * the body sat, with its health, no penalty. The body itself removes itself (no soul claims it).
+	 */
+	public static void arrived(ServerPlayer player) {
+		PlayerCultivation c = CultivationManager.own(player);
+		CompoundTag back = c.getSoulReturn();
 		if (back == null) return;
 		c.setSoulReturn(null);
 		CultivationManager.markDirty(player.server);

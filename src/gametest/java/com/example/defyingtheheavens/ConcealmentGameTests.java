@@ -2,8 +2,10 @@ package com.example.defyingtheheavens;
 
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.fabric.api.entity.FakePlayer;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -12,12 +14,20 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -234,6 +244,375 @@ public class ConcealmentGameTests implements FabricGameTest {
 		}
 		helper.assertTrue(Concealments.get(level, id) == null, "Dissolved: forgotten");
 		helper.succeed();
+	}
+
+	/** A veil of {@code owner}'s (and {@code friends}') about {@code center}, raised, strong enough to hide from the weak. */
+	private static Concealments.Veil raise(ServerLevel level, UUID id, BlockPos center, ServerPlayer owner, UUID... friends) {
+		Concealments.Veil veil = Concealments.veil(level, id, center, 6);
+		Concealments.update(level, veil, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), owner.getUUID(), Set.of(friends));
+		Concealments.set(level, veil, true, 6);
+		return veil;
+	}
+
+	/** {@code pos} set to {@code state} as a player's work (what stands there is what stood before them). */
+	private static void work(ServerLevel level, BlockPos pos, BlockState state) {
+		LandLedger.begin();
+		try {
+			level.setBlock(pos, state, 3);
+		} finally {
+			LandLedger.end();
+		}
+	}
+
+	/** The user's report, 2026-11-06: walking through a hidden wall hurt, at its edge: the eyes in the air beside it, the square about them in it. */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void noOneIsSmotheredInOrBesideWhatIsHiddenFromThem(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos center = helper.absolutePos(new BlockPos(4, 2, 4)), wall = center.offset(1, 1, 0), real = wall.west();
+		ServerPlayer owner = player(helper, "breath-owner", Realm.CORE_FORMATION, Stage.EARLY);
+		ServerPlayer weak = player(helper, "breath-weak", Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
+		UUID id = UUID.randomUUID();
+		forgetAll(helper);
+		level.setBlock(wall, Blocks.AIR.defaultBlockState(), 3);
+		level.setBlock(real, Blocks.AIR.defaultBlockState(), 3);
+		work(level, wall, Blocks.STONE.defaultBlockState());
+		raise(level, id, center, owner);
+		try {
+			double feet = wall.getY() + 0.5 - weak.getEyeHeight();
+			weak.moveTo(wall.getX() - 0.1, feet, wall.getZ() + 0.5);
+			owner.moveTo(wall.getX() - 0.1, feet, wall.getZ() + 0.5);
+			helper.assertTrue(BlockPos.containing(weak.getEyePosition()).equals(real), "The eyes in the air beside the wall");
+			helper.assertTrue(!weak.isInWall(), "One it hides from isn't smothered at the edge of a hidden wall");
+			helper.assertTrue(owner.isInWall(), "...its owner, who sees it, is");
+			weak.moveTo(wall.getX() + 0.5, feet, wall.getZ() + 0.5);
+			owner.moveTo(wall.getX() + 0.5, feet, wall.getZ() + 0.5);
+			helper.assertTrue(!weak.isInWall() && owner.isInWall(), "Eyes right in it, the same");
+			weak.moveTo(wall.getX() - 0.1, feet, wall.getZ() + 0.5);
+			level.setBlock(real, Blocks.STONE.defaultBlockState(), 3);
+			forget(helper, real); // no player's work: a wall of the land's own, shown as it stands
+			helper.assertTrue(weak.isInWall(), "A block they can see still smothers them, a hidden one beside it or not");
+		} finally {
+			Concealments.dissolve(level, id);
+			level.setBlock(wall, Blocks.AIR.defaultBlockState(), 3);
+			level.setBlock(real, Blocks.AIR.defaultBlockState(), 3);
+			forgetAll(helper);
+		}
+		helper.succeed();
+	}
+
+	/**
+	 * The user's asks, 2026-11-06: what a stranger destroys under a veil "should look destroyed for the stranger", "the owner shouldnt see the changed
+	 * ground, it should look like a spell never happened, and if the concealment falls, the ground should look like it does for the owner, not
+	 * destroyed", "although area outside the barrier that gets destroyed should still have terrain destruction". Mined, blasted or taken by a spell,
+	 * even beside the owner's hidden work and even a block of it; what the owner and those they trust do stays hidden.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aStrangersDestructionIsForStrangersEyesAlone(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos center = helper.absolutePos(new BlockPos(4, 2, 4));
+		BlockPos mined = center.offset(2, 0, 0), carved = center.offset(0, 0, 2), hut = carved.above(), roof = hut.above(), outside = center.offset(-4, 4, -4);
+		BlockPos ownMined = center.offset(-2, 0, 0), friendMined = center.offset(-2, 0, 2), ownCarved = center.offset(-2, 0, -2), blasted = center.offset(2, 0, -2);
+		BlockState stone = Blocks.STONE.defaultBlockState(), planks = Blocks.OAK_PLANKS.defaultBlockState();
+		ServerPlayer owner = player(helper, "grief-owner", Realm.CORE_FORMATION, Stage.EARLY);
+		ServerPlayer friend = player(helper, "grief-friend", Realm.QI_REFINING, Stage.EARLY);
+		ServerPlayer stranger = player(helper, "grief-stranger", Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
+		ServerPlayer other = player(helper, "grief-other", Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		UUID id = UUID.randomUUID();
+		forgetAll(helper);
+		List<BlockPos> ground = List.of(mined, carved, ownMined, friendMined, ownCarved, blasted, outside);
+		for (BlockPos pos : ground) level.setBlock(pos, stone, 3);
+		for (BlockPos pos : List.of(hut, roof)) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+		work(level, hut, planks); // the owner's hut, beside the ground a stranger's spell will take
+		work(level, roof, planks);
+		Concealments.Veil veil = raise(level, id, center, owner, friend.getUUID());
+		try {
+			stranger.moveTo(mined.getX() + 0.5, mined.getY() + 1, mined.getZ() + 0.5);
+			helper.assertTrue(stranger.gameMode.destroyBlock(mined), "A stranger mines ground they can see");
+			helper.assertTrue(level.getBlockState(mined) == stone && LandLedger.original(level, mined) == null, "The ground itself stands");
+			helper.assertTrue(Concealments.shown(level, stranger, mined, stone).isAir() && Concealments.shown(level, other, mined, stone).isAir(),
+					"It looks gone to them and everyone else");
+			helper.assertTrue(Concealments.shown(level, owner, mined, stone) == stone && Concealments.shown(level, friend, mined, stone) == stone,
+					"...and never happened for its owner and those they trust");
+			net.minecraft.world.phys.AABB in = new net.minecraft.world.phys.AABB(mined).deflate(0.1);
+			helper.assertTrue(level.noCollision(stranger, in) && !level.noCollision(owner, in), "A stranger goes by what they see, its owner stands on the land");
+			Packet<?> update = new ClientboundBlockUpdatePacket(mined, stone);
+			helper.assertTrue(Concealments.shownPacket(stranger, update) instanceof ClientboundBlockUpdatePacket rewritten && rewritten.getBlockState().isAir()
+					&& Concealments.shownPacket(owner, update) == update, "Its change goes out so: air to the stranger, nothing new to its owner");
+			helper.assertTrue(HeavenSpells.carvableAnyway(level, carved, stranger), "A stranger's spell may take the ground");
+			level.removeBlock(carved, false);
+			helper.assertTrue(level.getBlockState(carved) == stone && Concealments.shown(level, other, carved, stone).isAir() && Concealments.shown(level, owner, carved, stone) == stone,
+					"Taken by a stranger's spell, right beside hidden work: the same");
+			helper.assertTrue(HeavenSpells.carvableAnyway(level, roof, stranger), "...a block of the hidden work too");
+			level.removeBlock(roof, false);
+			helper.assertTrue(level.getBlockState(roof) == planks && LandLedger.original(level, roof) != null && Concealments.shown(level, owner, roof, planks) == planks,
+					"...which stands, still its owner's");
+			helper.assertTrue(Concealments.shown(level, other, hut, planks).isAir(), "The rest of the hut stays hidden");
+			LandLedger.begin(stranger);
+			try {
+				level.removeBlock(blasted, false); // as a blast of theirs takes it (ExplosionMixin)
+				level.setBlock(blasted, Blocks.FIRE.defaultBlockState(), 3);
+			} finally {
+				LandLedger.end();
+			}
+			helper.assertTrue(level.getBlockState(blasted) == stone && Concealments.shown(level, other, blasted, stone).isAir(), "A stranger's blast the same, its fire setting nothing in the hole's air");
+			helper.assertTrue(HeavenSpells.carvableAnyway(level, outside, stranger), "Outside the veil a stranger's spell takes the ground too");
+			level.removeBlock(outside, false);
+			helper.assertTrue(level.getBlockState(outside).isAir() && Concealments.shown(level, owner, outside, level.getBlockState(outside)).isAir(), "...for good, for everyone");
+
+			owner.moveTo(ownMined.getX() + 0.5, ownMined.getY() + 1, ownMined.getZ() + 0.5);
+			helper.assertTrue(owner.gameMode.destroyBlock(ownMined), "Its owner mines");
+			helper.assertTrue(LandLedger.original(level, ownMined) == stone && Concealments.shown(level, other, ownMined, level.getBlockState(ownMined)) == stone,
+					"Mined by its owner: hidden, as it ever was");
+			friend.moveTo(friendMined.getX() + 0.5, friendMined.getY() + 1, friendMined.getZ() + 0.5);
+			helper.assertTrue(friend.gameMode.destroyBlock(friendMined) && LandLedger.original(level, friendMined) == stone, "...by one they trust, the same");
+			helper.assertTrue(HeavenSpells.carvableAnyway(level, ownCarved, owner), "Its owner's spell may take the ground");
+			level.removeBlock(ownCarved, false);
+			helper.assertTrue(LandLedger.original(level, ownCarved) == stone, "...and that stays hidden too");
+
+			Concealments.set(level, veil, false, 6);
+			helper.assertTrue(veil.wrecked.isEmpty() && Concealments.shown(level, other, mined, stone) == stone && Concealments.shown(level, stranger, carved, stone) == stone,
+					"The veil down, the land is as its owner knows it, for everyone");
+			Concealments.set(level, veil, true, 6);
+			helper.assertTrue(Concealments.shown(level, other, mined, stone) == stone, "...and it stays so, raised again");
+		} finally {
+			Concealments.dissolve(level, id);
+			for (BlockPos pos : ground) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+			for (BlockPos pos : List.of(hut, roof)) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+			forgetAll(helper);
+			sweepDrops(helper);
+		}
+		helper.assertTrue(!LandLedger.recording(), "Every act's begin had its end");
+		helper.succeed();
+	}
+
+	/** {@code pos} set to {@code state} by {@code player}'s own act. */
+	private static void placed(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state) {
+		LandLedger.begin(player);
+		try {
+			level.setBlock(pos, state, 3);
+		} finally {
+			LandLedger.end();
+		}
+	}
+
+	/** The user's rule, 2026-11-06: a block a stranger places is there for them (and everyone else), and doesn't exist for the owner or those they trust. */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aStrangersBlockIsTheirsAndNotTheOwners(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos center = helper.absolutePos(new BlockPos(4, 2, 4)), block = center.offset(2, 1, 0), overhead = block.above(), gone = center.offset(-2, 1, 0), built = center.offset(0, 1, 2),
+				meadow = center.offset(0, 1, -2);
+		BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState(), planks = Blocks.OAK_PLANKS.defaultBlockState();
+		ServerPlayer owner = player(helper, "placed-owner", Realm.CORE_FORMATION, Stage.EARLY);
+		ServerPlayer friend = player(helper, "placed-friend", Realm.QI_REFINING, Stage.EARLY);
+		ServerPlayer stranger = player(helper, "placed-stranger", Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
+		ServerPlayer other = player(helper, "placed-other", Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		ServerPlayer strong = player(helper, "placed-strong", Realm.CORE_FORMATION, Stage.MID);
+		UUID id = UUID.randomUUID();
+		forgetAll(helper);
+		List<BlockPos> spots = List.of(block, overhead, gone, built, meadow);
+		for (BlockPos pos : spots) level.setBlock(pos, air, 3);
+		Concealments.Veil veil = raise(level, id, center, owner, friend.getUUID());
+		try {
+			placed(level, stranger, block, stone);
+			placed(level, strong, overhead, stone);
+			helper.assertTrue(level.getBlockState(block) == stone && LandLedger.original(level, block) == null, "It is a real block, and not hidden as the owner's work is");
+			helper.assertTrue(Concealments.shown(level, stranger, block, stone) == stone && Concealments.shown(level, other, block, stone) == stone
+					&& Concealments.shown(level, strong, block, stone) == stone, "There for the stranger who set it, another, and one stronger");
+			helper.assertTrue(Concealments.shown(level, owner, block, stone).isAir() && Concealments.shown(level, friend, block, stone).isAir(),
+					"Not there for its owner or one they trust");
+			helper.assertTrue(Concealments.shown(level, owner, overhead, stone).isAir() && Concealments.shown(level, strong, overhead, stone) == stone,
+					"One who sees through it is a stranger still: theirs is there for them, not for its owner");
+			net.minecraft.world.phys.AABB in = new net.minecraft.world.phys.AABB(block).deflate(0.1);
+			helper.assertTrue(level.noCollision(owner, in) && !level.noCollision(stranger, in), "Its owner walks through it; a stranger meets it");
+			double feet = block.getY() + 0.5 - owner.getEyeHeight();
+			owner.moveTo(block.getX() + 0.5, feet, block.getZ() + 0.5);
+			stranger.moveTo(block.getX() + 0.5, feet, block.getZ() + 0.5);
+			helper.assertTrue(!owner.isInWall() && stranger.isInWall(), "It doesn't smother its owner");
+			helper.assertTrue(Concealments.reachesHidden(owner, block) && !Concealments.reachesHidden(stranger, block), "Its owner can't lay hands on it; its stranger can");
+			Packet<?> update = new ClientboundBlockUpdatePacket(block, stone);
+			Packet<?> shown = Concealments.shownPacket(owner, update);
+			helper.assertTrue(shown instanceof ClientboundBlockUpdatePacket rewritten && rewritten.getBlockState().isAir(), "Its change goes out to its owner as air");
+			helper.assertTrue(Concealments.shownPacket(owner, shown) == shown && Concealments.shownPacket(stranger, update) == update,
+					"...once, and to the stranger as it is");
+			CompoundTag saved = veil.save();
+			helper.assertTrue(Concealments.Veil.load(saved).strangers.size() == 2, "It is remembered with the veil");
+
+			placed(level, stranger, gone, stone);
+			stranger.moveTo(gone.getX() + 0.5, gone.getY() + 2, gone.getZ() + 0.5);
+			helper.assertTrue(stranger.gameMode.destroyBlock(gone) && level.getBlockState(gone).isAir() && Concealments.shown(level, owner, gone, air).isAir()
+					&& !veil.strangers.containsKey(gone.asLong()), "Mined by the stranger, it is gone and forgotten");
+			placed(level, stranger, built, stone);
+			LandLedger.begin(owner);
+			try {
+				Concealments.clearFor(owner, built);
+				level.setBlock(built, planks, 3);
+			} finally {
+				LandLedger.end();
+			}
+			helper.assertTrue(level.getBlockState(built) == planks && !veil.strangers.containsKey(built.asLong()), "Its owner building there: it gives way");
+			helper.assertTrue(Concealments.shown(level, owner, built, planks) == planks && Concealments.shown(level, stranger, built, planks).isAir(),
+					"...and what they build is theirs, hidden as ever, over what stood before the stranger's block");
+			level.setBlock(meadow, Blocks.GRASS.defaultBlockState(), 2);
+			placed(level, stranger, meadow, stone);
+			helper.assertTrue(Concealments.shown(level, owner, meadow, stone).is(Blocks.GRASS), "Set down over grass, the grass is what its owner goes on seeing");
+			owner.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.OAK_PLANKS));
+			UseBlockCallback.EVENT.invoker().interact(owner, level, InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(meadow), Direction.UP, meadow, false));
+			helper.assertTrue(level.getBlockState(meadow).isAir() && !veil.strangers.containsKey(meadow.asLong()), "...and it gives way when they build on that grass");
+
+			Concealments.set(level, veil, false, 6);
+			helper.assertTrue(Concealments.shown(level, owner, block, stone) == stone && veil.strangers.isEmpty(), "The veil down, it is simply there for all");
+			Concealments.set(level, veil, true, 6);
+			helper.assertTrue(Concealments.shown(level, owner, block, stone) == stone, "...and stays so raised again");
+		} finally {
+			Concealments.dissolve(level, id);
+			for (BlockPos pos : spots) level.setBlock(pos, air, 3);
+			forgetAll(helper);
+			sweepDrops(helper);
+		}
+		helper.succeed();
+	}
+
+	/**
+	 * The user's rule, 2026-11-06: what a stranger makes of ground that stands already looks so to strangers alone: "the owner shouldnt see the changed
+	 * ground, it should look like a spell never happened". A door they swing is the same block still, there for all. The owner's hidden work that
+	 * shifts by a stranger's act stays hidden; what they rework of their own stays theirs. Water and fire run and burn on nothing.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void whatAStrangerMakesOfStandingGroundIsForStrangersEyes(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos center = helper.absolutePos(new BlockPos(4, 2, 4)), ground = center.offset(2, 1, 0), door = center.offset(-2, 1, 0), fence = center.offset(0, 1, 2),
+				own = center.offset(0, 1, -2), snow = center.offset(2, 1, 2), rock = center.offset(-2, 1, 2), burnt = center.offset(-2, 1, -2), iced = center.offset(2, 1, -2),
+				pool = center.offset(0, 1, 0), flame = center.offset(0, 3, 0);
+		BlockState air = Blocks.AIR.defaultBlockState(), closed = Blocks.OAK_DOOR.defaultBlockState(), open = closed.setValue(DoorBlock.OPEN, true),
+				alone = Blocks.OAK_FENCE.defaultBlockState(), joined = alone.setValue(FenceBlock.NORTH, true), layer = Blocks.SNOW.defaultBlockState(),
+				layers = layer.setValue(SnowLayerBlock.LAYERS, 2), blackstone = Blocks.BLACKSTONE.defaultBlockState(), farmland = Blocks.FARMLAND.defaultBlockState(),
+				grass = Blocks.GRASS_BLOCK.defaultBlockState(), stone = Blocks.STONE.defaultBlockState(), water = Blocks.WATER.defaultBlockState();
+		ServerPlayer owner = player(helper, "worked-owner", Realm.CORE_FORMATION, Stage.EARLY);
+		ServerPlayer stranger = player(helper, "worked-stranger", Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		UUID id = UUID.randomUUID();
+		forgetAll(helper);
+		List<BlockPos> spots = List.of(ground, door, fence, own, snow, rock, burnt, iced, pool, flame);
+		for (BlockPos pos : spots) level.setBlock(pos, air, 3);
+		level.setBlock(ground, grass, 3);
+		level.setBlock(door, closed, 2);
+		level.setBlock(snow, layer, 2);
+		level.setBlock(rock, stone, 3);
+		level.setBlock(burnt, stone, 3);
+		level.setBlock(iced, stone, 3);
+		work(level, fence, alone);
+		Concealments.Veil veil = raise(level, id, center, owner);
+		try {
+			stranger.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_HOE));
+			stranger.gameMode.useItemOn(stranger, level, stranger.getMainHandItem(), InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(ground), Direction.UP, ground, false));
+			helper.assertTrue(level.getBlockState(ground) == grass && veil.strangers.isEmpty() && LandLedger.original(level, ground) == null, "A stranger's hoe leaves the ground as it was");
+			helper.assertTrue(Concealments.shown(level, stranger, ground, grass) == farmland && Concealments.shown(level, owner, ground, grass) == grass, "...a furrow to strangers, grass to its owner");
+			helper.assertTrue(!Concealments.reachesHidden(owner, ground) && !level.noCollision(owner, new net.minecraft.world.phys.AABB(ground).deflate(0.1)), "...who can build on it, and stands on it");
+			helper.assertTrue(!Concealments.reachesHidden(stranger, ground), "The stranger goes on working what they made of it");
+
+			placed(level, stranger, door, open);
+			helper.assertTrue(veil.strangers.isEmpty() && Concealments.shown(level, owner, door, open) == open && !Concealments.reachesHidden(owner, door), "A door they swing is swung for its owner too, and theirs to swing back");
+
+			LandLedger.begin(stranger);
+			try {
+				helper.assertTrue(HeavenSpells.carvableAnyway(level, rock, stranger), "A stranger's spell may change the ground, from a weapon's art inside their act");
+				level.setBlock(rock, blackstone, 3);
+			} finally {
+				LandLedger.end();
+			}
+			helper.assertTrue(HeavenSpells.carvableAnyway(level, burnt, stranger), "...or cast with its key");
+			level.setBlock(burnt, blackstone, 3);
+			LandLedger.markSpell(level, iced, stranger);
+			level.setBlock(iced, Blocks.ICE.defaultBlockState(), 3);
+			for (BlockPos pos : List.of(rock, burnt, iced)) {
+				helper.assertTrue(level.getBlockState(pos) == stone && Concealments.shown(level, owner, pos, stone) == stone && !Concealments.reachesHidden(owner, pos), "Ground it changes stands for its owner, to stand and build on");
+			}
+			helper.assertTrue(Concealments.shown(level, stranger, rock, stone) == blackstone && Concealments.shown(level, stranger, burnt, stone) == blackstone && Concealments.shown(level, stranger, iced, stone).is(Blocks.ICE),
+					"...and looks changed to the stranger");
+			helper.assertTrue(veil.strangers.isEmpty(), "None of it is a block of theirs");
+
+			placed(level, stranger, pool, water);
+			placed(level, stranger, flame, Blocks.FIRE.defaultBlockState());
+			helper.assertTrue(level.getBlockState(pool).isAir() && level.getBlockState(flame).isAir() && Concealments.shown(level, stranger, pool, air) == water
+					&& Concealments.shown(level, stranger, flame, air).is(Blocks.FIRE) && Concealments.shown(level, owner, pool, air).isAir() && Concealments.shown(level, owner, flame, air).isAir(),
+					"Water and fire they set run and burn on nothing: strangers see them, the land has none");
+			Concealments.Veil kept = Concealments.Veil.load(veil.save());
+			helper.assertTrue(kept.wreckAt(ground.asLong()) == farmland && kept.wreckAt(pool.asLong()) == water && kept.wreckAt(flame.asLong()) == null, "What they did is remembered with the veil, its fires not");
+			BlockPos marked = center.offset(-1, 1, 0);
+			level.setBlock(marked, stone, 3);
+			helper.assertTrue(HeavenSpells.stainTemporary(level, marked, blackstone, 40, stranger), "A stranger's passing char is laid");
+			helper.assertTrue(level.getBlockState(marked) == stone && !HeavenSpells.isTemporary(level, marked) && Concealments.shown(level, stranger, marked, stone) == blackstone
+					&& Concealments.shown(level, owner, marked, stone) == stone, "...for strangers' eyes alone");
+			level.setBlock(marked, air, 3);
+			BlockPos tall = center.offset(1, 1, 0);
+			level.setBlock(tall, Blocks.TALL_GRASS.defaultBlockState(), 2 | 16); // its neighbours not told: it has no earth under it to stand on
+			level.setBlock(tall.above(), Blocks.TALL_GRASS.defaultBlockState().setValue(net.minecraft.world.level.block.DoublePlantBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), 2 | 16);
+			LandLedger.begin(stranger);
+			try {
+				level.setBlock(tall, air, 3);
+			} finally {
+				LandLedger.end();
+			}
+			helper.assertTrue(level.getBlockState(tall).is(Blocks.TALL_GRASS) && Concealments.shown(level, stranger, tall, level.getBlockState(tall)).isAir()
+					&& Concealments.shown(level, stranger, tall.above(), level.getBlockState(tall.above())).isAir(), "What stands in two goes whole");
+			level.setBlock(tall.above(), air, 2 | 16);
+			level.setBlock(tall, air, 2 | 16);
+
+			placed(level, stranger, fence, joined);
+			helper.assertTrue(veil.strangers.isEmpty() && !Concealments.reachesHidden(owner, fence), "Its owner's fence joining a stranger's block stays its owner's to touch");
+			helper.assertTrue(LandLedger.original(level, fence).isAir() && Concealments.shown(level, stranger, fence, joined).isAir(), "...and hidden from the stranger");
+
+			placed(level, stranger, snow, layers);
+			helper.assertTrue(veil.strangers.isEmpty() && Concealments.shown(level, owner, snow, layers) == layers, "More of the same is no new block");
+
+			placed(level, stranger, own, Blocks.DIRT.defaultBlockState());
+			placed(level, stranger, own, farmland);
+			helper.assertTrue(veil.strangers.containsKey(own.asLong()) && Concealments.shown(level, owner, own, farmland).isAir() && Concealments.shown(level, stranger, own, farmland) == farmland,
+					"A block of their own they rework stays theirs, and doesn't exist for its owner");
+		} finally {
+			Concealments.dissolve(level, id);
+			for (BlockPos pos : spots) level.setBlock(pos, air, 3);
+			forgetAll(helper);
+			sweepDrops(helper);
+		}
+		helper.succeed();
+	}
+
+	/** The user's asks, 2026-11-06: a core follows its owner's realm by itself, and "its power shouldnt fall with the owners in case of core detonation or something". */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aCoreRisesWithItsOwnerAndNeverFalls(GameTestHelper helper) throws ReflectiveOperationException {
+		ServerLevel level = helper.getLevel();
+		BlockPos rel = new BlockPos(4, 2, 4);
+		helper.setBlock(rel.below(), Blocks.STONE);
+		helper.setBlock(rel, ModBlocks.FORMATION_CORE);
+		for (BlockPos vein : new BlockPos[] {rel.east(), rel.west(), rel.north(), rel.south()}) helper.setBlock(vein, ModBlocks.QI_VEIN);
+		FormationCoreBlockEntity core = (FormationCoreBlockEntity) level.getBlockEntity(helper.absolutePos(rel));
+		ServerPlayer owner = player(helper, "risen-owner", Realm.CORE_FORMATION, Stage.EARLY);
+		Method economy = FormationCoreBlockEntity.class.getDeclaredMethod("economy", ServerLevel.class);
+		economy.setAccessible(true);
+		int low = PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), high = PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.MID);
+		try {
+			core.scanNetwork(level);
+			helper.assertTrue(core.canControl(owner) && core.getRank() == low, "The first hand claims it, as strong as they are");
+			core.configure(owner, 8, false, 8, true);
+			Concealments.Veil veil = Concealments.get(level, core.getFormationId());
+			helper.assertTrue(veil != null && veil.rank() == low, "Its concealment as strong");
+
+			CultivationManager.get(owner).setState(Realm.NASCENT_SOUL, Stage.MID, 0);
+			economy.invoke(core, level);
+			helper.assertTrue(core.getRank() == high && veil.rank() == high && Formations.get(level, core.getFormationId()).getRank() == high,
+					"Its owner breaks through: barrier and concealment rise by themselves, its screen untouched");
+
+			CultivationManager.get(owner).setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
+			economy.invoke(core, level);
+			helper.assertTrue(core.getRank() == high && veil.rank() == high, "Its owner's realm falls (a burst golden core): it doesn't");
+			core.configure(owner, 8, false, 8, true);
+			helper.assertTrue(core.getRank() == high && veil.rank() == high, "...nor when they next set it");
+			helper.succeed();
+		} finally {
+			core.onRemovedFromWorld(level);
+			helper.setBlock(rel, Blocks.AIR);
+			for (BlockPos vein : new BlockPos[] {rel.east(), rel.west(), rel.north(), rel.south(), rel.below()}) helper.setBlock(vein, Blocks.AIR);
+		}
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

@@ -757,11 +757,11 @@ public final class SpatialTrialHandler {
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(p);
 			if (!c.isFallProtected()) continue;
-			// (Coming down onto a planet out of space is protected the same way, and into the Upper Realm's sky out of it: AstralRealm,
-			// whose protection there was cleared the moment it was given before the sweep of 2026-10-23.)
+			// (Anywhere but on a way between the worlds: coming down onto a planet out of space, into the Upper Realm's sky, set down out of a sleeve or
+			// a small world in any world. Its protection went at once outside the Overworld, the Upper Realm and the planets before the sweep of
+			// 2026-11-06, so one let out in the air of the Great Void or the Immortal Realm took the whole fall.)
 			boolean landed = (p.onGround() && p.fallDistance <= 0) || p.isInWater() || p.getAbilities().flying || !p.isAlive()
-					|| p.level().dimension() != Level.OVERWORLD && p.level().dimension() != ModDimensions.UPPER_REALM
-					&& !ModDimensions.isPlanetSurface(p.level().dimension());
+					|| ModDimensions.isPassage(p.level().dimension());
 			if (landed) {
 				c.setFallProtected(false);
 				CultivationManager.markDirty(server);

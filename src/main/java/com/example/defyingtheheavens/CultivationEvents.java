@@ -30,6 +30,34 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class CultivationEvents {
 	/** Players whose leaving is done (#leaving): once for each login, whichever way it is told first. */
 	private static final java.util.Set<ServerPlayer> LEFT = java.util.Collections.synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
+	/**
+	 * Players come back into the game, for {@link #arrivals} to move where they belong. Fabric's JOIN comes before the world has taken a player in, and
+	 * one moved there ended up in two worlds at once and then in none: told of the chunks of the world they had left, unseen by the others, walking on
+	 * the spot until they logged in again (found 2026-11-06, back from a secret realm).
+	 */
+	private static final java.util.Set<java.util.UUID> JOINED = new java.util.HashSet<>();
+
+	/** First thing each tick: those who joined since the last, standing in the world now, go where they belong before anything else sees them. */
+	private static void arrivals(net.minecraft.server.MinecraftServer server) {
+		if (JOINED.isEmpty()) return;
+		java.util.List<java.util.UUID> joined = new java.util.ArrayList<>(JOINED);
+		JOINED.clear();
+		for (java.util.UUID id : joined) {
+			ServerPlayer player = server.getPlayerList().getPlayer(id);
+			if (player != null && !player.hasDisconnected()) arrived(player);
+		}
+	}
+
+	/** {@code player}, who has just joined, moved where they belong: out of anywhere they can't still be, and last whatever may make a new player of them. */
+	private static void arrived(ServerPlayer player) {
+		// Logged out with the soul inward (or back from a crash): return it to the body first.
+		if (ModDimensions.isInnerRealm(player.level().dimension())) InnerRealm.leave(player);
+		SoulProjection.arrived(player); // a nascent soul still out of its body (a crash): home, no penalty
+		SmallWorlds.arrived(player); // out of a world not theirs to be in
+		SecretRealms.onJoin(player); // logged out in a secret realm (or the server stopped): beside its Seal
+		GhostSystem.arrived(player); // a ghost that left scattered: together again at the Gate
+		LifespanTribulation.onJoin(player); // a spent life ended by a death they never came back from: born anew now
+	}
 
 	/**
 	 * {@code player} is leaving the game, on the server thread while they are still in the world, before vanilla saves them: what they
@@ -101,6 +129,7 @@ public final class CultivationEvents {
 	}
 
 	public static void register() {
+		ServerTickEvents.END_SERVER_TICK.register(CultivationEvents::arrivals); // first: those just joined, moved where they belong
 		ServerTickEvents.END_SERVER_TICK.register(MeditationManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(TribulationManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(CultivationStats::tickHunger);
@@ -237,6 +266,7 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> HeavenSpells.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			JOINED.clear();
 			Corpses.clear();
 			RiftHaunting.clear();
 			FiveElementsCycling.clear();
@@ -360,22 +390,19 @@ public final class CultivationEvents {
 			// A tribulation walked out of (logged out, quit, the game closed) fails now, before the stats are applied.
 			boolean fled = TribulationManager.onJoin(player);
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.
-			// Back from a crash with the soul still inward: return it to the body first.
-			if (ModDimensions.isInnerRealm(player.level().dimension())) InnerRealm.leave(player);
-			// Likewise a possession left on record (Possession: each one's things back where they belong), then a nascent soul still
-			// out of its body: home, no penalty.
+			// Whatever moves them waits until they stand in the world (#arrivals). A possession left on record (Possession: each one's things
+			// back where they belong), then a soul's state, no session outlasting a login.
+			JOINED.add(player.getUUID());
 			Possession.onJoin(player);
 			SoulProjection.onJoin(player);
 			Clones.onJoin(player); // back from a crash in their clone: in their main body again, a tick on
-			LifespanTribulation.onJoin(player); // a spent life ended by a death they never came back from: born anew now
 			Physiques.onJoin(player); // the body they were born with, the first time
 			Bloodlines.onJoin(player); // everyone's bloodline told; theirs chosen, the first time
 			DemonPath.born(player); // a demon's demon core, from birth (and its blood on its record)
 			BodyPath.shatteredBegin(player); // Shattered Meridians at their mortal Peak: the Body Path begun (a world from before it)
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			FiveDecays.onJoin(player); // the Decays' time stood still while they were away
-			SmallWorlds.onJoin(player); // their own small world's door, and out of one not theirs to be in
-			SecretRealms.onJoin(player); // logged out in a secret realm (or the server stopped): beside its Seal
+			SmallWorlds.onJoin(player); // their own small world's door
 			Sleeves.onJoin(player); // back in a sleeve, or let out of one while away: set right a tick on
 			PlayerTitles.onJoin(player); // every player's plate told (their title, their sect's title over them)
 			RealmSuppressionHandler.update(player);

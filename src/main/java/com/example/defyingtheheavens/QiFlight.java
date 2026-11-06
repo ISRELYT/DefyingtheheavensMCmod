@@ -154,12 +154,7 @@ public final class QiFlight {
 			else land(p);
 			return 0;
 		}
-		// The Soul River's current carries everyone living on it, a Void Breach's everyone climbing it (VoidBreach), the Immortal Gate's
-		// everyone passing up through it (ImmortalGate); the Spatial Gap
-		// carries nobody: whoever can fly flies it as anywhere (SpatialTrialHandler: its old trials, which carried those below Heavenly
-		// Being, are gone).
-		boolean carried = ModDimensions.isSoulRiver(p.level().dimension()) || ModDimensions.isVoidBreach(p.level().dimension())
-				|| ModDimensions.isImmortalPassage(p.level().dimension()); // not isPassage: that is the gap too
+		boolean carried = carried(p.level().dimension(), c);
 		// One of the living in a Ghost King's form flies as the dead do, whatever its realms, for nothing (the Soul River carries it as
 		// it carries everyone living, and a talisman binds it as it binds them).
 		if (TwoPaths.inGhostForm(c) && !carried) {
@@ -219,6 +214,17 @@ public final class QiFlight {
 		return 0;
 	}
 
+	/**
+	 * Whether {@code dimension}'s current carries {@code c}, and no flight holds there: the Soul River's carries everyone living on it, the Immortal
+	 * Gate's everyone passing up through it (ImmortalGate), a Void Breach's everyone climbing it (VoidBreach) but one who outflies it by Meteor Flight
+	 * (MeteorFlight#flownIn: from Entering Nirvana). The Spatial Gap carries nobody: whoever can fly flies it as anywhere (SpatialTrialHandler: its
+	 * old trials, which carried those below Heavenly Being, are gone).
+	 */
+	static boolean carried(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension, PlayerCultivation c) {
+		if (ModDimensions.isVoidBreach(dimension)) return !c.isAbilityActive(Ability.METEOR_FLIGHT) || !MeteorFlight.flownIn(dimension, c);
+		return ModDimensions.isSoulRiver(dimension) || ModDimensions.isImmortalPassage(dimension); // not isPassage: that is the gap too
+	}
+
 	/** The flight switches changed here rather than by the player: the menu and wheel follow, and (if Sword Flight went off) they're told. */
 	private static void flightsChanged(ServerPlayer p, boolean swordWentOff) {
 		CultivationManager.markDirty(p.server);
@@ -263,8 +269,8 @@ public final class QiFlight {
 
 	/**
 	 * Qi Flight's speed (and the free flight's, before Wandering Soul Steps) for {@code c} in {@code dimension}: creative flight's own;
-	 * but where Meteor Flight's own flight isn't flown and this one is (the Spatial Gap: MeteorFlight#flownIn), with Meteor Flight
-	 * switched on, the swiftness the realm had there before Meteor Flight came ({@link #formerSpeed}: Void Shattering 2.4 to 3 times
+	 * but where Meteor Flight's own flight isn't flown at every realm and this one is (the Spatial Gap: MeteorFlight#flownIn), with Meteor Flight
+	 * switched on, the swiftness the realm had there before Meteor Flight came, forward held or not ({@link #formerSpeed}: Void Shattering 2.4 to 3 times
 	 * creative flight's up to True Immortal 6 to 7.2; the user's ask, 2026-10-23: "make sure you can still reach previous flight speeds
 	 * in space and the spatial gap"). Space has its own speeds either way (AstralRealm#spaceSpeed).
 	 */

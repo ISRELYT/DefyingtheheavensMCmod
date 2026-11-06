@@ -91,9 +91,10 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		if (level == null || mc.player == null) return;
 		try {
 			PlayerCultivation c = ClientCultivationData.get();
-			int tier = c.isMortal() ? 0 : c.getRealm().ordinal();
+			// The sky's tables end at True Immortal: the realms above it keep its gold (past them this threw every frame and no sky was drawn, seen 2026-11-05).
+			int tier = c.isMortal() ? 0 : Math.min(c.getRealm().ordinal(), ZENITH.length - 1);
 			int stage = c.isMortal() ? 0 : c.getStage().ordinal();
-			int progress = tier * 4 + stage; // 0 .. 23
+			int progress = tier * 4 + stage; // 0 .. 43
 			float time = level.getGameTime() + context.tickDelta();
 			PoseStack poseStack = context.matrixStack();
 			Matrix4f pose = poseStack.last().pose();

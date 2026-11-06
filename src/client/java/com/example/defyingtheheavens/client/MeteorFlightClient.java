@@ -4,8 +4,10 @@ import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.Bulldozer;
 import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.MeteorFlight;
+import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.PlayerCultivation;
+import com.example.defyingtheheavens.SpatialTrialHandler;
 import com.example.defyingtheheavens.client.mixin.ClientLevelAccessor;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -156,7 +158,7 @@ public final class MeteorFlightClient {
 	public static boolean active(LocalPlayer p) {
 		PlayerCultivation c = ClientCultivationData.get();
 		return c.isAbilityActive(Ability.METEOR_FLIGHT) && p.getAbilities().flying && !p.isCreative() && !p.isSpectator() && !p.isPassenger()
-				&& !SwordFlightClient.isRiding(p) && !ClientSoul.isOut() && MeteorFlight.flownIn(p.level().dimension());
+				&& !SwordFlightClient.isRiding(p) && !ClientSoul.isOut() && MeteorFlight.flownIn(p.level().dimension(), c);
 	}
 
 	/**
@@ -187,6 +189,11 @@ public final class MeteorFlightClient {
 		Vec3 v = heading.scale(speed);
 		// Never into the void below the world.
 		if (player.getY() + v.y < player.level().getMinBuildHeight() - 2 && v.y < 0) v = new Vec3(v.x, 0, v.z);
+		// The Spatial Gap is thick below, for this flight as for any (GapSinkMixin).
+		if (ModDimensions.isSpatialGap(player.level().dimension()) && SpatialTrialHandler.inLowerLayers(player.getY()) && c.isAbilityEnabled(Ability.SPATIAL_TEAR)
+				&& v.y < -SpatialTrialHandler.LOWER_SINK) {
+			v = new Vec3(v.x, -SpatialTrialHandler.LOWER_SINK, v.z);
+		}
 		// Fast with the boost held: the way ahead bulldozed before it's flown (not by one of the dead, who breaks nothing: Incorporeal).
 		// Diving steeply, into the ground too (burrowing), and at any speed: set off from just over the ground, the ground stopped one
 		// before one was ever fast enough to clear it.

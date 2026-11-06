@@ -679,13 +679,18 @@ public final class GhostSystem {
 			if (TwoPaths.look(CultivationManager.get(p)) != TwoPaths.Look.HUMAN) broadcast(p);
 			return;
 		}
-		if (s.reforming()) reform(p);
 		if (isKing(p)) { // a king already: no need to tell it again
 			KINGS.add(p.getUUID());
 			s.setReignedKing(true);
 		}
 		applyBody(p);
 		broadcast(p);
+	}
+
+	/** One who left mid-dispersal, standing in the world now: together again at the Gate. */
+	public static void arrived(ServerPlayer p) {
+		NetherworldState s = state(p);
+		if (s.ghost() && s.reforming()) reform(p);
 	}
 
 	/**

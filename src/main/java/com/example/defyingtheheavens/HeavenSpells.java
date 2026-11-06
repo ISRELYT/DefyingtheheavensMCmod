@@ -581,6 +581,10 @@ public final class HeavenSpells {
 	public static boolean stainTemporary(ServerLevel level, BlockPos pos, BlockState state, int ticks, LivingEntity p) {
 		BlockState here = level.getBlockState(pos);
 		if (here.is(state.getBlock()) || here.isAir() || isTemporary(level, pos) || !couldCarve(level, pos, p)) return false;
+		if (p instanceof ServerPlayer player && Concealments.strangerAt(level, player, pos)) {
+			Concealments.stain(level, pos, state, ticks); // a stranger's leaves no mark on the land a veil keeps: only strangers see it, and it fades
+			return true;
+		}
 		if (!level.setBlock(pos, state, 2 | 16)) return false;
 		Placed placed = new Placed(level, pos.immutable(), here, state, level.getGameTime() + Math.max(1, ticks));
 		TEMPORARY.computeIfAbsent(level, k -> new HashMap<>()).put(placed.pos(), placed);
@@ -850,7 +854,7 @@ public final class HeavenSpells {
 		if (!player.mayBuild() || !level.mayInteract(player, pos) || Formations.protectsGroundQuietly(player, pos)) return false;
 		if (taking) {
 			SectManager.spoiled(level, player, pos);
-			LandLedger.noteSpell(level, pos); // what stood here before a player's spell took it, for concealment (LandLedger)
+			LandLedger.noteSpell(level, pos, player); // what stood here before a player's spell took it, for concealment (LandLedger)
 		}
 		return true;
 	}
