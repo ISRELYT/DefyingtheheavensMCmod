@@ -271,6 +271,14 @@ public final class ModBlocks {
 			.mapColor(MapColor.TERRACOTTA_ORANGE).requiresCorrectToolForDrops().strength(3.5f).sound(SoundType.METAL).noOcclusion()
 			.lightLevel(state -> state.getValue(ArtifactForgeBlock.WORKING) ? 11 : 0)));
 
+	/** The Ranking Stele (RankingSteleBlock, Rankings): two blocks of carved stone; right-clicked, every world's list. */
+	public static final Block RANKING_STELE = registerWithItem("ranking_stele", new RankingSteleBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.STONE).strength(2.5f, 9.0f).requiresCorrectToolForDrops().noOcclusion().sound(SoundType.STONE)
+			.pushReaction(PushReaction.BLOCK)));
+	/** A Sect Plaque (SectPlaqueBlock, PlayerSects): a lacquered board hung on a wall by a player's sect's gate. */
+	public static final Block SECT_PLAQUE = registerWithItem("sect_plaque", new SectPlaqueBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_RED).strength(1.0f).noCollission().noOcclusion().sound(SoundType.WOOD).ignitedByLava()
+			.pushReaction(PushReaction.DESTROY)));
 	/**
 	 * A sect's mission board (MissionBoardBlock, SectMissions): set up by the sect on its plaza, never crafted (its item is the creative menu's);
 	 * nothing breaks it, and it drops nothing.
@@ -440,6 +448,7 @@ public final class ModBlocks {
 			entries.accept(HEAVEN_ALTAR);
 			entries.accept(ALCHEMY_CAULDRON);
 			entries.accept(FORMATION_CORE);
+			entries.accept(SECT_PLAQUE);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(QI_VEIN);

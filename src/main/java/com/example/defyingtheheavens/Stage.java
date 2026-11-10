@@ -38,11 +38,18 @@ public enum Stage {
 	public String getTranslationKey() { return ModLang.stageKey(id); }
 	public Component getDisplayName() { return Component.translatable(getTranslationKey()); }
 
-	public boolean isLast() { return ordinal() == values().length - 1; }
-	public Stage next() { return isLast() ? this : values()[ordinal() + 1]; }
-	public Stage previous() { return ordinal() == 0 ? this : values()[ordinal() - 1]; }
+	/**
+	 * The stages, and how many: kept once, as values() makes a new array every call (rank to realm and stage, called for every cultivator many
+	 * times a tick: hundreds of megabytes of copies in the sweep of 2026-11-10).
+	 */
+	private static final Stage[] ALL = values();
+	public static final int COUNT = ALL.length;
+
+	public boolean isLast() { return ordinal() == COUNT - 1; }
+	public Stage next() { return isLast() ? this : ALL[ordinal() + 1]; }
+	public Stage previous() { return ordinal() == 0 ? this : ALL[ordinal() - 1]; }
 
 	public static Stage byIndex(int index) {
-		return values()[Math.max(0, Math.min(values().length - 1, index))];
+		return ALL[Math.max(0, Math.min(COUNT - 1, index))];
 	}
 }

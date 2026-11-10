@@ -156,7 +156,7 @@ public final class SectManager {
 	}
 
 	/** A new member of {@code rank} living at dwelling {@code home} (-1: the master's seat); not yet added to the world. */
-	private static CultivatorNpc spawnMember(ServerLevel level, Sect sect, int rank, int home, RandomSource random) {
+	static CultivatorNpc spawnMember(ServerLevel level, Sect sect, int rank, int home, RandomSource random) {
 		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return null;
 		npc.randomizeSkin(random);
@@ -217,7 +217,10 @@ public final class SectManager {
 		if (member == null) return;
 		long now = level.getGameTime();
 		if (member.title.isElderOrAbove()) sect.elderFellAt = now;
-		if (sect.members.isEmpty()) {
+		if (sect.isPlayers()) {
+			// A player's sect (PlayerSects) lives while its founder does, its places its mats: no replacement is sent for (its aspirants come
+			// of themselves), and no place lost for good.
+		} else if (sect.members.isEmpty()) {
 			sect.extinct = true;
 			sect.replacements.clear();
 			DefyingTheHeavens.LOGGER.info("The {} has fallen: its last member is dead", sect.name);
@@ -236,7 +239,7 @@ public final class SectManager {
 	public static void onMemberDeparted(ServerLevel level, UUID sectId, UUID memberId) {
 		Sect sect = get(level.getServer(), sectId);
 		if (sect == null || sect.members.remove(memberId) == null) return;
-		if (!sect.extinct) scheduleReplacement(sect, level.getGameTime(), level.getRandom());
+		if (!sect.extinct && !sect.isPlayers()) scheduleReplacement(sect, level.getGameTime(), level.getRandom());
 		retitle(level, sect);
 	}
 
@@ -252,7 +255,7 @@ public final class SectManager {
 		if (home != null && home.getEntity(memberId) instanceof CultivatorNpc banished) banished.dismiss(home);
 		else sect.letGo.put(memberId, new Sect.LetGo(out.lastAt, out.home));
 		long now = home != null ? home.getGameTime() : server.overworld().getGameTime();
-		if (!sect.extinct) scheduleReplacement(sect, now, server.overworld().getRandom());
+		if (!sect.extinct && !sect.isPlayers()) scheduleReplacement(sect, now, server.overworld().getRandom());
 		if (home != null) retitle(home, sect);
 		else dirty(server);
 	}
@@ -315,7 +318,7 @@ public final class SectManager {
 	public static void release(ServerLevel level, UUID sectId, UUID npc) {
 		Sect sect = get(level.getServer(), sectId);
 		if (sect == null || sect.reserved.remove(npc) == null) return;
-		if (!sect.extinct) scheduleReplacement(sect, level.getGameTime(), level.getRandom());
+		if (!sect.extinct && !sect.isPlayers()) scheduleReplacement(sect, level.getGameTime(), level.getRandom());
 		dirty(level.getServer());
 	}
 
@@ -369,6 +372,7 @@ public final class SectManager {
 					else sect.reserved.remove(late);
 				}
 			}
+			if (sect.isPlayers() && !sect.replacements.isEmpty()) sect.replacements.clear(); // its people come as aspirants (PlayerSects#arrive)
 			if (sect.extinct || sect.replacements.isEmpty()) continue;
 			ServerLevel level = server.getLevel(sect.dimension);
 			if (level == null || !level.isLoaded(sect.core)) continue;
@@ -438,6 +442,8 @@ public final class SectManager {
 	public static void alert(ServerLevel level, Sect sect, LivingEntity aggressor, BlockPos where, Alarm alarm, NpcTitle victimTitle, CultivatorNpc victim) {
 		if (sect == null || sect.extinct || aggressor == null || !aggressor.isAlive()) return;
 		if (aggressor instanceof CultivatorNpc npc && sect.id.equals(npc.getSectId())) return;
+		// A player's sect never turns on its founder (PlayerSects): their hand on their own is the master's.
+		if (sect.isPlayers() && aggressor.getUUID().equals(sect.founder)) return;
 		if (aggressor instanceof ServerPlayer player) SectMembership.revokeGuest(player, sect); // its barrier shuts on them again
 		long now = level.getGameTime();
 		boolean masterRoused = sect.isBarrierDown() || sect.elderFellAt >= 0 && now - sect.elderFellAt < MASTER_WRATH || alarm == Alarm.CORE_DESTROYED;
@@ -603,6 +609,10 @@ public final class SectManager {
 	public static void onCoreDestroyed(ServerLevel level, UUID sectId) {
 		Sect sect = get(level.getServer(), sectId);
 		if (sect == null) return;
+		if (sect.isPlayers()) {
+			PlayerSects.coreLost(level, sect); // its heart gone, a player's sect breaks up
+			return;
+		}
 		sect.barrierDownSince = level.getGameTime();
 		dirty(level.getServer());
 		Rumours.forgetCore(sect); // no unclaimed core there now

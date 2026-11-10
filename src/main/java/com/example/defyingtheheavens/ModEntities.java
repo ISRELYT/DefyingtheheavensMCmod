@@ -59,6 +59,15 @@ public final class ModEntities {
 					.clientTrackingRange(8)
 					.build("hungry_ghost"));
 
+	/** A thrown talisman of the brush's craft (see TalismanEntity, Talismans): small and quick, like a snowball. */
+	public static final EntityType<TalismanEntity> TALISMAN = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("talisman"),
+			EntityType.Builder.<TalismanEntity>of(TalismanEntity::new, MobCategory.MISC)
+					.sized(0.25f, 0.25f)
+					.clientTrackingRange(4)
+					.updateInterval(10)
+					.build("talisman"));
+
 	/** A thrown Ghost-Quelling Talisman (see GhostQuellingTalismanEntity): small and quick, like a snowball. */
 	public static final EntityType<GhostQuellingTalismanEntity> GHOST_QUELLING_TALISMAN = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("ghost_quelling_talisman"),

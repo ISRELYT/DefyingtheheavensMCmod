@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " G ",
+    "SJS",
+    "SSS"
+  ],
+  "key": {
+    "G": {"item": "minecraft:gold_ingot"},
+    "J": {"item": "defying-the-heavens:jade"},
+    "S": {"item": "minecraft:stone_bricks"}
+  },
+  "result": {"item": "defying-the-heavens:ranking_stele"}
+}

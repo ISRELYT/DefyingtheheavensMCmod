@@ -329,6 +329,79 @@ public final class ModLang {
 	public static final String TALK_INSIGHT = k("talk.insight");
 	/** A rumour's words: "old" (a herb, fruit or tree), "cave", "core", "killing", and the pieces they're made of. */
 	public static String rumour(String id) { return k("talk.rumour." + id); }
+	/** A world's list's name (Rankings.Board): the Earth List, the Heaven List... */
+	public static String rankingBoard(String id) { return k("ranking.board." + id); }
+	/** Its short name, on the lists' tabs: Earth, Heaven... */
+	public static String rankingBoardShort(String id) { return k("ranking.board_short." + id); }
+	// The lists (Rankings): a listed player greeted by their place; the stele's and the Journal's page
+	public static final String TALK_RANKED = k("talk.ranked");
+	public static final String RANKING_TITLE = k("ranking.title");
+	public static final String RANKING_EMPTY = k("ranking.empty");
+	public static final String RANKING_YOU = k("ranking.you");
+	public static final String RANKING_YOU_OFF = k("ranking.you_off");
+	public static final String RANKING_ROW = k("ranking.row");
+	public static final String RANKING_HINT = k("ranking.hint");
+	public static final String BTN_JOURNAL_RUMOURS = k("button.journal_rumours");
+	public static final String BTN_JOURNAL_RANKINGS = k("button.journal_rankings");
+	public static final String TOOLTIP_RANKING_STELE = k("tooltip.ranking_stele");
+	// Sects founded by players (PlayerSects): founding at the core, its people, invitations, tribute, its end
+	public static final String MSG_PSECT_NOT_OWNER = k("message.psect.not_owner");
+	public static final String MSG_PSECT_DEAD = k("message.psect.dead");
+	public static final String MSG_PSECT_IN_SECT = k("message.psect.in_sect");
+	public static final String MSG_PSECT_WEAK = k("message.psect.weak");
+	public static final String MSG_PSECT_NO_SECTS = k("message.psect.no_sects");
+	public static final String MSG_PSECT_TERRITORY = k("message.psect.territory");
+	public static final String MSG_PSECT_BARRIER = k("message.psect.barrier");
+	public static final String MSG_PSECT_MATS = k("message.psect.mats");
+	public static final String MSG_PSECT_FOUNDED = k("message.psect.founded");
+	public static final String MSG_PSECT_REVIVED = k("message.psect.revived");
+	public static final String MSG_PSECT_RENAMED = k("message.psect.renamed");
+	public static final String MSG_PSECT_ARRIVED = k("message.psect.arrived");
+	public static final String MSG_PSECT_INVITE_UNKNOWN = k("message.psect.invite_unknown");
+	public static final String MSG_PSECT_INVITE_MEMBER = k("message.psect.invite_member");
+	public static final String MSG_PSECT_INVITE_PENDING = k("message.psect.invite_pending");
+	public static final String MSG_PSECT_INVITE_SENT = k("message.psect.invite_sent");
+	public static final String MSG_PSECT_INVITED = k("message.psect.invited");
+	public static final String MSG_PSECT_ACCEPT = k("message.psect.accept");
+	public static final String MSG_PSECT_ACCEPT_HOVER = k("message.psect.accept_hover");
+	public static final String MSG_PSECT_NO_INVITE = k("message.psect.no_invite");
+	public static final String MSG_PSECT_ACCEPTED = k("message.psect.accepted");
+	public static final String MSG_PSECT_JOIN_POSSESSED = k("message.psect.join_possessed");
+	public static final String MSG_PSECT_JOIN_DEAD = k("message.psect.join_dead");
+	public static final String MSG_PSECT_JOIN_HUMAN = k("message.psect.join_human");
+	public static final String MSG_PSECT_JOIN_NOT_BODY = k("message.psect.join_not_body");
+	public static final String MSG_PSECT_JOIN_MORTAL = k("message.psect.join_mortal");
+	public static final String MSG_PSECT_JOIN_OTHER = k("message.psect.join_other");
+	public static final String MSG_PSECT_TRIBUTE = k("message.psect.tribute");
+	public static final String MSG_PSECT_NO_TRIBUTE = k("message.psect.no_tribute");
+	public static final String MSG_PSECT_DISBANDED = k("message.psect.disbanded");
+	public static final String MSG_PSECT_CORE_LOST = k("message.psect.core_lost");
+	public static final String MSG_PSECT_FOUNDER_STAYS = k("message.psect.founder_stays");
+	// The core's Sect page (FormationCoreScreen)
+	public static final String CORE_SECT_BUTTON = k("core.sect.button");
+	public static final String CORE_SECT_FOUND_TITLE = k("core.sect.found_title");
+	public static final String CORE_SECT_NAME_HINT = k("core.sect.name_hint");
+	public static final String CORE_SECT_FOUND = k("core.sect.found");
+	public static final String CORE_SECT_REVIVE = k("core.sect.revive");
+	public static final String CORE_SECT_RULES = k("core.sect.rules");
+	public static final String CORE_SECT_MATS = k("core.sect.mats");
+	public static final String CORE_SECT_READY = k("core.sect.ready");
+	public static final String CORE_SECT_PLACES = k("core.sect.places");
+	public static final String CORE_SECT_GROUNDS = k("core.sect.grounds");
+	public static final String CORE_SECT_NO_GATE = k("core.sect.no_gate");
+	public static final String CORE_SECT_TRIBUTE = k("core.sect.tribute");
+	public static final String CORE_SECT_NEXT = k("core.sect.next");
+	public static final String CORE_SECT_FULL = k("core.sect.full");
+	public static final String CORE_SECT_RENAME = k("core.sect.rename");
+	public static final String CORE_SECT_INVITE = k("core.sect.invite");
+	public static final String CORE_SECT_INVITE_HINT = k("core.sect.invite_hint");
+	public static final String CORE_SECT_COLLECT = k("core.sect.collect");
+	public static final String CORE_SECT_DISBAND = k("core.sect.disband");
+	public static final String CORE_SECT_SURE = k("core.sect.sure");
+	public static final String CORE_SECT_NONE = k("core.sect.none");
+	public static final String CORE_SECT_EXPEL = k("core.sect.expel");
+	public static final String CORE_SECT_PLAYER = k("core.sect.player");
+	public static final String TOOLTIP_SECT_PLAQUE = k("tooltip.sect_plaque");
 	public static String rumourSubject(Rumours.Kind kind) { return k("talk.rumour.subject." + kind.name().toLowerCase(java.util.Locale.ROOT)); }
 	// Sparring (SparSystem)
 	public static String sparTerms(String id) { return k("talk.spar_terms." + id); }
@@ -493,6 +566,9 @@ public final class ModLang {
 	public static final String SECT_TAB_NEAREST = k("sect_tab.nearest");
 	public static final String SECT_TAB_NEAREST_NONE = k("sect_tab.nearest_none");
 	public static final String SECT_TAB_BARRED = k("sect_tab.barred");
+	/** A player's sect's invitation, and its Accept button (PlayerSects). */
+	public static final String SECT_TAB_INVITED = k("sect_tab.invited");
+	public static final String SECT_TAB_ACCEPT = k("sect_tab.accept");
 	public static final String SECT_TAB_TITLE = k("sect_tab.title");
 	public static final String SECT_TAB_STANDING = k("sect_tab.standing");
 	public static final String SECT_TAB_GROUNDS_HERE = k("sect_tab.grounds_here");
@@ -1294,7 +1370,35 @@ public final class ModLang {
 	public static final String CRAFTS_ALCHEMY_SECOND = k("crafts.alchemy.second");
 	public static final String CRAFTS_FORGING = k("crafts.forging");
 	public static final String CRAFTS_FORMATIONS = k("crafts.formations");
+	public static final String CRAFTS_TALISMANS = k("crafts.talismans");
 	public static final String CRAFTS_HINT = k("crafts.hint");
+	// Talismans (Talismans, TalismanItem, TalismanPattern): drawing them, their tooltips, what they do
+	public static final String TALISMAN_TITLE = k("talisman.title");
+	public static final String TALISMAN_HINT = k("talisman.hint");
+	public static final String TALISMAN_OPTION = k("talisman.option");
+	public static final String MSG_TALISMAN_CHOSEN = k("message.talisman.chosen");
+	public static final String MSG_TALISMAN_NO_PAPER = k("message.talisman.no_paper");
+	public static final String MSG_TALISMAN_NO_QI_POOL = k("message.talisman.no_qi_pool");
+	public static final String MSG_TALISMAN_LOW_QI = k("message.talisman.low_qi");
+	public static final String MSG_TALISMAN_NEEDS = k("message.talisman.needs");
+	public static final String MSG_TALISMAN_SPOILED = k("message.talisman.spoiled");
+	public static final String MSG_TALISMAN_DRAWN = k("message.talisman.drawn");
+	public static final String MSG_TALISMAN_DRAWN_FINE = k("message.talisman.drawn_fine");
+	public static final String MSG_TALISMAN_UNBOUND = k("message.talisman.unbound");
+	public static final String MSG_TALISMAN_BOUND = k("message.talisman.bound");
+	public static final String MSG_TALISMAN_ESCAPE_SEALED = k("message.talisman.escape_sealed");
+	public static final String MSG_TALISMAN_ESCAPE_NO_GROUND = k("message.talisman.escape_no_ground");
+	public static final String MSG_TALISMAN_CONCEALED = k("message.talisman.concealed");
+	public static final String MSG_TALISMAN_REVEALED = k("message.talisman.revealed");
+	public static final String TOOLTIP_TALISMAN_THROW = k("tooltip.talisman.throw");
+	public static final String TOOLTIP_TALISMAN_BURN = k("tooltip.talisman.burn");
+	public static final String TOOLTIP_TALISMAN_DRAWN = k("tooltip.talisman.drawn");
+	public static final String TOOLTIP_TALISMAN_CAP = k("tooltip.talisman.cap");
+	public static final String TOOLTIP_TALISMAN_UNSIGNED = k("tooltip.talisman.unsigned");
+	public static final String TOOLTIP_TALISMAN_REACH = k("tooltip.talisman.reach");
+	public static final String TOOLTIP_TALISMAN_PAPER = k("tooltip.talisman_paper");
+	/** What a talisman of pattern {@code id} does (its tooltip's first line). */
+	public static String talismanTooltip(String id) { return k("tooltip.talisman." + id); }
 	/** A world on the Codex's map, and its way in (CodexMap; client CodexDiagrams). */
 	public static String codexWorld(String id) { return k("codex.world." + id); }
 	public static String codexWorldWay(String id) { return k("codex.world." + id + ".way"); }
@@ -2206,6 +2310,8 @@ public final class ModLang {
 	public static final String MSG_BOND_FED = k("message.bond.fed");
 	public static final String MSG_BOND_DIED = k("message.bond.died");
 	public static final String MSG_BOND_DIED_LOST = k("message.bond.died_lost");
+	public static final String MSG_MOUNT_TOO_SMALL = k("message.mount.too_small");
+	public static final String MSG_MOUNT_CANT = k("message.mount.cant");
 	public static final String MSG_COURT_CLAIMED = k("message.court.claimed");
 	public static final String MSG_COURT_LOST = k("message.court.lost");
 	public static final String MSG_COURT_EMPTY = k("message.court.empty");

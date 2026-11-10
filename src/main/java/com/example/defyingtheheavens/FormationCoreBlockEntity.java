@@ -72,6 +72,10 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	private final Map<UUID, String> trusted = new LinkedHashMap<>();
 	/** The sect this core served before it fell (its last member dead), for the first to claim it. Empty otherwise. */
 	private String formerSect = "";
+	/** That fallen sect's id, kept past the claim: its new owner may found a sect on it again and its grounds come back into use (PlayerSects). */
+	private UUID fallenSect;
+	/** The sect it serves is its owner's own (PlayerSects): the owner keeps it, its barrier draws on its veins alone, it may be concealed. */
+	private boolean playersSect;
 	/** Its concealment (Concealments: its veil's id the formation's): the radius to keep it at, and whether it should be up. */
 	private int veilRadius = DEFAULT_RADIUS;
 	private boolean veilWanted;
@@ -118,7 +122,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	 * (the user, 2026-10-27, "massive lag spikes"). The veins mined, it is short as before.
 	 */
 	public double supply() {
-		return supply(veins, sect != null, radius);
+		return supply(veins, sect != null && !playersSect, radius);
 	}
 
 	/** {@link #supply()} of a core with {@code veins} linked, a sect's or not, keeping a barrier of {@code radius}. */
@@ -142,6 +146,40 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	public String getOwnerName() { return ownerName; }
 	public String getSectName() { return sectName; }
 	public Map<UUID, String> getTrusted() { return Collections.unmodifiableMap(trusted); }
+	public UUID getOwner() { return owner; }
+	/** Its sect is its owner's own (PlayerSects). */
+	public boolean isPlayersSect() { return playersSect; }
+	/** The fallen sect it once served, kept past the claim (PlayerSects: founded on again, its grounds come back), or null. */
+	public UUID getFallenSect() { return fallenSect; }
+
+	/**
+	 * PlayerSects: its owner founds {@code founded} on it. The owner keeps it (and its trusted, its concealment), its barrier draws on its veins as
+	 * before, and lets the sect's people through.
+	 */
+	public void foundPlayersSect(ServerLevel level, Sect founded) {
+		sect = founded.id;
+		sectName = founded.name;
+		playersSect = true;
+		fallenSect = null;
+		formerSect = "";
+		setChanged();
+		Formations.update(level, formation(level), rank, owner, sect);
+	}
+
+	/** PlayerSects: its owner's sect renamed. */
+	public void renamePlayersSect(String name) {
+		sectName = name;
+		setChanged();
+	}
+
+	/** PlayerSects: its owner's sect disbanded (or gone): a plain core of its owner's again. */
+	public void unbindPlayersSect(ServerLevel level) {
+		sect = null;
+		sectName = "";
+		playersSect = false;
+		setChanged();
+		Formations.update(level, formation(level), rank, owner, null);
+	}
 
 	public boolean isRaised() {
 		if (!(level instanceof ServerLevel server) || formationId == null) return false;
@@ -193,6 +231,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	 */
 	private void releaseFromSect(ServerLevel level) {
 		formerSect = sectName;
+		fallenSect = sect;
 		sect = null;
 		sectName = "";
 		owner = null;
@@ -249,7 +288,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	 * It never falls with them (the user, 2026-11-06: "its power shouldnt fall with the owners in case of core detonation or something").
 	 */
 	private void followOwner(ServerLevel level) {
-		if (owner == null || sect != null) return;
+		if (owner == null || sect != null && !playersSect) return;
 		int now = TwoPaths.weighedRank(CultivationManager.own(level.getServer(), owner));
 		if (now <= rank) return;
 		rank = now;
@@ -263,11 +302,16 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	private void economy(ServerLevel level) {
 		if (sect != null) {
 			Sect served = SectManager.get(level.getServer(), sect);
-			if (served == null || served.extinct) releaseFromSect(level);
+			if (served == null || served.extinct) {
+				if (playersSect) unbindPlayersSect(level); // its owner's sect disbanded: a plain core of theirs again
+				else releaseFromSect(level);
+			}
 		}
 		followOwner(level);
 		Formation formation = formation(level);
-		Concealments.Veil veil = veilWanted && sect == null ? veil(level) : formationId == null ? null : Concealments.get(level, formationId);
+		// A sect's core keeps no concealment; its owner's own sect's may (PlayerSects).
+		boolean mayVeil = sect == null || playersSect;
+		Concealments.Veil veil = veilWanted && mayVeil ? veil(level) : formationId == null ? null : Concealments.get(level, formationId);
 		double share = upkeepShare();
 		double upkeep = formation.isRaised() ? upkeep(formation.getRadius()) * share : 0;
 		double veilCost = veil != null && veil.isRaised() ? veilUpkeep(veil.radius()) * share : 0;
@@ -275,7 +319,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		battery = Math.max(0, Math.min(BATTERY, battery + supply() - upkeep - veilCost));
 		if (battery != before) setChanged();
 		if (veil != null) {
-			if (veil.isRaised() && (!veilWanted || sect != null)) {
+			if (veil.isRaised() && (!veilWanted || !mayVeil)) {
 				Concealments.set(level, veil, false, veil.radius());
 				veilCost = 0;
 				level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.0f, 0.6f);
@@ -283,7 +327,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 				Concealments.set(level, veil, false, veil.radius());
 				veilCost = 0;
 				level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 0.6f);
-			} else if (!veil.isRaised() && veilWanted && sect == null
+			} else if (!veil.isRaised() && veilWanted && mayVeil
 					&& (supply() >= upkeep + veilUpkeep(veilRadius) * share || battery >= BATTERY * RAISE_FRACTION)) {
 				Concealments.set(level, veil, true, veilRadius);
 				level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.0f, 1.4f);
@@ -309,7 +353,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 
 	/** Every ten minutes a function of a player's core stands, its owner (if about) learns a point of formations for each (CraftMastery). */
 	private void practise(ServerLevel level, boolean barrier, boolean veiled) {
-		if (owner == null || sect != null || !barrier && !veiled) return;
+		if (owner == null || sect != null && !playersSect || !barrier && !veiled) return;
 		practiceTicks += 20;
 		if (practiceTicks < PRACTICE_TICKS) return;
 		practiceTicks = 0;
@@ -401,7 +445,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	/** Who may open the screen: the owner (a core nobody owns yet is claimed by the first to open it), or an operator in creative. */
 	public boolean canControl(ServerPlayer player) {
 		if (player.isCreative() && player.hasPermissions(2)) return true;
-		if (sect != null && level instanceof ServerLevel server) {
+		if (sect != null && !playersSect && level instanceof ServerLevel server) {
 			Sect served = SectManager.get(server.getServer(), sect);
 			if (served != null && !served.extinct) return false;
 			releaseFromSect(server); // its sect fell since the last second's check
@@ -425,7 +469,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 
 	/** From the screen: trust the player called {@code name} (online now, or seen on this server before). */
 	public void trustByName(ServerPlayer by, String name) {
-		if (!(level instanceof ServerLevel server) || !canControl(by) || sect != null || name == null || name.isBlank()) return;
+		if (!(level instanceof ServerLevel server) || !canControl(by) || sect != null && !playersSect || name == null || name.isBlank()) return;
 		MinecraftServer mc = server.getServer();
 		ServerPlayer online = mc.getPlayerList().getPlayerByName(name.trim());
 		GameProfile profile = online != null ? online.getGameProfile() : mc.getProfileCache() == null ? null
@@ -484,8 +528,8 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), newRadius));
 		wanted = newWanted;
 		veilRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), newVeilRadius));
-		veilWanted = newVeilWanted && sect == null;
-		if (sect == null && owner != null && owner.equals(player.getUUID())) {
+		veilWanted = newVeilWanted && (sect == null || playersSect);
+		if ((sect == null || playersSect) && owner != null && owner.equals(player.getUUID())) {
 			masteryRank = CraftMastery.rank(CultivationManager.own(player), CraftMastery.Craft.FORMATIONS).ordinal(); // as skilled as its maker now
 		}
 		setChanged();
@@ -530,6 +574,8 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		}
 		tag.put("Trusted", list);
 		tag.putString("FormerSect", formerSect);
+		if (fallenSect != null) tag.putUUID("FallenSect", fallenSect);
+		if (playersSect) tag.putBoolean("PlayersSect", true);
 		tag.putInt("VeilRadius", veilRadius);
 		tag.putBoolean("VeilWanted", veilWanted);
 		tag.putInt("Mastery", masteryRank);
@@ -557,6 +603,8 @@ public class FormationCoreBlockEntity extends BlockEntity {
 			if (player.hasUUID("Id")) trusted.put(player.getUUID("Id"), player.getString("Name"));
 		}
 		formerSect = tag.getString("FormerSect");
+		fallenSect = tag.hasUUID("FallenSect") ? tag.getUUID("FallenSect") : null;
+		playersSect = tag.getBoolean("PlayersSect");
 		veilRadius = tag.contains("VeilRadius") ? tag.getInt("VeilRadius") : DEFAULT_RADIUS;
 		veilWanted = tag.getBoolean("VeilWanted");
 		masteryRank = tag.getInt("Mastery");

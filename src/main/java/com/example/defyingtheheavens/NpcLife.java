@@ -1205,6 +1205,8 @@ public final class NpcLife {
 		ModPackets.sendGesture(other, Gesture.CUP_FIST);
 		NpcSpeech.say(winner, NpcLines.line("spar.win", winner, name(loser)));
 		NpcSpeech.say(loser, NpcLines.line("spar.lose", loser, name(winner)));
+		// Their bouts count on the lists too (Rankings#won).
+		if (npc.getServer() != null) Rankings.won(npc.getServer(), winner.getUUID(), loser.getUUID());
 	}
 
 	/** Sword forms: a cut, a turn, a step, again; drifting back to its spot. */

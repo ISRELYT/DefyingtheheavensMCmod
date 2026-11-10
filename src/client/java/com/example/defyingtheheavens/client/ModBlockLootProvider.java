@@ -31,6 +31,10 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 		dropSelf(ModBlocks.QI_VEIN);
 		dropSelf(ModBlocks.DEEPSLATE_QI_VEIN);
 		dropSelf(ModBlocks.FORMATION_CORE);
+		// The Ranking Stele drops itself once, from its foot (as a door does).
+		add(ModBlocks.RANKING_STELE, createSinglePropConditionTable(ModBlocks.RANKING_STELE, com.example.defyingtheheavens.RankingSteleBlock.HALF,
+				net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
+		dropSelf(ModBlocks.SECT_PLAQUE);
 		dropSelf(ModBlocks.RED_SPIDER_LILY);
 		// The sapling has no item of its own: breaking it gives back the peach pit it grew from.
 		dropOther(ModBlocks.SPIRIT_PEACH_SAPLING, ModItems.PEACH_PIT);

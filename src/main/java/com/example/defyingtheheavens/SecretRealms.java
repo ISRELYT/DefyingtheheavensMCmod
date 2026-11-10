@@ -174,6 +174,7 @@ public final class SecretRealms {
 		if (server.getTickCount() % 20 == 3) {
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) hud(p, data, now);
 		}
+		if (server.getTickCount() % 100 == 61) keepGates(server, data);
 		for (Record r : data.records.values()) {
 			if (r.openedAt >= 0) {
 				RealmWorks.tickOpen(server, data, r, now);
@@ -830,10 +831,17 @@ public final class SecretRealms {
 		return (roll < 0.3 ? Blocks.MOSSY_STONE_BRICKS : roll < 0.45 ? Blocks.CRACKED_STONE_BRICKS : roll < 0.52 ? Blocks.MOSS_BLOCK : Blocks.STONE_BRICKS).defaultBlockState();
 	}
 
-	/** {@code r}'s gate's opening set to {@code phase} (its chunk loaded for it): shut, stirring, or open. */
+	/**
+	 * {@code r}'s gate's opening set to {@code phase}: shut, stirring, or open. Only while its land is loaded: loading it for this alone, each
+	 * time a realm stirred, opened or shut, stalled the server (the sweep of 2026-11-10); nobody sees it unloaded, and it is set as its realm
+	 * stands once it loads ({@link #keepGates}).
+	 */
 	static void setGate(MinecraftServer server, Record r, SecretRealmGateBlock.Phase phase) {
 		ServerLevel home = server.getLevel(r.realm.home());
 		if (home == null || r.seal == null || !r.sealBuilt) return;
+		net.minecraft.server.level.ServerChunkCache chunks = home.getChunkSource();
+		int cz = r.seal.getZ() >> 4;
+		if (chunks.getChunkNow((r.seal.getX() - 1) >> 4, cz) == null || chunks.getChunkNow((r.seal.getX() + 1) >> 4, cz) == null) return;
 		for (int dx = -1; dx <= 1; dx++) {
 			for (int dy = 1; dy <= 4; dy++) {
 				BlockPos pos = r.seal.offset(dx, dy, 0);
@@ -845,6 +853,17 @@ public final class SecretRealms {
 				}
 			}
 		}
+	}
+
+	/** The phase {@code r}'s gate shows as its realm stands: open while its gate is lit, stirring while it stirs or stands open past that, else shut. */
+	static SecretRealmGateBlock.Phase gatePhase(Record r) {
+		if (r.openedAt >= 0) return r.gateLit ? SecretRealmGateBlock.Phase.OPEN : SecretRealmGateBlock.Phase.STIRRING;
+		return r.stirred ? SecretRealmGateBlock.Phase.STIRRING : SecretRealmGateBlock.Phase.SEALED;
+	}
+
+	/** Every 5 s: each Seal whose land is loaded shows its realm's phase (one changed while its land was unloaded waited: {@link #setGate}). */
+	static void keepGates(MinecraftServer server, Data data) {
+		for (Record r : data.records.values()) setGate(server, r, gatePhase(r));
 	}
 
 	/**

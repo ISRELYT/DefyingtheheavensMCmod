@@ -82,7 +82,11 @@ public abstract class SoulLivingEntityMixin {
 	@Inject(method = "hurt", at = @At("RETURN"))
 	private void dth$bloodDrawn(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Share("health") LocalFloatRef health) {
 		LivingEntity self = (LivingEntity) (Object) this;
-		if (!self.level().isClientSide && cir.getReturnValueZ()) Physiques.onHurt(self, source, health.get() - self.getHealth());
+		if (!self.level().isClientSide && cir.getReturnValueZ()) {
+			Physiques.onHurt(self, source, health.get() - self.getHealth());
+			// A blow landed: one concealed by a talisman who dealt it is noticed again (Talismans#struck).
+			com.example.defyingtheheavens.Talismans.struck(source);
+		}
 	}
 
 	@ModifyVariable(method = "hurt", at = @At("HEAD"), argsOnly = true)
@@ -122,10 +126,14 @@ public abstract class SoulLivingEntityMixin {
 		if ((Object) this instanceof Player player && Incorporeal.untouchable(player)) ci.cancel();
 	}
 
-	/** One of the dead bound by a Ghost-Quelling Talisman can't jump (see QuelledEffect). Both sides: a player's client jumps it. */
+	/**
+	 * One of the dead bound by a Ghost-Quelling Talisman can't jump (see QuelledEffect), nor one of the living held by a Binding Talisman
+	 * (BoundEffect). Both sides: a player's client jumps it.
+	 */
 	@Inject(method = "jumpFromGround", at = @At("HEAD"), cancellable = true)
 	private void dth$quelledCantJump(CallbackInfo ci) {
-		if (((LivingEntity) (Object) this).hasEffect(com.example.defyingtheheavens.ModEffects.QUELLED)) ci.cancel();
+		LivingEntity self = (LivingEntity) (Object) this;
+		if (self.hasEffect(com.example.defyingtheheavens.ModEffects.QUELLED) || self.hasEffect(com.example.defyingtheheavens.ModEffects.BOUND)) ci.cancel();
 	}
 
 	/**

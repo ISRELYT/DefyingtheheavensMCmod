@@ -122,7 +122,11 @@
       "com.example.defyingtheheavens.BodyLadderGameTests",
       "com.example.defyingtheheavens.BodyHeavenTechniquesGameTests",
       "com.example.defyingtheheavens.LoginGameTests",
-      "com.example.defyingtheheavens.SpellCooldownGameTests"
+      "com.example.defyingtheheavens.SpellCooldownGameTests",
+      "com.example.defyingtheheavens.MountGameTests",
+      "com.example.defyingtheheavens.TalismanGameTests",
+      "com.example.defyingtheheavens.RankingsGameTests",
+      "com.example.defyingtheheavens.PlayerSectGameTests"
     ]
   }
 }

@@ -187,6 +187,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	/** The same for the Journal tab. */
 	private int journalScroll;
 	private int journalMaxScroll;
+	/** The Journal tab's page shown (kept on reopening): 0 its rumours, 1 the lists (Rankings); its pages' buttons; the lists' view. */
+	private static int journalPage;
+	private final List<RowButton<Integer>> journalPageButtons = new ArrayList<>();
+	private final RankingView rankingView = new RankingView();
 	/** Where the scrollbar was drawn this frame (null: none on this tab), and where its thumb is held (-1: not held). */
 	private ScrollBar bar;
 	private int barGrab = -1;
@@ -242,6 +246,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	private final List<RowButton<StatPoints.Stat>> statPlusButtons = new ArrayList<>();
 	/** The Sect tab's member list's scrolling. */
 	private int sectScroll;
+	/** The Stats tab's Crafts page, scrolled. */
+	private int craftsScroll, craftsMaxScroll;
 	private int sectMaxScroll;
 	/**
 	 * The Sect tab's buttons for a soul in a member's body (SectMembership#leaveAsBody, #banish): Leave ({@link #LEAVE_SECT}) and each
@@ -249,6 +255,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	 */
 	private final List<RowButton<UUID>> sectButtons = new ArrayList<>();
 	private static final UUID LEAVE_SECT = new UUID(0, 0);
+	/** The Accept button of a player's sect's invitation (PlayerSects): one press, no "Sure?". */
+	private static final UUID ACCEPT_INVITE = new UUID(0, 1);
 	private static final long CONFIRM_MS = 3000;
 	private UUID sectConfirm;
 	private long sectConfirmAt;
@@ -382,7 +390,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		titleBox.setWidth(Math.round((564 - 26) / 3f));
 
 		updateButtons();
-		if (tab == Tab.JOURNAL) ClientJournal.request();
+		if (tab == Tab.JOURNAL) {
+			ClientJournal.request();
+			ClientRankings.request();
+		}
 		if (tab == Tab.SECT) ClientSect.request();
 	}
 
@@ -539,6 +550,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		lawChooseButtons.clear();
 		spellPalette.clear();
 		statPageButtons.clear();
+		journalPageButtons.clear();
 		statPlusButtons.clear();
 		sectButtons.clear();
 		bar = null;
@@ -551,7 +563,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				} else {
 					renderStatPages(g, mouseX, mouseY);
 					if (statPage == 1) renderStatPoints(g, mouseX, mouseY);
-					else if (statPage == 2) renderCrafts(g);
+					else if (statPage == 2) renderCrafts(g, mouseX, mouseY);
 					else renderStats(g, player);
 				}
 			}
@@ -559,7 +571,15 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			case METHODS -> renderMethods(g, mouseX, mouseY);
 			case SPELLS -> renderSpells(g, mouseX, mouseY);
 			case SECT -> renderSect(g, mouseX, mouseY);
-			case JOURNAL -> renderJournal(g, mouseX, mouseY);
+			case JOURNAL -> {
+				renderJournalPages(g, mouseX, mouseY);
+				if (journalPage == 1) {
+					int y = top + CONTENT_Y + METHOD_PAGE_ROW + 2;
+					rankingView.render(g, font, left + 14, y, LIST_RIGHT - 14, top + HEIGHT - 10 - y, mouseX, mouseY);
+				} else {
+					renderJournal(g, mouseX, mouseY);
+				}
+			}
 		}
 
 		super.render(g, mouseX, mouseY, partialTick);
@@ -1655,10 +1675,13 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	 * The Crafts page (CraftMastery, 2026-10-28): each craft with its rank, a gold bar of the practice toward the next rank, and what the
 	 * rank does: in alchemy the chance of a better grade, how often the hardest brews fail, and a second pill's chance.
 	 */
-	private void renderCrafts(GuiGraphics g) {
+	private void renderCrafts(GuiGraphics g, int mouseX, int mouseY) {
 		PlayerCultivation c = ClientCultivationData.get();
-		int x = left + 14, right = left + WIDTH - 14;
-		int y = top + CONTENT_Y + METHOD_PAGE_ROW + 6;
+		int x = left + 14, right = left + LIST_RIGHT;
+		// Four crafts and their lines are more than the page holds (talismans the fourth, 2026-11-10): a view that scrolls, above the hint.
+		int viewTop = top + CONTENT_Y + METHOD_PAGE_ROW + 2, viewBottom = top + HEIGHT - 18;
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 4 - craftsScroll;
 		for (CraftMastery.Craft craft : CraftMastery.Craft.values()) {
 			int practice = c.getMastery(craft);
 			CraftMastery.Rank rank = CraftMastery.Rank.of(practice);
@@ -1687,15 +1710,21 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				}
 				case FORGING -> lines.add(Component.translatable(ModLang.CRAFTS_FORGING));
 				case FORMATIONS -> lines.add(Component.translatable(ModLang.CRAFTS_FORMATIONS));
+				case TALISMANS -> lines.add(Component.translatable(ModLang.CRAFTS_TALISMANS));
 			}
 			for (Component line : lines) {
-				for (FormattedCharSequence part : font.split(line, right - x)) {
+				for (FormattedCharSequence part : font.split(line, right - x - 4)) {
 					g.drawString(font, part, x + 4, y, 0x8FA8C8);
 					y += 10;
 				}
 			}
 			y += 6;
 		}
+		g.disableScissor();
+		int contentHeight = y + craftsScroll - viewTop;
+		craftsMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		craftsScroll = Mth.clamp(craftsScroll, 0, craftsMaxScroll);
+		if (craftsMaxScroll > 0) scrollbar(g, viewTop, viewBottom, contentHeight, craftsScroll, craftsMaxScroll, mouseX, mouseY);
 		g.drawCenteredString(font, Component.translatable(ModLang.CRAFTS_HINT), left + WIDTH / 2, top + HEIGHT - 12, 0x7A7A7A);
 	}
 
@@ -1806,6 +1835,20 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			if (info.barredDays() > 0) {
 				g.drawCenteredString(font, Component.translatable(ModLang.SECT_TAB_BARRED, info.barredDays()), cx, y + 2, 0xFF6E6E);
 				y += 11;
+			}
+			// A player's sect inviting them (PlayerSects): taken up here, with one press.
+			if (!info.invitedTo().isEmpty()) {
+				y += 8;
+				for (FormattedCharSequence line : font.split(Component.translatable(ModLang.SECT_TAB_INVITED, info.invitedTo()), WIDTH - 28)) {
+					g.drawCenteredString(font, line, cx, y, 0xF2C94C);
+					y += 11;
+				}
+				Component label = Component.translatable(ModLang.SECT_TAB_ACCEPT);
+				int w = font.width(label) + 12;
+				RowButton<UUID> accept = new RowButton<>(ACCEPT_INVITE, cx - w / 2, y + 2, w);
+				sectButtons.add(accept);
+				drawRowButton(g, accept, label, accept.contains(mouseX, mouseY), 0x69F0AE);
+				y += SWITCH_H + 4;
 			}
 			if (info.court() != null) g.drawCenteredString(font, courtLine(info), cx, y + 10, NpcTitle.IMMORTAL_OFFICER.getColor());
 			return;
@@ -2032,6 +2075,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			case JOURNAL -> journalScroll = scroll;
 			case METHODS -> methodScroll = scroll;
 			case SECT -> sectScroll = scroll;
+			case STATS -> craftsScroll = scroll;
 			case SPELLS -> {
 				if (arrangingSpells) spellPaletteScroll = scroll;
 				else spellScroll = scroll;
@@ -2040,7 +2084,22 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		}
 	}
 
-	// --- Journal: the rumours cultivators have told you ---
+	// --- Journal: the rumours cultivators have told you, and the lists (Rankings) ---
+
+	/** The Journal tab's two pages, as buttons over it: the rumours heard, and the lists. */
+	private void renderJournalPages(GuiGraphics g, int mouseX, int mouseY) {
+		int x = left + 14;
+		int y = top + CONTENT_Y;
+		for (int page = 0; page < 2; page++) {
+			Component label = Component.translatable(page == 0 ? ModLang.BTN_JOURNAL_RUMOURS : ModLang.BTN_JOURNAL_RANKINGS);
+			int w = font.width(label) + 12;
+			RowButton<Integer> button = new RowButton<>(page, x, y, w);
+			journalPageButtons.add(button);
+			boolean chosen = journalPage == page;
+			drawRowButton(g, button, label, button.contains(mouseX, mouseY), chosen ? 0xFFD54F : 0x9E9E9E, chosen);
+			x += w + 4;
+		}
+	}
 
 	/** Each rumour heard (newest first): the day and who told it, in gold, then their words; scrolls like the Abilities tab. */
 	private void renderJournal(GuiGraphics g, int mouseX, int mouseY) {
@@ -2048,7 +2107,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		int cx = left + WIDTH / 2;
 		if (entries.isEmpty()) {
 			journalMaxScroll = 0;
-			int y = top + CONTENT_Y + 30;
+			int y = top + CONTENT_Y + METHOD_PAGE_ROW + 30;
 			g.drawCenteredString(font, Component.translatable(ModLang.TAB_JOURNAL), cx, y, 0xFFD700);
 			y += 20;
 			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.JOURNAL_EMPTY), WIDTH - 28)) {
@@ -2059,7 +2118,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		}
 		int x = left + 14;
 		int rightEdge = left + LIST_RIGHT;
-		int viewTop = top + CONTENT_Y;
+		int viewTop = top + CONTENT_Y + METHOD_PAGE_ROW; // under the pages' buttons
 		int viewBottom = top + HEIGHT - 8;
 		List<List<FormattedCharSequence>> texts = new ArrayList<>();
 		int contentHeight = 6;
@@ -2197,6 +2256,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			abilityScroll = Mth.clamp(abilityScroll - (int) Math.round(delta * SCROLL_STEP), 0, abilityMaxScroll);
 			return true;
 		}
+		if (tab == Tab.JOURNAL && journalPage == 1) {
+			rankingView.scroll(delta);
+			return true;
+		}
 		if (tab == Tab.JOURNAL && journalMaxScroll > 0) {
 			journalScroll = Mth.clamp(journalScroll - (int) Math.round(delta * SCROLL_STEP), 0, journalMaxScroll);
 			return true;
@@ -2207,6 +2270,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		}
 		if (tab == Tab.SECT && sectMaxScroll > 0) {
 			sectScroll = Mth.clamp(sectScroll - (int) Math.round(delta * SCROLL_STEP), 0, sectMaxScroll);
+			return true;
+		}
+		if (tab == Tab.STATS && statPage == 2 && craftsMaxScroll > 0) {
+			craftsScroll = Mth.clamp(craftsScroll - (int) Math.round(delta * SCROLL_STEP), 0, craftsMaxScroll);
 			return true;
 		}
 		if (tab == Tab.SPELLS && !arrangingSpells && spellMaxScroll > 0) {
@@ -2286,6 +2353,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		if (button == 0) {
 			for (RowButton<UUID> act : sectButtons) {
 				if (!act.contains(mouseX, mouseY)) continue;
+				if (act.value().equals(ACCEPT_INVITE)) {
+					ClientSect.acceptInvite();
+					if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+					return true;
+				}
 				// The first click asks "Sure?"; the second, while it asks, does it.
 				if (confirming(act.value())) {
 					sectConfirm = null;
@@ -2301,6 +2373,17 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			for (RowButton<Integer> page : statPageButtons) {
 				if (!page.contains(mouseX, mouseY)) continue;
 				statPage = page.value();
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			for (RowButton<Integer> page : journalPageButtons) {
+				if (!page.contains(mouseX, mouseY)) continue;
+				journalPage = page.value();
+				if (journalPage == 1) ClientRankings.request(); // fresh from the server
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			if (tab == Tab.JOURNAL && journalPage == 1 && rankingView.mouseClicked(mouseX, mouseY)) {
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}
@@ -3642,7 +3725,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			tab = target;
 			dragged = null;
 			updateButtons();
-			if (target == Tab.JOURNAL) ClientJournal.request(); // fresh from the server
+			if (target == Tab.JOURNAL) {
+				ClientJournal.request(); // fresh from the server
+				ClientRankings.request();
+			}
 			if (target == Tab.SECT) ClientSect.request();
 		}
 

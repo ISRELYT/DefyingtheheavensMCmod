@@ -35,6 +35,9 @@ public final class NetherworldClient {
 		// A thrown Ghost-Quelling Talisman: the item, turning as it flies (a snowball's renderer).
 		net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(com.example.defyingtheheavens.ModEntities.GHOST_QUELLING_TALISMAN,
 				net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+		// A thrown talisman of the brush's craft (Talismans): the same, the item turning as it flies.
+		net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(com.example.defyingtheheavens.ModEntities.TALISMAN,
+				net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
 		// The Soul River: carried along it, its HUD, and the river itself with its starry dark.
 		ClientSoulRiver.register();
 		SoulRiverRenderer.register();

@@ -65,6 +65,17 @@ public final class ModEffects {
 	/** One of the dead bound by a Ghost-Quelling Talisman, held where it stands (see QuelledEffect). */
 	public static final MobEffect QUELLED = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("quelled"),
 			new QuelledEffect());
+	/** Held where one stands by a Binding Talisman (see BoundEffect, Talismans): the living's Quelled. */
+	public static final MobEffect BOUND = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("bound"), new BoundEffect());
+	/** A Golden Light Talisman's shell soaking up harm (see GoldenLightEffect, Talismans). */
+	public static final MobEffect GOLDEN_LIGHT = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("golden_light"),
+			new GoldenLightEffect());
+	/**
+	 * A Concealment Talisman burnt (Talismans#conceal): beasts and cultivators don't notice one (MobConcealmentMixin) until one strikes, or but
+	 * those two realms or more above the talisman. Its amplifier is the talisman's strength (its rank, PlayerCultivation#rank).
+	 */
+	public static final MobEffect CONCEALED = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("concealed"),
+			new MarkerEffect(MobEffectCategory.BENEFICIAL, 0x7A9CC8));
 
 	private static final class MarkerEffect extends MobEffect {
 		MarkerEffect(MobEffectCategory category, int color) {

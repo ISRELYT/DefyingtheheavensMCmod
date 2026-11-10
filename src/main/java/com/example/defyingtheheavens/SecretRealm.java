@@ -221,9 +221,12 @@ public enum SecretRealm {
 	public static SecretRealm at(double x, double z) {
 		long slot = Math.round(x / SLOT_SPACING);
 		if (Math.abs(z) > SLOT_SPACING / 2.0) return null;
-		for (SecretRealm realm : values()) if (realm.slot == slot) return realm;
+		for (SecretRealm realm : ALL) if (realm.slot == slot) return realm;
 		return null;
 	}
+
+	/** The realms, kept once (values() copies them on every call; this is asked for every one in the dimension every tick: Stage#ALL). */
+	private static final SecretRealm[] ALL = values();
 
 	public static SecretRealm byId(String id) {
 		for (SecretRealm realm : values()) if (realm.id.equals(id)) return realm;

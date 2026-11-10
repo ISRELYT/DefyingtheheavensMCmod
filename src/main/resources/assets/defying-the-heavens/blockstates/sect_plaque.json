@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "defying-the-heavens:block/sect_plaque"},
+    "facing=east": {"model": "defying-the-heavens:block/sect_plaque", "y": 90},
+    "facing=south": {"model": "defying-the-heavens:block/sect_plaque", "y": 180},
+    "facing=west": {"model": "defying-the-heavens:block/sect_plaque", "y": 270}
+  }
+}

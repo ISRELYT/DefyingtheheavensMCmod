@@ -709,6 +709,8 @@ public final class HerbValleyWorks extends RealmWorks {
 				out.add(new ItemStack(ModItems.LOW_SPIRIT_STONE, 4 + random.nextInt(6)));
 				for (int i = 0; i < 2; i++) out.add(GinsengItem.create(random.nextBoolean() ? ModItems.GINSENG : ModItems.LINGZHI, 100 + random.nextInt(250)));
 				if (random.nextFloat() < 0.3f) out.add(new ItemStack(ModItems.DEPARTURE_JADE));
+				// A disciple's talismans, of no known hand now (Talismans#found).
+				if (random.nextFloat() < 0.5f) out.addAll(Talismans.found(random, 1 + random.nextInt(2)));
 			}
 			case STELE_COURT -> {
 				if (random.nextFloat() < 0.5f) out.add(Artifacts.any(random, ArtifactGrade.SPIRIT, null));

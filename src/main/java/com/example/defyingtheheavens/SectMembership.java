@@ -66,6 +66,18 @@ public final class SectMembership {
 		return null;
 	}
 
+	/**
+	 * The sect {@code player} is a disciple of that still stands, or null: a sect fallen with them on its rolls (its last cultivator dead) holds
+	 * nobody, and nobody can walk out of one (leaving is asked of its elders), so it never keeps them from joining another or founding their own
+	 * (the bug sweep of 2026-11-10).
+	 */
+	public static Sect liveSectOf(MinecraftServer server, UUID player) {
+		for (Sect sect : SectData.get(server).all()) {
+			if (!sect.extinct && sect.disciples.containsKey(player)) return sect;
+		}
+		return null;
+	}
+
 	/** Whether {@code player} is a disciple of the sect {@code sectId}. */
 	public static boolean isDisciple(MinecraftServer server, UUID sectId, UUID player) {
 		if (server == null || sectId == null || player == null) return false;
@@ -89,6 +101,7 @@ public final class SectMembership {
 
 	/** {@code player}'s title in their sect now, by their strength among its members ({@link Sect#titleAmong}). */
 	public static NpcTitle titleOf(Sect sect, ServerPlayer player) {
+		if (isFounder(sect, player.getUUID())) return NpcTitle.SECT_MASTER; // a player's sect's founder holds its master's seat (PlayerSects)
 		PlayerCultivation c = CultivationManager.get(player);
 		return sect.titleAmong(strength(sect, player), c.getCultivation());
 	}
@@ -99,6 +112,11 @@ public final class SectMembership {
 	 */
 	public static int strength(Sect sect, ServerPlayer player) {
 		return sect.body ? TwoPaths.weighedRank(CultivationManager.get(player)) : CultivatorNpc.rankOf(player);
+	}
+
+	/** {@code player} founded {@code sect} (PlayerSects): its Sect Master. */
+	public static boolean isFounder(Sect sect, UUID player) {
+		return sect != null && sect.isPlayers() && sect.founder.equals(player);
 	}
 
 	/** An Elder or above of their sect: the treasury is theirs to open. */
@@ -118,12 +136,17 @@ public final class SectMembership {
 		// the sweep of 2026-10-23).
 		if (Possession.inhabits(player.getUUID())) return "join.possessed";
 		if (GhostSystem.isGhost(player)) return "join.ghost";
+		// A player's sect (PlayerSects) takes in only those its founder invites.
+		if (sect.isPlayers()) {
+			arg[0] = sect.founderName;
+			return "join.founder_only";
+		}
 		// A demon clan takes only the demon races (the user's pick, 2026-10-23: any of them), wary of men.
 		if (sect.isClan() && !DemonPath.isDemon(c)) return "join.human";
 		// A body sect takes only those who walk the Body Path (the user's "Go, with body sects", 2026-11-01), qi or none; no other takes one with no qi.
 		if (sect.body && BodyPath.rank(c) < 0) return "join.not_body";
 		if (c.isMortal() && !sect.body) return "join.mortal";
-		Sect other = sectOf(player.server, player.getUUID());
+		Sect other = liveSectOf(player.server, player.getUUID());
 		if (other != null) {
 			arg[0] = other.name;
 			return "join.other_sect";
@@ -234,9 +257,11 @@ public final class SectMembership {
 
 	/** {@code player} becomes a disciple of {@code sect}: welcomed (its standing), told their title, the barrier opened to them. */
 	public static void join(ServerPlayer player, Sect sect) {
-		Sect old = sectOf(player.server, player.getUUID());
-		if (old == sect) return;
-		if (old != null) remove(player.server, old, player.getUUID());
+		if (sect.disciples.containsKey(player.getUUID())) return;
+		// Off every other sect's rolls: the one they leave, and any fallen with them on it (#liveSectOf), which #sectOf could find before this one.
+		for (Sect other : SectData.get(player.server).all()) {
+			if (other != sect) remove(player.server, other, player.getUUID());
+		}
 		sect.disciples.put(player.getUUID(), new Sect.Disciple(player.getUUID(), player.getGameProfile().getName(), player.level().getGameTime()));
 		sect.barredUntil.remove(player.getUUID());
 		sect.changeStanding(player.getUUID(), Math.max(0, WELCOME - Math.min(WELCOME, sect.standing(player.getUUID()))));
@@ -252,6 +277,11 @@ public final class SectMembership {
 
 	/** {@code player} leaves {@code sect} of their own will: it takes them back after {@link #LEFT_DAYS} days. */
 	public static void leave(ServerPlayer player, Sect sect) {
+		if (isFounder(sect, player.getUUID())) {
+			// Its founder doesn't walk out of their own sect: they disband it, at its Formation Core (PlayerSects).
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_PSECT_FOUNDER_STAYS, sect.name).withStyle(ChatFormatting.GRAY));
+			return;
+		}
 		if (!remove(player.server, sect, player.getUUID())) return;
 		sect.barredUntil.put(player.getUUID(), player.level().getGameTime() + LEFT_DAYS * HeavenRitual.DAY);
 		sect.changeStanding(player.getUUID(), LEFT);
@@ -265,6 +295,7 @@ public final class SectMembership {
 	 * it won't hear them for {@link #EXPELLED_DAYS} days, and its barrier is shut to them again.
 	 */
 	public static void expel(ServerPlayer player, Sect sect, String reason) {
+		if (isFounder(sect, player.getUUID())) return; // nobody casts a sect's founder out of it
 		if (!remove(player.server, sect, player.getUUID())) return;
 		sect.barredUntil.put(player.getUUID(), player.level().getGameTime() + EXPELLED_DAYS * HeavenRitual.DAY);
 		sect.changeStanding(player.getUUID(), EXPELLED);
@@ -302,6 +333,7 @@ public final class SectMembership {
 
 	/** A disciple's title in {@code sect} by their strength, online or not (one in no body's place: their own record's). */
 	static NpcTitle discipleTitle(MinecraftServer server, Sect sect, UUID id) {
+		if (isFounder(sect, id)) return NpcTitle.SECT_MASTER;
 		ServerPlayer online = server.getPlayerList().getPlayer(id);
 		if (online != null && !Possession.isHeld(id)) return titleOf(sect, online);
 		ServerPlayer tenant = Possession.tenantOf(id);
@@ -316,8 +348,10 @@ public final class SectMembership {
 	 * pick after the bug sweep of 2026-10-23: it let one player empty a sect of its lower ranks).
 	 */
 	public static boolean mayBanish(Seat seat, UUID target, NpcTitle title) {
-		return seat != null && seat.inBody() && seat.title().isElderOrAbove() && title != null && !target.equals(seat.who())
-				&& title.ordinal() > seat.title().ordinal();
+		if (seat == null || title == null || target.equals(seat.who())) return false;
+		// A player's sect's founder, as themselves, casts out anyone in it (PlayerSects): it is theirs.
+		if (!seat.inBody() && isFounder(seat.sect(), seat.who())) return true;
+		return seat.inBody() && seat.title().isElderOrAbove() && title.ordinal() > seat.title().ordinal();
 	}
 
 	/**
@@ -428,7 +462,9 @@ public final class SectMembership {
 	public static void onFellowStruck(CultivatorNpc victim, ServerPlayer attacker) {
 		if (!victim.isSectMember() || SparSystem.areSparring(victim, attacker) || attacker.isCreative() || attacker.isSpectator()) return;
 		Sect sect = victim.sect();
-		if (sect != null && sect.disciples.containsKey(attacker.getUUID())) expel(attacker, sect, ModLang.MSG_SECT_EXPELLED_VIOLENCE);
+		if (sect != null && sect.disciples.containsKey(attacker.getUUID()) && !isFounder(sect, attacker.getUUID())) {
+			expel(attacker, sect, ModLang.MSG_SECT_EXPELLED_VIOLENCE);
+		}
 	}
 
 	/**
@@ -555,6 +591,7 @@ public final class SectMembership {
 				long left = barred == null ? 0 : barred - player.level().getGameTime();
 				buf.writeVarInt(left <= 0 ? 0 : (int) Math.max(1, (left + HeavenRitual.DAY - 1) / HeavenRitual.DAY));
 			}
+			buf.writeUtf(PlayerSects.invitationFor(player)); // a player's sect that invites them (PlayerSects): accepted from the tab
 		}
 		CelestialCourt.writeInfo(player, buf); // and their rank in the Celestial Court, if they are of it
 		ServerPlayNetworking.send(player, ModPackets.SECT_INFO, buf);

@@ -156,7 +156,8 @@ public class MethodsPhaseFourGameTests implements FabricGameTest {
 			TestMethods.setAt(c, Realm.SACRED_VESSEL, Stage.EARLY);
 			CultivationMethods.learn(p, CultivationMethod.VESSEL_NURTURING, Realm.SACRED_VESSEL);
 			CultivationMethods.practise(p, CultivationMethod.VESSEL_NURTURING);
-			ItemStack vessel = new ItemStack(ModItems.NINE_PROVINCES_DING);
+			// Two of it: a pour may crack one (VesselNurturing#CRACK_ODDS), which left an empty stack, no item to rest, a flaky test (2026-11-10).
+			ItemStack vessel = new ItemStack(ModItems.NINE_PROVINCES_DING, 2);
 			c.setQi(c.maxQi() * 0.4);
 			helper.assertTrue(VesselNurturing.pour(p, vessel) && c.getCultivation() == 0, "Less than half its qi: refused");
 			c.setQi(c.maxQi());

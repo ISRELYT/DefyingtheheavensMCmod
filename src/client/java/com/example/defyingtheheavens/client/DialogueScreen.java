@@ -30,6 +30,12 @@ public class DialogueScreen extends Screen implements HallFrame.Framed {
 	final TalkSession session;
 	private TalkSession.Dialogue dialogue;
 	private int boxX0, boxY0, boxX1, boxY1, repliesX;
+	/**
+	 * How many of what they say is scrolled past (lines), and how many more there are than the box shows: a long answer (a Heavenly
+	 * Venerable's on the four primordial beasts) ran past the box's foot on a small screen and was cut off (2026-11-10). The wheel over it,
+	 * or the arrow keys, scroll it; arrows at its side tell there is more.
+	 */
+	private int textScroll, textMaxScroll;
 
 	DialogueScreen(TalkSession session, TalkSession.Dialogue dialogue) {
 		super(Component.literal(session.name));
@@ -40,6 +46,7 @@ public class DialogueScreen extends Screen implements HallFrame.Framed {
 	/** They said something more. */
 	void show(TalkSession.Dialogue next) {
 		dialogue = next;
+		textScroll = 0;
 		if (minecraft != null) fit();
 	}
 
@@ -64,7 +71,12 @@ public class DialogueScreen extends Screen implements HallFrame.Framed {
 		int forReplies = rows.get(rows.size() - 1).bottom() + 4 - boxY0;
 		int forLine = font.split(dialogue.line(), repliesX - (boxX0 + 10) - 14).size() * 10 + 23;
 		int room = boxY1 - 60;
-		boxY0 = boxY1 - Math.max(BOX_H, Math.min(room, Math.max(forReplies, forLine)));
+		// For what they say, the portrait and its plates (52 above the box) kept below the HUD's top-left stack: on a small screen a long
+		// answer grew the box till they sat over its name and bars, words on words (2026-11-10); what doesn't fit scrolls. The replies may
+		// still take all the room (none of them is ever left off).
+		int hud = HudCorner.foot();
+		int clear = hud > 0 ? Math.min(room, boxY1 - (hud + 4) - 52) : room;
+		boxY0 = boxY1 - Math.max(BOX_H, Math.max(Math.min(room, forReplies), Math.min(clear, forLine)));
 	}
 
 	/** One row of the replies, wrapped to the column: where it starts and its lines (the number goes before the first). */
@@ -150,12 +162,20 @@ public class DialogueScreen extends Screen implements HallFrame.Framed {
 		// The box.
 		TalkUi.panel(g, boxX0, boxY0, boxX1, boxY1, TalkUi.GOLD);
 		int textX = boxX0 + 10, textW = repliesX - textX - 14;
-		int y = boxY0 + 9;
-		for (FormattedCharSequence line : font.split(dialogue.line(), textW)) {
-			if (y > boxY1 - 24) break;
-			g.drawString(font, line, textX, y, TalkUi.CREAM, false);
+		int top = boxY0 + 9;
+		List<FormattedCharSequence> said = font.split(dialogue.line(), textW);
+		int shown = Math.max(1, (boxY1 - 24 - top) / 10 + 1);
+		textMaxScroll = Math.max(0, said.size() - shown);
+		textScroll = Math.max(0, Math.min(textScroll, textMaxScroll));
+		int y = top;
+		for (int i = textScroll; i < said.size() && i < textScroll + shown; i++) {
+			g.drawString(font, said.get(i), textX, y, TalkUi.CREAM, false);
 			y += 10;
 		}
+		// More above or below: a small gold arrow in the gap between the words and the replies' rule (the wheel over it, or the arrow keys, scroll it).
+		int arrowX = repliesX - 13;
+		if (textScroll > 0) arrow(g, arrowX, top + 1, true);
+		if (textScroll < textMaxScroll) arrow(g, arrowX, top + (shown - 1) * 10 + 2, false);
 		TalkUi.regard(g, font, session.regard, textX, boxY1 - 15);
 		g.fill(repliesX - 8, boxY0 + 8, repliesX - 7, boxY1 - 8, HallHud.RULE);
 
@@ -198,8 +218,34 @@ public class DialogueScreen extends Screen implements HallFrame.Framed {
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
+	/** A five-pixel gold arrow, pointing {@code up} or down, its top left at ({@code x}, {@code y}). */
+	private static void arrow(GuiGraphics g, int x, int y, boolean up) {
+		// (Opaque: fill takes the colour's alpha as given, and the text colour has none of its own.)
+		int gold = 0xFF000000 | TalkUi.GOLD_TEXT;
+		for (int row = 0; row < 3; row++) {
+			int inset = up ? 2 - row : row;
+			g.fill(x + inset, y + row, x + 5 - inset, y + row + 1, gold);
+		}
+	}
+
+	/** The wheel over what they say scrolls it: two lines a notch. */
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+		if (textMaxScroll > 0 && mouseX < repliesX - 8 && mouseY >= boxY0 && mouseY < boxY1) {
+			int lines = 2 * Math.max(1, (int) Math.round(Math.abs(delta)));
+			textScroll = Math.max(0, Math.min(textMaxScroll, textScroll - (int) Math.signum(delta) * lines));
+			return true;
+		}
+		return super.mouseScrolled(mouseX, mouseY, delta);
+	}
+
 	@Override
 	public boolean keyPressed(int key, int scanCode, int modifiers) {
+		// The arrow keys scroll what they say, when it is longer than the box.
+		if (textMaxScroll > 0 && (key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN)) {
+			textScroll = Math.max(0, Math.min(textMaxScroll, textScroll + (key == GLFW.GLFW_KEY_DOWN ? 1 : -1)));
+			return true;
+		}
 		int index = key - GLFW.GLFW_KEY_1;
 		if (index >= 0 && index < dialogue.replies().size()) {
 			pick(index);

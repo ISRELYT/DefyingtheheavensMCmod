@@ -331,6 +331,16 @@ public final class ClientPacketHandlers {
 			float health = buf.readFloat(), max = buf.readFloat();
 			client.execute(() -> ClientClone.set(in, health, max));
 		});
+		// The lists (Rankings): kept for the Journal's page, and the stele's screen opened if one was right-clicked.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.RANKINGS, (client, handler, buf, sender) -> {
+			boolean open = buf.readBoolean();
+			net.minecraft.network.FriendlyByteBuf copy = new net.minecraft.network.FriendlyByteBuf(buf.copy());
+			client.execute(() -> {
+				ClientRankings.read(copy);
+				copy.release();
+				if (open) client.setScreen(new RankingScreen());
+			});
+		});
 		// What may be written out on a Blank Manual (TechniqueManualItem#offerInscription): the screen to pick it from.
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.INSCRIBE_OPTIONS, (client, handler, buf, sender) -> {
 			int count = buf.readVarInt();
@@ -383,6 +393,35 @@ public final class ClientPacketHandlers {
 			FormationCoreScreen.State state = new FormationCoreScreen.State(pos, radius, wanted, raised, battery, max, supply, veins, rank,
 					cooldown, owner, trusted, veilRadius, veilWanted, veilRaised, share);
 			client.execute(() -> FormationCoreScreen.receive(state));
+		});
+
+		// The core's Sect page (PlayerSects#sendInfo): the player's sect on it, or whether one could be founded there.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.PLAYER_SECT, (client, handler, buf, sender) -> {
+			BlockPos pos = buf.readBlockPos();
+			FormationCoreScreen.SectInfo info;
+			if (buf.readBoolean()) {
+				String name = buf.readUtf();
+				long tribute = buf.readVarLong(), daily = buf.readVarLong();
+				int capacity = buf.readVarInt(), mats = buf.readVarInt(), cap = buf.readVarInt(), gates = buf.readVarInt();
+				boolean altar = buf.readBoolean();
+				long next = buf.readVarLong();
+				boolean clan = buf.readBoolean(), holy = buf.readBoolean(), immortal = buf.readBoolean(), body = buf.readBoolean();
+				int count = buf.readVarInt();
+				List<FormationCoreScreen.SectMember> members = new ArrayList<>(count);
+				for (int i = 0; i < count; i++) {
+					members.add(new FormationCoreScreen.SectMember(buf.readUUID(), buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
+				}
+				info = new FormationCoreScreen.SectInfo(pos, true, name, tribute, daily, capacity, mats, cap, gates, altar, next, clan, holy, immortal,
+						body, members, false, net.minecraft.network.chat.Component.empty(), "");
+			} else {
+				boolean canFound = buf.readBoolean();
+				net.minecraft.network.chat.Component refusal = buf.readComponent();
+				int mats = buf.readVarInt(), cap = buf.readVarInt();
+				String fallen = buf.readUtf();
+				info = new FormationCoreScreen.SectInfo(pos, false, "", 0, 0, 0, mats, cap, 0, false, -1, false, false, false, false, List.of(),
+						canFound, refusal, fallen);
+			}
+			client.execute(() -> FormationCoreScreen.receiveSect(info));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TALK_OPEN, (client, handler, buf, sender) -> {

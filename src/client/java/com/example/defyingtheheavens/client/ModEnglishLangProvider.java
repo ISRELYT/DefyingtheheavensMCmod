@@ -1485,6 +1485,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			case ALCHEMY -> "Alchemy";
 			case FORGING -> "Forging";
 			case FORMATIONS -> "Formations";
+			case TALISMANS -> "Talismans";
 		});
 		for (CraftMastery.Rank rank : CraftMastery.Rank.values()) t.add(ModLang.craftRank(rank.name().toLowerCase(java.util.Locale.ROOT)), switch (rank) {
 			case APPRENTICE -> "Apprentice";
@@ -1505,7 +1506,54 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CRAFTS_ALCHEMY_SECOND, "Two pills from one brew %s%% of the time.");
 		t.add(ModLang.CRAFTS_FORGING, "Grown at the Artifact Forge.");
 		t.add(ModLang.CRAFTS_FORMATIONS, "Grown by crafting formations.");
+		t.add(ModLang.CRAFTS_TALISMANS, "Grown by drawing talismans: harder patterns fail less, and from Adept they can come out Fine or Perfect.");
 		t.add(ModLang.CRAFTS_HINT, "Every craft grows with practice.");
+		// Talismans (Talismans, TalismanItem)
+		t.add(ModLang.TALISMAN_TITLE, "Draw a Talisman");
+		t.add(ModLang.TALISMAN_HINT, "Choose a pattern, then hold use to draw it");
+		t.add(ModLang.TALISMAN_OPTION, "%s: %s qi, sure from %s");
+		t.add(ModLang.MSG_TALISMAN_CHOSEN, "%s chosen: hold use to draw it. Sneak and use to choose another.");
+		t.add(ModLang.MSG_TALISMAN_NO_PAPER, "Hold Talisman Paper in your other hand to draw.");
+		t.add(ModLang.MSG_TALISMAN_NO_QI_POOL, "You have no qi to draw a talisman with.");
+		t.add(ModLang.MSG_TALISMAN_LOW_QI, "Drawing a %s takes %s qi; you have %s.");
+		t.add(ModLang.MSG_TALISMAN_NEEDS, "Drawing a %s needs %s.");
+		t.add(ModLang.MSG_TALISMAN_SPOILED, "Your stroke slips: the %s is spoiled.");
+		t.add(ModLang.MSG_TALISMAN_DRAWN, "You draw a %s.");
+		t.add(ModLang.MSG_TALISMAN_DRAWN_FINE, "You draw a %s: %s work.");
+		t.add(ModLang.MSG_TALISMAN_UNBOUND, "%s stands too far above the talisman to be bound.");
+		t.add(ModLang.MSG_TALISMAN_BOUND, "A talisman binds you where you stand.");
+		t.add(ModLang.MSG_TALISMAN_ESCAPE_SEALED, "Space is sealed here: the talisman can't carry you.");
+		t.add(ModLang.MSG_TALISMAN_ESCAPE_NO_GROUND, "No safe ground lies that way: the talisman won't carry you.");
+		t.add(ModLang.MSG_TALISMAN_CONCEALED, "You fade from notice.");
+		t.add(ModLang.MSG_TALISMAN_REVEALED, "You strike, and are noticed again.");
+		t.add(ModLang.TOOLTIP_TALISMAN_THROW, "Throw it");
+		t.add(ModLang.TOOLTIP_TALISMAN_BURN, "Burn it (use)");
+		t.add(ModLang.TOOLTIP_TALISMAN_DRAWN, "Drawn by %s at %s");
+		t.add(ModLang.TOOLTIP_TALISMAN_CAP, "In weaker hands, at most a realm above theirs");
+		t.add(ModLang.TOOLTIP_TALISMAN_UNSIGNED, "Of no known hand: as strong as whoever uses it");
+		t.add(ModLang.TOOLTIP_TALISMAN_REACH, "Carries you %s blocks the way you face");
+		t.add(ModLang.TOOLTIP_TALISMAN_PAPER, "Hold it in one hand and the Inscription Brush in the other to draw a talisman");
+		t.add(ModLang.talismanTooltip("fire"), "Bursts into flame where it lands");
+		t.add(ModLang.talismanTooltip("five_thunder"), "Calls a bolt of the Five Thunders down where it lands");
+		t.add(ModLang.talismanTooltip("frost"), "Bursts into frost where it lands, slowing all it catches");
+		t.add(ModLang.talismanTooltip("binding"), "Holds whoever it strikes where they stand for a few seconds");
+		t.add(ModLang.talismanTooltip("golden_light"), "A shell of golden light that soaks up harm for half a minute");
+		t.add(ModLang.talismanTooltip("divine_speed"), "Swift feet for a minute");
+		t.add(ModLang.talismanTooltip("thousand_li_escape"), "Flashes you far the way you face, onto safe ground");
+		t.add(ModLang.talismanTooltip("concealment"), "Beasts and cultivators don't notice you for a minute, until you strike");
+		t.add(ModItems.TALISMAN_PAPER, "Talisman Paper");
+		t.add(ModItems.FIRE_TALISMAN, "Fire Talisman");
+		t.add(ModItems.FIVE_THUNDER_TALISMAN, "Five Thunder Talisman");
+		t.add(ModItems.FROST_TALISMAN, "Frost Talisman");
+		t.add(ModItems.BINDING_TALISMAN, "Binding Talisman");
+		t.add(ModItems.GOLDEN_LIGHT_TALISMAN, "Golden Light Talisman");
+		t.add(ModItems.DIVINE_SPEED_TALISMAN, "Divine Speed Talisman");
+		t.add(ModItems.THOUSAND_LI_ESCAPE_TALISMAN, "Thousand-Li Escape Talisman");
+		t.add(ModItems.CONCEALMENT_TALISMAN, "Concealment Talisman");
+		t.add(ModEntities.TALISMAN, "Talisman");
+		t.add(ModEffects.BOUND, "Bound");
+		t.add(ModEffects.GOLDEN_LIGHT, "Golden Light");
+		t.add(ModEffects.CONCEALED, "Concealed");
 		for (CodexMap.World world : CodexMap.World.values()) {
 			t.add(world.nameKey(), world.english());
 			t.add(world.wayKey(), world.wayEnglish());
@@ -2531,6 +2579,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SECT_TAB_NEAREST, "Nearest: %s (%s), %s blocks to the %s.");
 		t.add(ModLang.SECT_TAB_NEAREST_NONE, "No sect is known of within 4,000 blocks.");
 		t.add(ModLang.SECT_TAB_BARRED, "It won't hear you for %s more day(s).");
+		t.add(ModLang.SECT_TAB_INVITED, "The %s invites you to join it.");
+		t.add(ModLang.SECT_TAB_ACCEPT, "Accept");
 		t.add(ModLang.SECT_TAB_TITLE, "Your title: %s");
 		t.add(ModLang.SECT_TAB_STANDING, "Its regard for you: %s (%s)");
 		t.add(ModLang.SECT_TAB_GROUNDS_HERE, "Grounds: you stand on them (cultivating %s%% faster)");
@@ -2970,16 +3020,19 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.talkLine("join.failed"), "Not yet. Train, and come back tomorrow.");
 		t.add(ModLang.talkLine("leave.disciple"), "Only an elder can release you from the sect.");
 		t.add(ModLang.talkLine("leave.done"), "So be it. You are no longer one of us. Go well.");
+		t.add(ModLang.talkLine("leave.founder"), "You are our master: we are your sect. If you would end it, do it at its Formation Core.");
+		t.add(ModLang.talkLine("join.founder_only"), "Our sect is %s's. Only those our master invites may join us.");
 		// The Celestial Court (CelestialCourt): a Heavenly Venerable's topic and answers, its people's own words of themselves, its merit.
 		t.add("cultivation.defying-the-heavens.talk.topic.court", "I would serve the Celestial Court.");
-		t.add(ModLang.talkLine("court.join"), "%s writes your name into the Court's rolls. \"From today you are an Officer of the Celestial Court. "
+		// (Every answer is shown in quotation marks of its own (TalkSystem#speech): these carry none, and are wholly the speaker's words.)
+		t.add(ModLang.talkLine("court.join"), "Then I write your name into the Court's rolls. From today you are an Officer of the Celestial Court. "
 				+ "Keep watch on the Southern Heavenly Gate's plaza while the Gate stands open, and hunt down the devilish immortals of this realm. "
-				+ "The Court pays its officers in merit; its Quartermaster, on the palace terrace, takes it.\"");
-		t.add(ModLang.talkLine("court.member"), "\"You hold the rank of %s in the Celestial Court, with %s merit to your name. Earn %s more "
-				+ "and you will be made a %s.\"");
-		t.add(ModLang.talkLine("court.member.top"), "\"You hold the rank of %s in the Celestial Court, with %s merit to your name. The Court "
-				+ "has no higher rank to give you.\"");
-		t.add(ModLang.talkLine("court.too_weak"), "\"The Court takes no one who could not climb the Gate.\"");
+				+ "The Court pays its officers in merit; its Quartermaster, on the palace terrace, takes it.");
+		t.add(ModLang.talkLine("court.member"), "You hold the rank of %s in the Celestial Court, with %s merit to your name. Earn %s more "
+				+ "and you will be made a %s.");
+		t.add(ModLang.talkLine("court.member.top"), "You hold the rank of %s in the Celestial Court, with %s merit to your name. The Court "
+				+ "has no higher rank to give you.");
+		t.add(ModLang.talkLine("court.too_weak"), "The Court takes no one who could not climb the Gate.");
 		t.add(ModLang.talkLine("self.court"), "I am %1$s, %2$s of the Celestial Court: a %3$s.");
 		t.add(ModLang.talkLine("self.court.venerable"), "I am %1$s, the Heavenly Venerable of %2$s of the Celestial Court: a %3$s.");
 		t.add(ModLang.TALK_NEEDS_COURT, "(needs the rank of Court %s)");
@@ -3008,7 +3061,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_PRIMORDIAL_SLAIN, "The %s has fallen. Another of its kind will come in five days.");
 		t.add(ModLang.MSG_COURT_MERIT_PRIMORDIAL, "+%2$s merit: the %1$s slain (%3$s in all)");
 		t.add("cultivation.defying-the-heavens.talk.topic.beasts", "Where are the primordial beasts?");
-		t.add(ModLang.talkLine("primordial"), "\"Four beasts older than the Court keep this realm, and none of them bows to it.\"");
+		t.add(ModLang.talkLine("primordial"), "Four beasts older than the Court keep this realm, and none of them bows to it.");
 		t.add(ModLang.primordialWhere("kun_peng"), "The Kun swims the sea of clouds %s of the Southern Heavenly Gate, some %s blocks out (about %s, %s). Wound it deep and it is the Peng.");
 		t.add(ModLang.primordialGone("kun_peng"), "The Kun-Peng was slain; another comes to its waters in %s days.");
 		t.add(ModLang.primordialWhere("true_phoenix"), "The True Phoenix roosts on a peak %s of the Gate, some %s blocks out (about %s, %s). Kill it once and it burns, and rises again.");
@@ -3270,6 +3323,95 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.rumour("realm.stirs"), "They say the %1$s stirs. Its Seal lies %2$s of here, in the %3$s, some %4$s blocks off.");
 		t.add(ModLang.rumour("realm.heir"), "They say %s took the Great Inheritance of the %s.");
 		t.add(ModLang.rumour("realm.fallen"), "They say %s fell in the %s. Whatever they carried lies there still.");
+		// The lists (Rankings) and a sect founded by a player (PlayerSects), talked of round their world.
+		t.add(ModLang.rumour("ranking"), "Have you heard? %s beat %s, and stands number %s on the %s now.");
+		t.add(ModLang.rumour("founding"), "They say a new sect has been founded, the %1$s, by %2$s. Its grounds lie %3$s of here, in the %4$s, some %5$s blocks off.");
+		t.add(ModLang.TALK_RANKED, "Number %s of the %s! %s");
+		t.add(ModLang.RANKING_TITLE, "The Lists");
+		t.add(ModLang.RANKING_EMPTY, "No one is known on this list yet.");
+		t.add(ModLang.RANKING_YOU, "You stand number %s on the %s.");
+		t.add(ModLang.RANKING_YOU_OFF, "You aren't among the hundred on the %s.");
+		t.add(ModLang.RANKING_ROW, "%s. %s");
+		t.add(ModLang.RANKING_HINT, "Strongest first. Beat one above you to take their place.");
+		t.add(ModLang.BTN_JOURNAL_RUMOURS, "Rumours");
+		t.add(ModLang.BTN_JOURNAL_RANKINGS, "The Lists");
+		t.add(ModLang.TOOLTIP_RANKING_STELE, "Right-click to read the hundred strongest of every world");
+		for (com.example.defyingtheheavens.Rankings.Board board : com.example.defyingtheheavens.Rankings.Board.values()) {
+			t.add(ModLang.rankingBoard(board.getId()), switch (board) {
+				case EARTH -> "Earth List";
+				case HEAVEN -> "Heaven List";
+				case VOID -> "Void List";
+				case IMMORTAL -> "Immortal List";
+				case NETHERWORLD -> "Netherworld List";
+			});
+			t.add(ModLang.rankingBoardShort(board.getId()), switch (board) {
+				case EARTH -> "Earth";
+				case HEAVEN -> "Heaven";
+				case VOID -> "Void";
+				case IMMORTAL -> "Immortal";
+				case NETHERWORLD -> "Netherworld";
+			});
+		}
+		t.add(ModBlocks.RANKING_STELE, "Ranking Stele");
+
+		// Sects founded by players (PlayerSects, 2026-11-10): founding at a Formation Core, aspirants, invitations, tribute, disbanding.
+		t.add(ModLang.MSG_PSECT_NOT_OWNER, "Only this core's owner may found a sect on it.");
+		t.add(ModLang.MSG_PSECT_DEAD, "Only the living, in their own bodies, found sects.");
+		t.add(ModLang.MSG_PSECT_IN_SECT, "You are of the %s already: one belongs to a single sect.");
+		t.add(ModLang.MSG_PSECT_WEAK, "Only one of Nascent Soul or above may found a sect.");
+		t.add(ModLang.MSG_PSECT_NO_SECTS, "No sects stand in this world: no aspirant would ever come.");
+		t.add(ModLang.MSG_PSECT_TERRITORY, "This is the %s's land, or too near it.");
+		t.add(ModLang.MSG_PSECT_BARRIER, "Raise the barrier first: a sect lives behind its own.");
+		t.add(ModLang.MSG_PSECT_MATS, "Lay at least %s meditation mats inside the barrier (%s there now).");
+		t.add(ModLang.MSG_PSECT_FOUNDED, "You found the %s. Aspirants will come, about one a day while it has places.");
+		t.add(ModLang.MSG_PSECT_REVIVED, "The %s lives again, with you as its master. Aspirants will come, about one a day while it has places.");
+		t.add(ModLang.MSG_PSECT_RENAMED, "Your sect is called the %s now.");
+		t.add(ModLang.MSG_PSECT_ARRIVED, "An aspirant, %s (%s), comes to the %s and is taken in as %s.");
+		t.add(ModLang.MSG_PSECT_INVITE_UNKNOWN, "No one called %s is here.");
+		t.add(ModLang.MSG_PSECT_INVITE_MEMBER, "%s is of the %s already.");
+		t.add(ModLang.MSG_PSECT_INVITE_PENDING, "%s has your invitation already: it stands a few minutes yet.");
+		t.add(ModLang.MSG_PSECT_INVITE_SENT, "You invite %s to join the %s. The invitation stands for five minutes.");
+		t.add(ModLang.MSG_PSECT_INVITED, "%s invites you to join the %s.");
+		t.add(ModLang.MSG_PSECT_ACCEPT, "[Accept]");
+		t.add(ModLang.MSG_PSECT_ACCEPT_HOVER, "Join the %s");
+		t.add(ModLang.MSG_PSECT_NO_INVITE, "No sect's invitation stands for you now.");
+		t.add(ModLang.MSG_PSECT_ACCEPTED, "%s joins the %s.");
+		t.add(ModLang.MSG_PSECT_JOIN_POSSESSED, "Come in your own body to join a sect.");
+		t.add(ModLang.MSG_PSECT_JOIN_DEAD, "The dead join no sect of the living.");
+		t.add(ModLang.MSG_PSECT_JOIN_HUMAN, "The %s is a clan: it takes only those with a beast's blood.");
+		t.add(ModLang.MSG_PSECT_JOIN_NOT_BODY, "The %s tempers the body: begin on the Body Path first.");
+		t.add(ModLang.MSG_PSECT_JOIN_MORTAL, "Begin cultivating first: a sect takes no mortal.");
+		t.add(ModLang.MSG_PSECT_JOIN_OTHER, "You are of the %s: leave it before you join another.");
+		t.add(ModLang.MSG_PSECT_TRIBUTE, "You take %s Low spirit stones' worth of tribute from the %s.");
+		t.add(ModLang.MSG_PSECT_NO_TRIBUTE, "No tribute is waiting yet.");
+		t.add(ModLang.MSG_PSECT_DISBANDED, "The %s is disbanded. Its people go their own ways.");
+		t.add(ModLang.MSG_PSECT_CORE_LOST, "The %s's Formation Core is gone, and the sect breaks up. Its people go their own ways.");
+		t.add(ModLang.MSG_PSECT_FOUNDER_STAYS, "You founded the %s: if you would end it, disband it at its Formation Core.");
+		t.add(ModLang.CORE_SECT_BUTTON, "Sect");
+		t.add(ModLang.CORE_SECT_FOUND_TITLE, "Found a Sect");
+		t.add(ModLang.CORE_SECT_NAME_HINT, "Its name");
+		t.add(ModLang.CORE_SECT_FOUND, "Found");
+		t.add(ModLang.CORE_SECT_REVIVE, "The fallen %s would live again here (its name, unless you give another).");
+		t.add(ModLang.CORE_SECT_RULES, "One of Nascent Soul or above, of no sect, may found a sect at their core: its barrier up, %s or more meditation mats inside, in a world with sects, on no other sect's land.");
+		t.add(ModLang.CORE_SECT_MATS, "Meditation mats inside the barrier: %s. Places for your realm: %s at most.");
+		t.add(ModLang.CORE_SECT_READY, "All is ready: name it and found it.");
+		t.add(ModLang.CORE_SECT_PLACES, "Members %s of %s places (%s mats inside, %s at most for your realm)");
+		t.add(ModLang.CORE_SECT_GROUNDS, "Gates (Sect Plaques): %s. Altar of Heaven: %s.");
+		t.add(ModLang.CORE_SECT_NO_GATE, "Hang a Sect Plaque by your gate: aspirants come in there, and guards keep it.");
+		t.add(ModLang.CORE_SECT_TRIBUTE, "Tribute waiting: %s Low stones' worth (%s a day)");
+		t.add(ModLang.CORE_SECT_NEXT, "The next aspirant comes in about %s.");
+		t.add(ModLang.CORE_SECT_FULL, "Every place is filled: lay more mats for more.");
+		t.add(ModLang.CORE_SECT_RENAME, "Rename");
+		t.add(ModLang.CORE_SECT_INVITE, "Invite");
+		t.add(ModLang.CORE_SECT_INVITE_HINT, "A player's name");
+		t.add(ModLang.CORE_SECT_COLLECT, "Collect");
+		t.add(ModLang.CORE_SECT_DISBAND, "Disband");
+		t.add(ModLang.CORE_SECT_SURE, "Sure?");
+		t.add(ModLang.CORE_SECT_NONE, "No one yet: aspirants come about one a day.");
+		t.add(ModLang.CORE_SECT_EXPEL, "Cast %s out of the sect");
+		t.add(ModLang.CORE_SECT_PLAYER, "%s (player)");
+		t.add(ModLang.TOOLTIP_SECT_PLAQUE, "Hang it by your sect's gate: its aspirants come in there, and its guards keep it");
+		t.add(ModBlocks.SECT_PLAQUE, "Sect Plaque");
 
 		// The second phase (2026-10-31): the Sunken Sword Tomb (SwordTombWorks) and the Ancient Battlefield (BattlefieldWorks).
 		t.add(ModLang.secretRealm("sunken_sword_tomb"), "Sunken Sword Tomb");
@@ -3700,6 +3842,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BOND_FED, "%s eats the core and grows, but you practise no Spirit Beast Bond to grow with it.");
 		t.add(ModLang.MSG_BOND_DIED, "Your bound beast, %s, has died.");
 		t.add(ModLang.MSG_BOND_DIED_LOST, "Your bound beast, %s, has died, and the realm's progress it carried goes with it: you fall back to %s.");
+		t.add(ModLang.MSG_MOUNT_TOO_SMALL, "%s is too small to carry you yet: it must grow larger first.");
+		t.add(ModLang.MSG_MOUNT_CANT, "%s can't carry you now.");
 		// Court of the Dead (CourtOfTheDead)
 		t.add(ModLang.MSG_COURT_CLAIMED, "You take the empty throne: the palace is yours, and its %s retainers your subjects.");
 		t.add(ModLang.MSG_COURT_LOST, "No longer a Ghost King, you give your palace's throne up.");

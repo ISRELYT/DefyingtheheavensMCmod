@@ -62,6 +62,9 @@ public final class SectCommand {
 						return 1;
 					}))));
 
+			// /sectaccept: anyone takes up the invitation standing for them to a player's sect (PlayerSects: the link in the invitation runs it).
+			dispatcher.register(Commands.literal("sectaccept").executes(ctx -> PlayerSects.accept(ctx.getSource().getPlayerOrException())));
+
 			dispatcher.register(Commands.literal("cultivator")
 					.requires(src -> src.hasPermission(2))
 					// Where the secluded are: everyone known to sit in seclusion (or to be seeking a place for it), nearest first.

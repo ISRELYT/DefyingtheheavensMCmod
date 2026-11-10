@@ -14,11 +14,14 @@ import net.minecraft.sounds.SoundSource;
  * What a rank does in alchemy (AlchemyCauldronBlockEntity): a brew harder than one's rank can fail ({@link #failChance}: the herbs
  * ruined, half the practice still learned), a pill can come out a grade better than the herbs alone would give ({@link #betterGrade}: never
  * past the best grade herbs of that age can give at all), and a Grandmaster or a Saint now and then draws two pills from one brew
- * ({@link #secondPill}). Forging and Formations are practised at the Artifact Forge and on the formations themselves.
+ * ({@link #secondPill}). Forging and Formations are practised at the Artifact Forge and on the formations themselves; Talismans (the fourth,
+ * 2026-11-10) by drawing them with the Inscription Brush (Talismans), failing and coming out Fine or Perfect as the forge's work does.
  */
 public final class CraftMastery {
 	public enum Craft {
-		ALCHEMY("alchemy"), FORGING("forging"), FORMATIONS("formations");
+		ALCHEMY("alchemy"), FORGING("forging"), FORMATIONS("formations"),
+		/** The fourth (2026-11-10): drawing talismans with the Inscription Brush (Talismans). */
+		TALISMANS("talismans");
 
 		private final String id;
 

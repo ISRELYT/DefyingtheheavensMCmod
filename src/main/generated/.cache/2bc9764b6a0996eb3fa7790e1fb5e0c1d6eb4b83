@@ -1,4 +1,4 @@
-// 1.20.1	2026-11-01T20:53:35.5439332	Defying The Heavens/Block Loot Tables
+// 1.20.1	2026-11-10T23:08:15.7129591	Defying The Heavens/Block Loot Tables
 0e94fb10ad651ca942cd0f9dfda513003025edb6 data\defying-the-heavens\loot_tables\blocks\formation_core.json
 86ae70a214555fdc048f1e6c401d1dfcbcf87de0 data\defying-the-heavens\loot_tables\blocks\high_qi_gathering_formation.json
 86041040437e63b212119a67a16f5daa00c23752 data\defying-the-heavens\loot_tables\blocks\heaven_altar.json
@@ -12,9 +12,10 @@ acfd35aef3d373e63b6f72e54a975eb9956dd14f data\defying-the-heavens\loot_tables\bl
 4b25a1162f7cebc1ecf3e75964c61b36f4342ea3 data\defying-the-heavens\loot_tables\blocks\blue_spirit_wood.json
 3300dc4aac9db3ab1905fbff8aef4d6b5af9ce32 data\defying-the-heavens\loot_tables\blocks\spirit_peach_sapling.json
 1b232e5c95c1f1ad6fe234c1fc64dc1add954886 data\defying-the-heavens\loot_tables\blocks\qi_vein.json
-ee253c5344d9f282c9e4aab06dfed3c5a0145b7d data\defying-the-heavens\loot_tables\blocks\mid_qi_gathering_formation.json
 2b47cb4406d1ad7ff50bca7459a4cc105b4f1325 data\defying-the-heavens\loot_tables\blocks\buried_sword.json
+ee253c5344d9f282c9e4aab06dfed3c5a0145b7d data\defying-the-heavens\loot_tables\blocks\mid_qi_gathering_formation.json
 771d43930000d5d17838e3437e0dc81ac22d473c data\defying-the-heavens\loot_tables\blocks\blue_spirit_log.json
+d2336ef77a0d2b3f497223d264cde29d9bcfcbb4 data\defying-the-heavens\loot_tables\blocks\ranking_stele.json
 7c892c7708ab301a6619ef0f98cc4ee331d0593f data\defying-the-heavens\loot_tables\blocks\deepslate_jade_ore.json
 18e7dff58e9d756077f964ff29d48d629a79bef5 data\defying-the-heavens\loot_tables\blocks\chaos_origin_ore.json
 13614c0f07e6776ed25b323cb500484b3d3076a6 data\defying-the-heavens\loot_tables\blocks\spirit_peach_leaves.json
@@ -27,5 +28,6 @@ b52f4d37381c416b561a10f644b3c83680926d56 data\defying-the-heavens\loot_tables\bl
 d6a9b3a779306a1cd27586391e87d940433f4e46 data\defying-the-heavens\loot_tables\blocks\white_blossom_leaves.json
 4734c5099031357c80df266e90fc332032d7c0ac data\defying-the-heavens\loot_tables\blocks\pill_sage_cauldron.json
 15334d9adbb50cdff7e037564275622c349eee07 data\defying-the-heavens\loot_tables\blocks\yin_jade_block.json
+70e649e7e0e1d00a4e893563e562d6f68e9e4740 data\defying-the-heavens\loot_tables\blocks\sect_plaque.json
 1353e4e378d036345524b222edb0b03e500815c0 data\defying-the-heavens\loot_tables\blocks\low_qi_gathering_formation.json
 3c912e694a94541911cf7186cd20b8f277f98468 data\defying-the-heavens\loot_tables\blocks\alchemy_cauldron.json

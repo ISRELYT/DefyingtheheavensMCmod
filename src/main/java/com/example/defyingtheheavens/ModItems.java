@@ -149,6 +149,28 @@ public final class ModItems {
 	/** Painted with the brush: thrown, it strikes one of the dead and binds it where it stands (see GhostQuellingTalismanItem). */
 	public static final Item GHOST_QUELLING_TALISMAN = register("ghost_quelling_talisman",
 			new GhostQuellingTalismanItem(new Item.Properties().stacksTo(16)));
+	/** Paper dyed for talismans: the Inscription Brush draws them on it, a pattern picked, cinnabar and qi its ink (see Talismans). */
+	public static final Item TALISMAN_PAPER = register("talisman_paper", new Item(new Item.Properties()) {
+		@Override
+		public void appendHoverText(net.minecraft.world.item.ItemStack stack, net.minecraft.world.level.Level level, java.util.List<net.minecraft.network.chat.Component> lines,
+				net.minecraft.world.item.TooltipFlag flag) {
+			lines.add(net.minecraft.network.chat.Component.translatable(ModLang.TOOLTIP_TALISMAN_PAPER).withStyle(net.minecraft.ChatFormatting.GRAY));
+		}
+	});
+	/** The talismans the brush draws (TalismanItem, TalismanPattern): thrown or burnt, each as strong as its drawer's realm. */
+	public static final Item FIRE_TALISMAN = register("fire_talisman", new TalismanItem(TalismanPattern.FIRE, new Item.Properties().stacksTo(16)));
+	public static final Item FIVE_THUNDER_TALISMAN = register("five_thunder_talisman",
+			new TalismanItem(TalismanPattern.FIVE_THUNDER, new Item.Properties().stacksTo(16)));
+	public static final Item FROST_TALISMAN = register("frost_talisman", new TalismanItem(TalismanPattern.FROST, new Item.Properties().stacksTo(16)));
+	public static final Item BINDING_TALISMAN = register("binding_talisman", new TalismanItem(TalismanPattern.BINDING, new Item.Properties().stacksTo(16)));
+	public static final Item GOLDEN_LIGHT_TALISMAN = register("golden_light_talisman",
+			new TalismanItem(TalismanPattern.GOLDEN_LIGHT, new Item.Properties().stacksTo(16)));
+	public static final Item DIVINE_SPEED_TALISMAN = register("divine_speed_talisman",
+			new TalismanItem(TalismanPattern.DIVINE_SPEED, new Item.Properties().stacksTo(16)));
+	public static final Item THOUSAND_LI_ESCAPE_TALISMAN = register("thousand_li_escape_talisman",
+			new TalismanItem(TalismanPattern.THOUSAND_LI_ESCAPE, new Item.Properties().stacksTo(16)));
+	public static final Item CONCEALMENT_TALISMAN = register("concealment_talisman",
+			new TalismanItem(TalismanPattern.CONCEALMENT, new Item.Properties().stacksTo(16)));
 	/** Holds a ghost method; read, it teaches it, and isn't used up (see GhostJadeSlipItem). */
 	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
 	/** Holds a heaven method; read, it teaches it, and isn't used up (see JadeSlipItem). */
@@ -339,11 +361,14 @@ public final class ModItems {
 			entries.accept(RING_OF_POWER);
 			entries.accept(RING_OF_TRANSCENDENCE);
 			entries.accept(INSCRIPTION_BRUSH);
+			entries.accept(TALISMAN_PAPER);
 			entries.accept(YANG_FIRE_TALISMAN);
+			for (TalismanPattern pattern : TalismanPattern.values()) if (pattern.hasPower() && pattern.use == TalismanPattern.Use.BURNT) entries.accept(pattern.item());
 			entries.accept(WORLD_SEED);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> {
 			entries.accept(GHOST_QUELLING_TALISMAN);
+			for (TalismanPattern pattern : TalismanPattern.values()) if (pattern.use == TalismanPattern.Use.THROWN) entries.accept(pattern.item());
 			for (ClothingStyle style : ClothingStyle.values()) {
 				for (ClothingTier tier : ClothingTier.values()) {
 					for (ArmorItem.Type type : ArmorItem.Type.values()) entries.accept(ClothingItem.create(clothing(tier, type), style));

@@ -709,7 +709,7 @@ public class SectGameTests implements FabricGameTest {
 		var placement = new net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement(32, 16,
 				net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType.LINEAR, 1874662921);
 		BlockPos anchor = new BlockPos(-1234, 64, 5678);
-		java.util.Set<Long> done = new java.util.HashSet<>();
+		it.unimi.dsi.fastutil.longs.LongSet done = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
 		double last = -1;
 		long[] next;
 		while ((next = SectSites.nearestUndecided(done, placement, 12345L, anchor, SectSites.SPAWN_REACH)) != null) {

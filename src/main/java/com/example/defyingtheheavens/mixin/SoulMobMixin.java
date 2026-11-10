@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * A possessed body (see SoulProjection#tryPossess) answers to the soul riding it, as a saddled horse to its rider: the soul
  * controls it (its client moves it, see SoulLivingEntityMixin), and its own mind (goals, targets, pathfinding) is silent until the
- * soul leaves.
+ * soul leaves. So is a bound beast's while its owner rides it (SpiritBonds#mount: its rider steers it, DemonBeast#getControllingPassenger).
  */
 @Mixin(Mob.class)
 public abstract class SoulMobMixin {
@@ -25,6 +25,7 @@ public abstract class SoulMobMixin {
 
 	@Inject(method = "serverAiStep", at = @At("HEAD"), cancellable = true)
 	private void dth$ownMindSilent(CallbackInfo ci) {
-		if (SoulProjection.isPossessed((Mob) (Object) this)) ci.cancel();
+		Mob self = (Mob) (Object) this;
+		if (SoulProjection.isPossessed(self) || self instanceof com.example.defyingtheheavens.DemonBeast beast && beast.rider() != null) ci.cancel();
 	}
 }

@@ -723,7 +723,18 @@ public final class Codex {
 				- Feed it demon cores (right-click it holding one): each is a share of your stage by its realm, and a core of its rank or \
 				above raises it a stage, toward yours.
 				- Each cultivator or beast it slays is a share of your stage too.
-				If it dies, the realm's progress it carried goes with it: you fall back to your realm's Early.""");
+				If it dies, the realm's progress it carried goes with it: you fall back to your realm's Early.
+				Ride it: right-click your own beast with an empty hand to climb on its back, and sneak to get off. It must be big enough to \
+				carry you (about a block wide): boars, tigers, bears, rhinos, antelopes, crocodiles, turtles, pythons, frost apes, rocs and \
+				flood dragons from the start; wolves, foxes, hawks, vipers and monkeys once they have grown a few stages, since a beast grows \
+				a little larger with every stage.
+				- On the ground it runs at its kind's pace, and Space jumps. In water it swims along the top, a crocodile, turtle or flood \
+				dragon swiftest.
+				- A roc (or a grown hawk) flies: forward goes where you look, so look down to come down, and Space climbs. It flies only \
+				where you could fly yourself: not under the Weak Water's weight or a Killing Formation's, and in a secret realm only if you \
+				fly freely there.
+				- While you ride it, it fights nothing. Get off, and it fights for you again. If it dies under you, the bond's loss is yours \
+				as ever.""");
 		page("court_of_the_dead", Items.GOLDEN_HELMET, "springs/ghost_path", Hint.DEAD, "Court of the Dead", """
 				A Ghost King's method, from Core Formation to True Immortal. Stand at the throne of a ghost palace whose king has been slain, \
 				and after a few seconds the palace is yours: its retainers become your subjects and turn on you no more.
@@ -1009,7 +1020,7 @@ public final class Codex {
 				A pill comes out at Low, Mid, High, Supreme or Immortal grade: the older its herbs, the higher the grade and the stronger \
 				the pill. A practised alchemist does better still (see Craft Mastery).""");
 		page("mastery", Items.ENCHANTED_BOOK, null, "Craft Mastery", """
-				Alchemy, forging and formations are crafts, and each grows with practice through five ranks: Apprentice, Adept, Master, \
+				Alchemy, forging, formations and talismans are crafts, and each grows with practice through five ranks: Apprentice, Adept, Master, \
 				Grandmaster and Saint. The Stats tab's Crafts page shows how far you have come in each.
 				- Alchemy: every brew teaches you, and harder pills teach more. A pill harder than your rank can fail, ruining its herbs, \
 				though you still learn half as much from it. The Marrow Cleansing Elixir never fails.
@@ -1018,7 +1029,41 @@ public final class Codex {
 				- Forging: every artifact forged teaches you, and higher grades teach more. A grade harder than your rank can fail, and \
 				each rank brings a chance of finer work (see Forging Artifacts).
 				- Formations grow by crafting and refining them, and by keeping a Formation Core's barrier or concealment up.
+				- Talismans grow by drawing them, harder patterns teaching more (see Talismans).
 				Your mastery is your own: it stays with you through death and rebirth.""");
+		page("talismans", ModItems.FIRE_TALISMAN, null, "Talismans", """
+				Talismans are drawn, not crafted. Hold the Inscription Brush in one hand and Talisman Paper in the other (four paper and a \
+				yellow dye make four), then use the brush: pick a pattern, and hold use to draw it. Sneak and use to pick another.
+				@craft talisman_paper
+				- Each drawing takes a sheet of paper, a redstone dust for its cinnabar, a share of your qi pool and a stroke of the brush's \
+				wear. Cultivators of the Body Path, with no qi, can't draw them, but can use them.
+				- A talisman is as strong as the one who drew it: their realm is written on it, so a friend can carry yours. In weaker \
+				hands it works at most a realm above theirs. One found with no hand on it is as strong as whoever uses it.
+				- A pattern harder than your rank can fail, spoiling the paper and cinnabar. Practice brings finer work: Fine (a tenth \
+				stronger) from Adept, Perfect (a quarter stronger) from Master.
+				Thrown, they burst where they land:
+				- Fire: flame that burns all round it. Five Thunder: a bolt of lightning. Frost: cold that slows all it catches. Binding: \
+				holds the one it strikes where they stand for a few seconds, but nothing a realm or more above it.
+				Burnt (use), they work on you:
+				- Golden Light: a shell that soaks up harm for half a minute. Divine Speed: swift feet for a minute.
+				- Thousand-Li Escape: a flash of a hundred blocks or more the way you face, onto safe ground. Not where space is sealed: \
+				a Space domain, the ways between the worlds, the secret realms.
+				- Concealment: beasts and cultivators don't notice you for a minute, until you strike, unless they stand two realms or \
+				more above the talisman.
+				Each kind has its own short wait between two. The Yang Fire and Ghost-Quelling Talismans can be drawn too.""");
+		page("rankings", ModBlocks.RANKING_STELE, null, "The Lists", """
+				Every world keeps its list of its hundred strongest: the Earth List (the lower realms), the Heaven List (the Jade \
+				Firmament), the Void List (the Great Void), the Immortal List (the Immortal Realm) and the Netherworld List (the dead).
+				- Cultivators are on the list of the world they live in. You are on the list of the highest world you have ascended to, \
+				so visiting a world below never puts you at the top of its list; while you are dead, on the Netherworld's.
+				- Strength comes first: realm, stage, then how far into it. But beat someone ranked above you, in a spar or by killing them, \
+				and you take their place, just above them. They pass you again only by breaking through, or by beating you back. \
+				Cultivators' own bouts count too.
+				- Read them at a Ranking Stele: one stands beside every sect's and clan's mission board and in every immortal city's \
+				market square, and you can make one. The Journal tab's second page shows them too.
+				@craft ranking_stele
+				- Cultivators know their world's list: one of its hundred is greeted by their place, and thought the better of. When a \
+				place in its top ten changes hands, people talk of it for a few days.""");
 		page("forge", ModBlocks.ARTIFACT_FORGE, null, "The Artifact Forge", """
 				Artifacts are forged, not crafted. Make an Artifact Forge from five copper ingots, a blast furnace, two iron ingots and a \
 				Low-Grade spirit stone.
@@ -1319,6 +1364,23 @@ public final class Codex {
 				Your title in a sect depends on your strength compared with its members: Outer Disciple, Inner Disciple, Elder or Grand \
 				Elder. It changes as you, or they, break through. Elders may open the treasury.
 				The Sect tab shows your sect, your title, the sect's regard for you, and its members.""");
+		page("player_sects", ModBlocks.SECT_PLAQUE, NS, Hint.CULTIVATE, "A Sect of Your Own", """
+				From Nascent Soul on, you can found a sect of your own at your own Formation Core, on its Sect page.
+				- You must belong to no sect, and your core's barrier must be up with at least three meditation mats inside it, in a world \
+				with sects of its own, on no other sect's land. Name your sect: its path is yours, a demon founds a clan of their race, and \
+				one who tempers only the body founds a body sect. On the core of a fallen sect you claimed, that sect lives again under you.
+				- Its places are its meditation mats inside the barrier: up to 9 at Nascent Soul, 12 at Heavenly Being, 16 at Four Axis, 20 \
+				at Dao Integration and 24 from Void Shattering on. About one aspirant a day comes while there is room, most at the weakest \
+				realm of the world and now and then a stronger one. You are its Sect Master, and its cultivators are titled under you, a \
+				Grand Elder at most.
+				@craft sect_plaque
+				- Hang Sect Plaques by your gates: aspirants come in there, and its guards keep them. A Heaven Altar inside the barrier is \
+				its Altar of Heaven.
+				- Its cultivators bring tribute every day, more the stronger they are, kept for up to thirty days: collect it at the core.
+				- Players join only when you invite them from the Sect page. They accept on their own Sect tab, or with the link in their \
+				chat. Cast anyone out from the Sect page or the Sect tab.
+				- Disband it at the core. If its core is broken, it breaks up. Either way its cultivators go their own ways, and its players \
+				belong to no sect.""");
 		page("missions", ModBlocks.MISSION_BOARD, "sects/joined", Hint.SECT, "The Mission Board", """
 				Every sect keeps a mission board on its plaza, by its Formation Core. Each day it posts five missions for each of its \
 				disciples, fitted to their realm: Easy, Fitting or Hard. You may hold three at once.

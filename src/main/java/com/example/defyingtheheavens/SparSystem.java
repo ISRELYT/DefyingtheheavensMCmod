@@ -451,6 +451,9 @@ public final class SparSystem {
 			Milestones.award(player, Milestones.SPAR_WON);
 			HundredBattles.won(player, fought); // a spar won tempers a body of Hundred Battles
 		}
+		// A place on the lists won (Rankings#won): the winner goes just above the one beaten, if that one stood higher.
+		if (outcome == Outcome.WON) Rankings.won(player.server, player.getUUID(), npc.getUUID());
+		else if (outcome == Outcome.LOST || outcome == Outcome.FORFEIT) Rankings.won(player.server, npc.getUUID(), player.getUUID());
 		int delta = switch (outcome) {
 			case WON -> spar.terms.full && spar.stronger ? Regard.SPAR_WIN_FULL : spar.senior ? Regard.SPAR_WIN_SENIOR : Regard.SPAR_WIN;
 			case LOST -> spar.junior ? Regard.SPAR_LOSS_BADLY : Regard.SPAR_LOSS;

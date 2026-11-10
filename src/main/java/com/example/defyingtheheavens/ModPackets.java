@@ -107,6 +107,10 @@ public final class ModPackets {
 	public static final ResourceLocation FORMATION_CORE_CONFIGURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_configure");
 	/** C2S: the owner trusts a player by name (position, true, name) or stops trusting one (position, false, UUID). */
 	public static final ResourceLocation FORMATION_CORE_TRUST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_trust");
+	/** S2C: the core's Sect page (PlayerSects#sendInfo): the player's sect founded on it, or whether one could be. */
+	public static final ResourceLocation PLAYER_SECT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "player_sect");
+	/** C2S: the Sect page asks (position, PlayerSects.Act, a name, a target or none): found, rename, invite, expel, collect, disband, or look. */
+	public static final ResourceLocation PLAYER_SECT_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "player_sect_act");
 	/**
 	 * S2C: the player's own soul (see {@link SoulProjection}): state, channel ticks left, where the body sits, the tether's reach,
 	 * the body's health and maximum, the possessed being's entity id (-1 for none) and the tether's remaining strength (0-1).
@@ -155,6 +159,12 @@ public final class ModPackets {
 	/** S2C: the player's journal (see Journal), whole. C2S JOURNAL_REQUEST asks for it (the menu's Journal tab opening). */
 	public static final ResourceLocation JOURNAL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal");
 	public static final ResourceLocation JOURNAL_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal_request");
+	/**
+	 * C2S: the lists asked for (the Journal's page); S2C RANKINGS: every world's list (Rankings, its {@link Rankings#TOP} first) and the player's
+	 * own place on theirs, and whether to open the stele's screen (a Ranking Stele right-clicked) or only refresh the Journal's page.
+	 */
+	public static final ResourceLocation RANKINGS_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "rankings_request");
+	public static final ResourceLocation RANKINGS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "rankings");
 	/**
 	 * S2C: the player's own Netherworld state (see NetherworldManager#sync): the ghostly qi pool and its maximum, the density of
 	 * ghostly qi here, yin corruption (-1 where it doesn't apply), which way it is going (1 rising, -1 ebbing, 0 held), and how
@@ -281,6 +291,18 @@ public final class ModPackets {
 				}
 			});
 		});
+		ServerPlayNetworking.registerGlobalReceiver(PLAYER_SECT_ACT, (server, player, handler, buf, responseSender) -> {
+			BlockPos pos = buf.readBlockPos();
+			int act = buf.readVarInt();
+			String text = buf.readUtf(PlayerSects.NAME_LENGTH * 2);
+			UUID target = buf.readBoolean() ? buf.readUUID() : null;
+			server.execute(() -> {
+				if (act < 0 || act >= PlayerSects.Act.values().length) return;
+				if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= CORE_REACH * CORE_REACH && player.level().isLoaded(pos)) {
+					PlayerSects.act(player, pos, PlayerSects.Act.values()[act], text, target);
+				}
+			});
+		});
 		ServerPlayNetworking.registerGlobalReceiver(TALK_INTENT, (server, player, handler, buf, responseSender) -> {
 			int entity = buf.readVarInt();
 			int intent = buf.readVarInt();
@@ -301,12 +323,18 @@ public final class ModPackets {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(JOURNAL_REQUEST,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> sendJournal(player)));
+		ServerPlayNetworking.registerGlobalReceiver(RANKINGS_REQUEST,
+				(server, player, handler, buf, responseSender) -> server.execute(() -> sendRankings(player, false)));
 		ServerPlayNetworking.registerGlobalReceiver(SECT_INFO_REQUEST,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> SectMembership.sendInfo(player)));
 		ServerPlayNetworking.registerGlobalReceiver(INSCRIBE, (server, player, handler, buf, responseSender) -> {
 			int kind = buf.readVarInt();
 			int index = buf.readVarInt();
-			server.execute(() -> TechniqueManualItem.inscribe(player, kind, index));
+			// Kind 2: a talisman's pattern for the brush (Talismans); else a manual written out.
+			server.execute(() -> {
+				if (kind == 2) Talismans.choose(player, index);
+				else TechniqueManualItem.inscribe(player, kind, index);
+			});
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SECT_ACT, (server, player, handler, buf, responseSender) -> {
 			int act = buf.readVarInt();
@@ -314,6 +342,10 @@ public final class ModPackets {
 			server.execute(() -> {
 				if (act == 0 && SectMembership.leaveAsBody(player)) SectMembership.sendInfo(player);
 				else if (act == 1) SectMembership.banish(player, target);
+				else if (act == 2) { // a player's sect's invitation taken up from the Sect tab (PlayerSects)
+					PlayerSects.accept(player);
+					SectMembership.sendInfo(player);
+				}
 			});
 		});
 		ServerPlayNetworking.registerGlobalReceiver(MISSION_ACT, (server, player, handler, buf, responseSender) -> {
@@ -784,6 +816,33 @@ public final class ModPackets {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		Journal.write(buf, CultivationManager.get(player).journal());
 		ServerPlayNetworking.send(player, JOURNAL, buf);
+	}
+
+	/**
+	 * S2C rankings: whether to open the stele's screen; the player's own list and place (0: not on it); then each list (Rankings.Board in order):
+	 * its length, and for each its name, rank, sect, title (NpcTitle ordinal, -1 none), path (Alignment.Faction ordinal), and whether a player.
+	 */
+	public static void sendRankings(ServerPlayer player, boolean open) {
+		Rankings data = Rankings.get(player.server);
+		Rankings.note(player);
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBoolean(open);
+		Rankings.Entry own = data.entry(player.getUUID());
+		buf.writeVarInt(own == null ? -1 : own.board.ordinal());
+		buf.writeVarInt(data.placeOf(player.getUUID()));
+		for (Rankings.Board board : Rankings.Board.values()) {
+			List<Rankings.Entry> list = data.top(board);
+			buf.writeVarInt(list.size());
+			for (Rankings.Entry e : list) {
+				buf.writeUtf(e.name, 64);
+				buf.writeVarInt(e.rank);
+				buf.writeUtf(e.sect, 96);
+				buf.writeVarInt(e.title + 1);
+				buf.writeVarInt(e.faction);
+				buf.writeBoolean(e.player);
+			}
+		}
+		ServerPlayNetworking.send(player, RANKINGS, buf);
 	}
 
 	/** Closes {@code player}'s talk with the cultivator {@code entityId}, saying why over the hotbar. */

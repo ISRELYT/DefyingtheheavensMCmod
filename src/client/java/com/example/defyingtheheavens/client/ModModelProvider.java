@@ -229,6 +229,11 @@ public class ModModelProvider extends FabricModelProvider {
 		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);
 		items.generateFlatItem(ModItems.YANG_FIRE_TALISMAN, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.GHOST_QUELLING_TALISMAN, ModelTemplates.FLAT_ITEM);
+		// The brush's talismans (Talismans): the paper, and each pattern's own (16x16 strips drawn as the older two are, each its own glyph).
+		items.generateFlatItem(ModItems.TALISMAN_PAPER, ModelTemplates.FLAT_ITEM);
+		for (com.example.defyingtheheavens.TalismanPattern pattern : com.example.defyingtheheavens.TalismanPattern.values()) {
+			if (pattern.hasPower()) items.generateFlatItem(pattern.item(), ModelTemplates.FLAT_ITEM);
+		}
 		items.generateFlatItem(ModItems.GHOST_JADE_SLIP, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.TECHNIQUE_MANUAL, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.BLANK_MANUAL, ModelTemplates.FLAT_ITEM);

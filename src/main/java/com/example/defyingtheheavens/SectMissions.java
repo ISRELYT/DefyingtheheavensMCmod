@@ -1412,7 +1412,8 @@ public final class SectMissions {
 	static void layBoards(MinecraftServer server) {
 		long today = Regard.day(server.overworld().getGameTime());
 		for (Sect sect : SectData.get(server).all()) {
-			if (sect.extinct || sect.posts(Sect.Post.GATE).isEmpty()) continue;
+			// A player's sect (PlayerSects) sets up no board of its own on its founder's grounds.
+			if (sect.extinct || sect.isPlayers() || sect.posts(Sect.Post.GATE).isEmpty()) continue;
 			ServerLevel level = server.getLevel(sect.dimension);
 			if (level == null || !level.isPositionEntityTicking(sect.core) || !level.getBlockState(sect.core).is(ModBlocks.FORMATION_CORE)) continue;
 			if (level.getNearestPlayer(sect.core.getX() + 0.5, sect.core.getY(), sect.core.getZ() + 0.5, LAY_NEAR, false) == null) continue;
@@ -1423,6 +1424,8 @@ public final class SectMissions {
 						sect.boardGoneDay = -1;
 						SectManager.dirty(server);
 					}
+					// Its Ranking Stele beside it, once (Rankings).
+					if (sect.stele == null) laySteleBeside(level, sect);
 					continue;
 				}
 				if (sect.boardGoneDay < 0) {
@@ -1475,6 +1478,39 @@ public final class SectMissions {
 		SectManager.dirty(level.getServer());
 		DefyingTheHeavens.LOGGER.info("{} set up its mission board at {}", sect.name, best.toShortString());
 		return best;
+	}
+
+	/**
+	 * A Ranking Stele (Rankings) beside {@code sect}'s board: its face the board's way, two to four blocks to one side or the other, the first
+	 * spot with room for its two blocks (and a block over it) on firm ground, clear of everyone's posts. Set once: its place kept (Sect#stele), or
+	 * BlockPos.ZERO when there was no room; one taken down isn't set up again.
+	 */
+	static void laySteleBeside(ServerLevel level, Sect sect) {
+		net.minecraft.world.level.block.state.BlockState board = level.getBlockState(sect.board);
+		Direction facing = board.hasProperty(MissionBoardBlock.FACING) ? board.getValue(MissionBoardBlock.FACING) : Direction.SOUTH;
+		Direction side = facing.getClockWise();
+		List<BlockPos> posts = new ArrayList<>();
+		for (List<BlockPos> list : sect.posts.values()) posts.addAll(list);
+		for (int d = 2; d <= 4; d++) {
+			for (int sign : new int[] {1, -1}) {
+				BlockPos column = sect.board.relative(side, d * sign);
+				for (int dy = 1; dy >= -2; dy--) {
+					BlockPos pos = column.above(dy);
+					if (!roomFor(level, pos) || !level.getBlockState(pos.above(2)).isAir() || !clearOfPosts(pos, posts)) continue;
+					net.minecraft.world.level.block.state.BlockState lower = ModBlocks.RANKING_STELE.defaultBlockState().setValue(RankingSteleBlock.FACING, facing)
+							.setValue(RankingSteleBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER);
+					level.setBlock(pos, lower, Block.UPDATE_ALL);
+					level.setBlock(pos.above(), lower.setValue(RankingSteleBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER),
+							Block.UPDATE_ALL);
+					sect.stele = pos;
+					SectManager.dirty(level.getServer());
+					DefyingTheHeavens.LOGGER.info("{} set up its Ranking Stele at {}", sect.name, pos.toShortString());
+					return;
+				}
+			}
+		}
+		sect.stele = BlockPos.ZERO;
+		SectManager.dirty(level.getServer());
 	}
 
 	/**

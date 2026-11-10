@@ -189,6 +189,11 @@ public final class ImmortalGate {
 				warn(server, data);
 				keepGuards(immortal, data);
 				if (!open) tellShut(greatVoid, immortal, data);
+				// Every 5 s, its openings' light as the Gate stands (#light leaves land not loaded as it was, to be set here once it loads).
+				if (server.getTickCount() % 100 == 27 && open == data.lit) {
+					if (data.skyBuilt) light(greatVoid, SKY_X, data.skyY, SKY_Z, data.lit);
+					if (data.heavenBuilt) light(immortal, HEAVEN_X, data.heavenY, HEAVEN_Z, data.lit);
+				}
 			} catch (Exception e) {
 				DefyingTheHeavens.LOGGER.error("Immortal Gate tick failed", e);
 			}
@@ -253,10 +258,14 @@ public final class ImmortalGate {
 	/** Light set in (or taken out of) the opening of the gate whose threshold is ({@code x}, {@code y}, {@code z}). */
 	static void light(ServerLevel level, int x, int y, int z, boolean on) {
 		BlockState light = ModBlocks.IMMORTAL_GATE_LIGHT.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+		net.minecraft.server.level.ServerChunkCache chunks = level.getChunkSource();
 		for (int dx = -HALF; dx <= HALF; dx++) {
 			for (int dy = 1; dy <= HEIGHT; dy++) {
 				for (int dz = -1; dz <= 0; dz++) {
 					BlockPos at = new BlockPos(x + dx, y + dy, z + dz);
+					// Only where its land is loaded: loading it for this alone stalled the server each time the Gate opened or shut (the sweep
+					// of 2026-11-10). Nobody sees land not loaded; it is lit as the Gate stands once it loads (#tick, every 5 s).
+					if (chunks.getChunkNow(at.getX() >> 4, at.getZ() >> 4) == null) continue;
 					BlockState here = level.getBlockState(at);
 					if (on && here.isAir()) level.setBlock(at, light, Block.UPDATE_CLIENTS);
 					else if (!on && here.is(ModBlocks.IMMORTAL_GATE_LIGHT)) level.setBlock(at, air, Block.UPDATE_CLIENTS);

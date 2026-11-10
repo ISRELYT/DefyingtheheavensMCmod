@@ -262,7 +262,12 @@ public final class Formations {
 
 	/** {@link #ready} for the column and the four beside it (a block set there tells, or looks at, its neighbours). */
 	private static boolean readyAround(Level level, int x, int z) {
-		return ready(level, x, z) && ready(level, x - 1, z) && ready(level, x + 1, z) && ready(level, x, z - 1) && ready(level, x, z + 1);
+		if (!ready(level, x, z)) return false;
+		// The four beside it share its chunk but at its edges: only a chunk across an edge looked at (five lookups a cell were the barrier's
+		// most frequent work in the sweep of 2026-11-10).
+		int lx = x & 15, lz = z & 15;
+		return (lx != 0 || ready(level, x - 1, z)) && (lx != 15 || ready(level, x + 1, z)) && (lz != 0 || ready(level, x, z - 1))
+				&& (lz != 15 || ready(level, x, z + 1));
 	}
 
 	public static int surface(Level level, Heightmap.Types type, int x, int z) {
@@ -580,6 +585,9 @@ public final class Formations {
 
 	/** Already closes its cell: its collision covers the whole footprint and stands at least half a block high. */
 	private static boolean isWall(ServerLevel level, BlockPos pos, BlockState state) {
+		// Most of what the shell crosses: whole blocks, known from the state's own cache with no shape's bounds made (those bounds were the
+		// most made things on the server in the sweep of 2026-11-10).
+		if (state.isCollisionShapeFullBlock(level, pos)) return true;
 		VoxelShape shape = state.getCollisionShape(level, pos);
 		if (shape.isEmpty()) return false;
 		AABB bounds = shape.bounds();

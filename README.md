@@ -666,6 +666,132 @@ falls or the prey gets 128 blocks away; the hunts aren't saved). Their arts cost
 /legend brand <player> <percent>      set heaven's brand on a player (0 lifts it)
 ```
 
+## Talismans (2026-11-10)
+
+The fourth craft (the user's "Build as designed"): `Talismans`, `TalismanPattern`, `TalismanItem`, `TalismanEntity`.
+- **Drawing:** the Inscription Brush in one hand, Talisman Paper (4 paper + yellow dye = 4) in the other. Use with no pattern set
+  (or sneaking) opens the pattern list (the inscription screen, kind 2: `Talismans#offer`, C2S inscribe kind 2 -> `#choose`, set
+  on the brush as `TalismanPattern`); use held 40 ticks (`UseAnim.BRUSH`) draws it (`InscriptionBrushItem#finishUsingItem` ->
+  `Talismans#draw`): 1 paper, 1 redstone (cinnabar), the pattern's extras, `qiShare` of the qi pool (no pool: can't draw), 1
+  brush wear. Craft `CraftMastery.Craft.TALISMANS`: fails `FAIL_PER_RANK_SHORT` 12% a rank short of the pattern's difficulty
+  (paper and cinnabar lost, half the practice); Fine/Perfect as the forge (`ArtifactForgeBlockEntity#rollQuality`, the
+  `ArtifactQuality` tag). Practice 1 + difficulty.
+- **Power:** written on the talisman (`TalismanRank`, `TalismanDrawer`; Escape's `TalismanReach` 100/150/200/300/500 by the
+  drawer's rank); in a weaker hand at most `ABOVE_BURNER` 4 stages above it (`#effectiveRank`); none written (loot): the user's.
+  Harm is the rank's blow (`CultivationStats#attackDamage`) times the pattern's.
+- **Patterns** (difficulty, qi share, own cooldown): Fire (0, 8%, 1.5 s: burst 2.5, x1.5, alight 5 s), Five Thunder (2, 15%, 3 s:
+  a visual bolt, x2.5 within 1.5), Frost (0, 8%, 1.5 s: burst 3, x1, Slowness II 5 s, frozen), Binding (1, 12%, 5 s: `BOUND` 3 s +
+  1 a realm above, none on one a realm or more above), Golden Light (1, 15%, 30 s: absorption 0.3 of the rank's whole health for
+  30 s, `GoldenLightEffect`), Divine Speed (0, 6%, 10 s: Speed II..V by rank, 60 s), Thousand-Li Escape (2, 20%, 30 s: onto the
+  heightmap's safe ground the way one faces, stepping back 8 at a time; refused in a Space domain, the Earth's lock, a passage, a
+  secret realm, the Inner Realm, space), Concealment (1, 12%, 60 s: `CONCEALED` 60 s, amplifier = rank; `MobConcealmentMixin`
+  refuses `Mob#setTarget` on one concealed unless the mob is 8 stages above or was struck by them; any blow landed ends it,
+  `Talismans#struck` from `SoulLivingEntityMixin`). Yang Fire and Ghost-Quelling drawable too (their extras: blaze powder + gold
+  nugget; Yin Jade, two to a drawing). A Bound one can't jump (SoulLivingEntityMixin) and a bound player is weighed down.
+- Found: sect dwellings (paper, Fire, Divine Speed, Frost), elders' chests (paper and the harder ones), the Verdant Herb Valley's
+  quarters and the Cave Abode's library (`Talismans#found`); sold by outer disciples (paper), inner disciples and elders (their own
+  drawing, `#drawnBy`). Advancements "Ink and Cinnabar", "Saint of Talismans". Codex "Talismans". Tests `TalismanGameTests`.
+
+## The Earth and Heaven Lists (2026-11-10)
+
+`Rankings` (SavedData `_rankings`): one list a world (`Board`: EARTH lower realms + astral, HEAVEN Jade Firmament, VOID Great Void,
+IMMORTAL Immortal Realm + small worlds, NETHERWORLD; passages, secret realms and the Inner Realm none), its `TOP` 100 shown.
+- Who: cultivators as they load (ENTITY_LOAD), break through (`CultivatorNpc` advance) or die (`#slain`); the sects' rolls read in
+  each day (`#tick`); players every 5 s (`#note(ServerPlayer)`: rank = the higher path or the body's; their list the highest world
+  reached, FA+ at least HEAVEN, TI+ IMMORTAL; NETHERWORLD while dead). Unseen 30 days and no sect member: forgotten; each list kept
+  to `KEPT` 300.
+- Order: rank + glory, then the stage's progress. `#won(winner, loser)`: if the loser stood above, the winner's glory = loser's
+  score - winner's rank + `EDGE` 0.01 (from player spars `SparSystem#end`, NPC bouts `NpcLife#finishBout`, kills). A top-ten place
+  won: rumour `RANKING` (Rumours, round its world 3 days).
+- Effects: `CultivatorNpc#regard` + `TOP_TEN_REGARD` 10 / `LISTED_REGARD` 5 on the NPC's own world's list; `TalkSystem#greet`
+  "Number N of the X List!". Shown by `RankingSteleBlock` (2 tall, handwritten blockstate/models; set by `SectMissions#laySteleBeside`
+  beside a sect's board once, `Sect#stele`; `CityMarkets#laySquareStele` in markets once peopled; craftable) and the Journal tab's
+  second page (`RankingView`, `RankingScreen`, `ClientRankings`; packets `RANKINGS`, `RANKINGS_REQUEST`). Codex "The Lists".
+  Tests `RankingsGameTests` (own batch, lists emptied first).
+
+## Sects founded by players (2026-11-10)
+
+`PlayerSects`: a `Sect` with a `founder` (`Sect#isPlayers`), bound to its founder's own core (`FormationCoreBlockEntity#foundPlayersSect`,
+`playersSect`: the owner keeps it, its trusted and concealment; its barrier draws on its veins as any player's; unbound again on disband).
+- Founding (the core screen's Sect page, packets `PLAYER_SECT` / `PLAYER_SECT_ACT`): owner, alive in their own body, of no sect,
+  `TwoPaths#weighedRank` >= Nascent Soul Early, a sect world (Overworld, Jade Firmament, Great Void, Immortal Realm), not on another
+  sect's land (`#landOf`: its territory, or its core within this barrier + margin), barrier raised, `MIN_MATS` 3 mats inside. Alignment
+  the founder's; a demon founds a clan (its race); body only (mortal in qi, on the Body Path) a body sect. A claimed fallen sect's core
+  (`FormationCoreBlockEntity#getFallenSect`) revives that sect's record (its posts, treasury, name unless renamed). Rumour `FOUNDING`.
+- `#survey`: mats, Sect Plaques and a Heaven Altar inside the barrier (16 below to 24 above; sections skipped by `maybeHas`).
+  `#lay`: DWELLING/MEDITATION = mats; GATE before each plaque (`SectPlaqueBlock`, wall-hung), GATE_GUARD 2 blocks either side;
+  ALTAR; a new sect's CORE/TREASURY/COURTYARD/TRAINING rings round the core. `capacity` = min(mats, cap NS 9 / HB 12 / FA 16 /
+  DI 20 / VS+ 24). Looked over every minute while loaded.
+- `#tick` (5 s): invitations lapse (5 min), tribute (`dailyTribute`: 2^realm Low stones a member, kept 30 days), aspirants
+  (`#arrive`: every 18-30 h while there is room; the world's floor rank, 1 in 6 up to half way to the founder) at a gate.
+- Titles: the founder is SECT_MASTER (`SectMembership#titleOf`, `#discipleTitle`), members counted with them
+  (`Sect#recalculateTitles`, `#titleAmong`). No replacements and no place lost for good (`SectManager#onMemberDeath`, `#release`,
+  `#tick`); cultivators ascending from below of its path may join it as any sect (`#findOpening`); it never turns on its founder
+  (`#alert`); the founder is never expelled, can't leave (disband), and casts out anyone (`SectMembership#mayBanish`). NPC elders
+  refuse others ("join.founder_only"); players come by `#invite`, then Accept on their Sect tab (SECT_ACT 2) or `/sectaccept`.
+- `#disband` (or `#coreLost`, the core broken: `SectManager#onCoreDestroyed`): members `SectManager#banish`ed, disciples dropped,
+  `extinct`. Codex "A Sect of Your Own". Tests `PlayerSectGameTests` (own batch; nearby sects set aside while they run).
+
+## The lag and save-size sweep (2026-11-10)
+
+A dedicated test server run with no wait between ticks (12 minutes a run, 4 to 12 game days), a player taken round 14 stops in five
+worlds, tick times, chunks and entities logged every 15 s, the world's files measured at the start and end, Java Flight Recorder over
+the whole (scratchpad harness: SelfTest-sweep, SweepJfr/SweepCallers/SweepUnder/SweepCpuWindow). The mod's own code was about 11% of
+the server thread, the rest vanilla chunk loading and saving (the run's constant teleports). Fixed, by what the recording showed:
+- `SecretRealms#setGate` and `ImmortalGate#light` loaded their chunk from disk on the server thread to set a gate's blocks: now only
+  while it is loaded, caught up every 5 s (`SecretRealms#keepGates`, the Gate's tick).
+- `RealmWorks#work`: a realm's readying reached into land not made yet, and the server made it there and then. Its land is now brought
+  in first, in the generator's own time: one realm's at a time, nearest its middle first, eight chunks on their way at once, each held
+  (a level-33 ticket, `READYING`: loaded whole, not ticking) until its realm is readied, as far as its land reaches (`SecretRealm#REACH`);
+  its steps wait for it (five minutes by the clock at most, then as before). Asked for all at once (a fresh world's nine realms, 4,700
+  chunks) it queued every other load behind it, ticks of up to 35 s; held out to the bound and past it, the realms' files grew by half.
+- `SectSites` / `HermitSites`: their decided regions were boxed `Set<Long>`s whose keys hash to x ^ z, so neighbouring regions collided
+  into tree bins compared by reflection (gigabytes of garbage): fastutil `LongOpenHashSet`s; `SectSites#siteOf` caches each region's
+  site chunk (worldgen made a random source for every roll).
+- `Formations#isWall` built a shape box for every block the barrier crossed: `isCollisionShapeFullBlock` first; `readyAround` looks up a
+  neighbour's chunk only across a chunk edge.
+- The Xuanyuan Sword's peak (some 2,000 columns of the generator) is sought off the server thread (`Legends#peakSought`).
+- `Stage`, `Realm` and `SecretRealm` keep their `values()` (each call copied the array: hundreds of megabytes a run).
+
+The machine was shared with a game (the rest of it at 54 to 89% of the CPU, the test server below normal priority), so ticks a second
+and the longest tick say more about that than about the mod; the server thread's own CPU time a tick (the system's count, from the
+recording) does not: 2.25 ms before; 2.11 after the first fixes (all but the readying and the sites' cache: 11% more ticks in the same
+12 minutes, the machine as busy); 1.89 and 1.94 with those too (two runs). Under the readying itself, on the
+server thread: 18 samples and 300 MB allocated a game day before, 5 and 17 MB after. Its price: a realm's land is made whole before
+anyone goes in, 16,560 chunks (65 MB) in the secret realms of a world whose realms nobody has entered, against 13,389 (53 MB), once.
+
+Saved data stayed small (rumours 64 KB, sects 33 KB, the lists 20 KB after 10 days); the world's growth is new land. Noted, not changed:
+the Netherworld's lakes and springs flow on a new area's first load and wash its spider lilies and crimson roots into items.
+
+The talk box (`DialogueScreen`) scrolls what is said (wheel or arrow keys, gold arrows when there is more), and keeps it below the HUD's
+top-left stack (`HudCorner#foot`): a Heavenly Venerable's answer on the four primordial beasts was cut off at 427x240, Hundun never named.
+Its five lines that carried their own quotation marks inside the box's (`TalkSystem#speech`) are unquoted.
+
+## The bug sweep of the new features (2026-11-10)
+
+The user's ask, after the five above: "do a bug sweep of the new features". Riding, talismans, the lists, players' sects and the sweep's
+own changes read through again. It put right:
+
+- **A sect fallen with players on its rolls holds none of them.** An NPC sect falls when its last cultivator dies, and its player
+  disciples stayed on its rolls with nobody left to ask leave of: they could neither join another sect nor found their own. Now a fallen
+  sect never counts as one's sect for joining or founding (`SectMembership#liveSectOf`), and joining takes one off every other sect's
+  rolls (`SectMembership#join`).
+- **A revived sect starts afresh.** Founding a sect on a fallen sect's core (PlayerSects) took in the players left on its rolls unasked,
+  and kept its grudges: a founder who had brought it down (the likeliest way a core comes to be claimed) was, to its new people, the slayer
+  of its old ones. Its old disciples, its standing with everyone and those it barred are cleared, and the founder is taken off any fallen
+  sect's rolls they were left on.
+- **An invitation stands one at a time.** Sent again while it stood, a sect's invitation rang in its target's chat each time; now the
+  founder is told it stands already.
+- **A Thousand-Li Escape lands no further past a barrier than its burner could walk** (`Formations#walls`): it landed inside a sect's
+  barrier and was only set out again at the barrier's next sweep, its grounds to roam meanwhile. It never lands on a barrier's dome
+  (its ground looked for under it: `Formations#surface`), and it looks at a dozen spots at most along its way (each one's land loaded to
+  look, made if it never was: in steps of 8 over a wide sea, dozens of them a flash).
+
+Read through and found sound: riding (soul projection and meditation get one off a mount first; possession lets go of its host if
+its soul is flashed away; a flier is grounded wherever its rider couldn't fly), the talismans' strength and shells, the lists (a win, a
+death, the rolls read in, the stele dropping once), the sweep's site cache and peak search (each only on its own thread), and every new
+line of text against its arguments. Tests: `PlayerSectGameTests#aFallenSectHoldsNobodyAndARevivalStartsAfresh`.
+
 ## Bloodlines: the demon races
 
 **Built so far: three of four parts** (the user's ask, 2026-10-23): the races and their looks, the Demon Path and the races'
@@ -1681,6 +1807,19 @@ Tests: `MethodsPhaseTwoGameTests`.
   despawns. A core fed: 0.15 x2/realm of the core against the owner (at most 0.6) and a stage of growth if the core is of its rank
   or above (to the owner's rank, past its kind boundless). Its kills: 0.05 x2/realm of the slain (at most 0.3). Dead: the owner's
   heaven path re-laid at the realm's Early (`CultivationMethods#restart`), online or not.
+  **Ridden** (2026-11-10, the user's "Build as designed"): the owner's empty main hand on it mounts it (`SpiritBonds#mount`; sneak gets
+  off, vanilla) if it is at least `MOUNT_WIDTH` 0.9 wide at its size now (`DemonBeast#bearsARider`: kind width x `scale`, a twelfth
+  larger a stage, so the wolf from 4 stages above its kind's least, the fox 2, viper 2, hawk and monkey 6); never a soul, one of the
+  dead, or a possessed beast. `DemonBeast#getControllingPassenger` = its rider (a soul possessing it as before, SoulMobMixin); its
+  mind is silent while ridden (`SoulMobMixin` cancels `serverAiStep`, `tendRidden` drops its target). The rider's client moves it
+  (`travel`): on the ground as a horse (`getRiddenInput` half sideways, a quarter back; `getRiddenSpeed` its MOVEMENT_SPEED, a water
+  beast's 0.1 on land; Space hops in `tickRidden`; vanilla gives a player-steered mount step height 1); in water `swimRidden` along
+  the top (half under; pace x0.04 swimmer, x0.12 amphibious, x0.05 land beast); a FLYING kind off the ground or climbing flies
+  (`flyRidden`: `SoulProjection#flightWish`/`#flightVelocity` at `SpiritBonds#flightPace` = kind speed x2 x(1 + 0.02/stage grown),
+  a roc 0.6 a tick) unless the server says it's grounded (`DATA_GROUNDED`, `SpiritBonds#groundedFor` each half second: weighed down,
+  a carrying way, a secret realm one doesn't fly freely in); a flier's wings hold it up (`setNoGravity`) so dedicated servers don't
+  kick its rider for floating. The rider sits on `DemonBeast#seat` by build; one teleported more than `TORN_AWAY` 16 off is let go
+  rather than dragged back (`positionRider`). The rider's jump is read through `mixin/LivingEntityAccessor`.
 - **Court of the Dead** (`CourtOfTheDead`; `GhostPalaces#claim`/`#heldBy`/`#kingOf`): a player Ghost King practising it stands within
   4 of an empty throne for 5 s: claimed; the palace's retainers are its allies (`GhostCultivatorNpc#isAlly`), their grudge dropped.
   Every 60 s within its palace, each living retainer pays max(0.0025, 0.02 x 2^(its realm - the king's)). No longer a king: the

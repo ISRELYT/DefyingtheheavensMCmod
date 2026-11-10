@@ -25,6 +25,8 @@
     "InventoryMenuMixin",
     "LakeFeatureMixin",
     "LightningBoltMixin",
+    "LivingEntityAccessor",
+    "MobConcealmentMixin",
     "NaturalSpawnerMixin",
     "NetherPortalBlockMixin",
     "NoiseBasedChunkGeneratorMixin",

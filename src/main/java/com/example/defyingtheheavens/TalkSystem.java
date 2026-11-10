@@ -395,6 +395,10 @@ public final class TalkSystem {
 		Component words = npc.regard(player) >= Regard.WARM && NpcLines.has("talk.greet.liked." + NpcAddress.rung(player, npc).id(), npc)
 				? NpcLines.line("talk.greet.liked." + NpcAddress.rung(player, npc).id(), npc, NpcAddress.address(player, npc), NpcAddress.name(player))
 				: lineFor("greet", npc, player, standing);
+		// One on its world's list is known by their place (Rankings): "Number 7 of the Earth List!" before the rest.
+		int place = Rankings.placeOn(player, npc);
+		Rankings.Board board = Rankings.Board.of(npc.level().dimension());
+		if (place > 0 && board != null) words = Component.translatable(ModLang.TALK_RANKED, place, board.getDisplayName(), words);
 		say(player, npc, words, delta);
 		// A sworn friend presses something on you now and then.
 		if (npc.regard(player) >= Regard.SWORN && today - entry.giftBackDay >= GIFT_BACK_DAYS && npc.getRandom().nextFloat() < GIFT_BACK_CHANCE) {
@@ -695,6 +699,8 @@ public final class TalkSystem {
 			if (seat == null || seat.sect() != sect || !SectMembership.leaveAsBody(player)) return Component.translatable(ModLang.talkLine("leave.disciple"));
 			return Component.translatable(ModLang.talkLine("leave.done"));
 		}
+		// The founder of a player's sect (PlayerSects) doesn't walk out of it: they would disband it, at its core.
+		if (SectMembership.isFounder(sect, player.getUUID())) return Component.translatable(ModLang.talkLine("leave.founder"));
 		SectMembership.leave(player, sect);
 		return Component.translatable(ModLang.talkLine("leave.done"));
 	}

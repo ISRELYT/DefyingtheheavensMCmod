@@ -294,8 +294,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	// --- Identity ---
 
-	public static Realm realmOf(int rank) { return Realm.byIndex(Math.max(0, rank) / Stage.values().length); }
-	public static Stage stageOf(int rank) { return Stage.byIndex(Math.max(0, rank) % Stage.values().length); }
+	public static Realm realmOf(int rank) { return Realm.byIndex(Math.max(0, rank) / Stage.COUNT); }
+	public static Stage stageOf(int rank) { return Stage.byIndex(Math.max(0, rank) % Stage.COUNT); }
 
 	/** True rank (realm and stage as one number), or {@link #MORTAL}. */
 	public int getRank() { return entityData.get(DATA_RANK); }
@@ -576,6 +576,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (player instanceof ServerPlayer sp) value += Regard.bloodShift(getBloodline(), DemonPath.bloodline(CultivationManager.get(sp)));
 		// A body cultivator is warm to one who tempers the body as it does (Regard#BODY_KIN).
 		if (isBodyCultivator() && player instanceof ServerPlayer sp && BodyPath.rank(CultivationManager.get(sp)) >= 0) value += Regard.BODY_KIN;
+		// One on its world's list is thought the better of (Rankings#regardBonus).
+		if (player instanceof ServerPlayer sp) value += Rankings.regardBonus(sp, this);
 		UUID who = Possession.identity(player);
 		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
@@ -1214,6 +1216,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			level().playSound(null, blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.6f, 1.2f);
 			if (sectId != null && level() instanceof ServerLevel server) SectManager.onMemberRankChanged(server, this);
 			if (after > before && !catchingUp) NpcLife.onBreakthrough(this);
+			Rankings.note(this); // its new place on its world's list
 		}
 	}
 
@@ -2111,6 +2114,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!livesItsLife()) return; // a reflection (MirrorReflection): no life ended, no killing told of, nobody to mourn it
 		ServerPlayer killer = killerOf(source);
 		HighRealms.gone(server.getServer(), getUUID()); // a place among the few after Four Axis free again
+		// Off its world's list; its slayer, if one of the listed, takes its place there (Rankings#slain).
+		Rankings.slain(this, source.getEntity() instanceof LivingEntity slayer ? slayer : null);
 		Legends.onHolderDeath(this); // a legend it kept lies where it fell (dropped whole: Legends#hold)
 		if (!visitRealm.isEmpty()) SecretRealmRivals.visitorDied(server, this); // one come for a secret realm: gone from its roll
 		NpcLife.end(this);

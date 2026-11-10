@@ -22,6 +22,10 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.KILLING_FORMATION);
 		// The Sunken Sword Tomb's old swords: iron, pulled out with a pickaxe.
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BURIED_SWORD);
+		// The Ranking Stele (Rankings): carved stone, taken down with a pickaxe.
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.RANKING_STELE);
+		// A Sect Plaque (PlayerSects): lacquered wood, taken down with an axe.
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.SECT_PLAQUE);
 		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
 		// Spirit stone veins: an iron pickaxe; the Upper Realm's rich veins a diamond one. (Their drops are hand-written loot
 		// tables in resources, not generated: they roll several grades.)

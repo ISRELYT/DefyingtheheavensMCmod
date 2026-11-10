@@ -1,0 +1,22 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "defying-the-heavens:block/sect_plaque_side",
+    "front": "defying-the-heavens:block/sect_plaque_front",
+    "side": "defying-the-heavens:block/sect_plaque_side"
+  },
+  "elements": [
+    {
+      "from": [1, 3, 15],
+      "to": [15, 13, 16],
+      "faces": {
+        "north": {"uv": [1, 3, 15, 13], "texture": "#front"},
+        "south": {"uv": [1, 3, 15, 13], "texture": "#side", "cullface": "south"},
+        "east": {"uv": [0, 3, 1, 13], "texture": "#side"},
+        "west": {"uv": [15, 3, 16, 13], "texture": "#side"},
+        "up": {"uv": [1, 15, 15, 16], "texture": "#side"},
+        "down": {"uv": [1, 0, 15, 1], "texture": "#side"}
+      }
+    }
+  ]
+}

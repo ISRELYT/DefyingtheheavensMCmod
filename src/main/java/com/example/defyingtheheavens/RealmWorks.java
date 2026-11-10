@@ -38,11 +38,16 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import net.minecraft.server.level.TicketType;
+import net.minecraft.world.level.ChunkPos;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -174,13 +179,114 @@ public abstract class RealmWorks {
 		while (steps != null && !steps.isEmpty()) runStep(steps.poll(), r.realm);
 	}
 
-	/** Each tick: the readying under way, as much as {@link #BUDGET_MS} allows. */
+	/**
+	 * Each tick: the readying under way, as much as {@link #BUDGET_MS} allows, once its realm's land is all loaded ({@link #landIn}). Its steps
+	 * reach into land not made yet, and the server made it there and then, on its own thread, whatever the budget (gigabytes of it a run,
+	 * the sweep of 2026-11-10); brought in first, the land is made in the generator's own time, and its steps wait for it.
+	 */
 	static void work(MinecraftServer server, SecretRealms.Data data) {
+		ServerLevel level = server.getLevel(ModDimensions.SECRET_REALM);
+		if (level == null) return;
 		long until = System.nanoTime() + BUDGET_MS * 1_000_000L;
 		for (Map.Entry<SecretRealm, Deque<Runnable>> entry : STEPS.entrySet()) {
 			Deque<Runnable> steps = entry.getValue();
-			while (!steps.isEmpty() && System.nanoTime() < until) runStep(steps.poll(), entry.getKey());
+			SecretRealm realm = entry.getKey();
+			if (steps.isEmpty()) {
+				release(level, realm);
+				continue;
+			}
+			if (!landIn(level, realm)) continue;
+			while (!steps.isEmpty() && System.nanoTime() < until) runStep(steps.poll(), realm);
+			if (steps.isEmpty()) release(level, realm);
 		}
+	}
+
+	/** Holds a realm's land loaded while it is readied: each of its chunks loaded whole, none of them ticking (as land at a player's edge). */
+	private static final TicketType<ChunkPos> READYING = TicketType.create("defying_the_heavens_realm_readying", Comparator.comparingLong(ChunkPos::toLong));
+	/**
+	 * How far out (blocks) a realm's land is held: as far as its land reaches, every chunk with any of it. (Held out to its bound and two
+	 * chunks past, all of it made whole, the realms' files came to 80 MB where the readying alone had made 55: the sweep of 2026-11-10.)
+	 */
+	private static final int LAND_REACH = SecretRealm.REACH;
+	/**
+	 * At most this many of its chunks on their way at a time. All of every stirring realm's asked for at once (thousands, a fresh world's nine
+	 * stirring together) queued every other load in every world behind them: ticks of 9 to 35 s in the sweep of 2026-11-10.
+	 */
+	private static final int IN_FLIGHT = 8;
+	/** The realms whose land is held, and those whose land is all in. */
+	private static final Set<SecretRealm> HELD = EnumSet.noneOf(SecretRealm.class), LAND_IN = EnumSet.noneOf(SecretRealm.class);
+	/** The one realm whose land is being brought in (one at a time), its chunks still to ask for (nearest its middle first), and those on their way. */
+	private static SecretRealm bringing;
+	/**
+	 * When its land began to be brought in, and how long it is waited on at most (ms, the clock's: the generator's pace is the clock's, not
+	 * the ticks', a server running fast or slow alike).
+	 */
+	private static long bringingSince;
+	private static final long GIVE_UP_MS = 300_000;
+	private static final Deque<ChunkPos> TO_ASK = new ArrayDeque<>();
+	private static final List<ChunkPos> ON_THE_WAY = new ArrayList<>();
+
+	/** The chunks of {@code realm}'s land: any of them within {@link #LAND_REACH} of its middle, sideways, nearest first. */
+	private static List<ChunkPos> land(SecretRealm realm) {
+		BlockPos c = realm.centre();
+		List<ChunkPos> chunks = new ArrayList<>();
+		for (int cx = (c.getX() - LAND_REACH) >> 4; cx <= (c.getX() + LAND_REACH) >> 4; cx++) {
+			for (int cz = (c.getZ() - LAND_REACH) >> 4; cz <= (c.getZ() + LAND_REACH) >> 4; cz++) {
+				// (its column nearest the middle)
+				double dx = Mth.clamp(c.getX(), cx << 4, (cx << 4) + 15) - c.getX(), dz = Mth.clamp(c.getZ(), cz << 4, (cz << 4) + 15) - c.getZ();
+				if (dx * dx + dz * dz <= (double) LAND_REACH * LAND_REACH) chunks.add(new ChunkPos(cx, cz));
+			}
+		}
+		chunks.sort(Comparator.comparingDouble(chunk -> Math.pow((chunk.x << 4) + 8 - c.getX(), 2) + Math.pow((chunk.z << 4) + 8 - c.getZ(), 2)));
+		return chunks;
+	}
+
+	/**
+	 * Whether {@code realm}'s land is all loaded. One realm's at a time is brought in, a few chunks on their way at once ({@link #IN_FLIGHT}),
+	 * the next asked for as each comes; each held (a ticket of its own) until its realm is readied.
+	 */
+	private static boolean landIn(ServerLevel level, SecretRealm realm) {
+		if (LAND_IN.contains(realm)) return true;
+		if (bringing != null && bringing != realm) return false; // another realm's land first
+		net.minecraft.server.level.ServerChunkCache chunks = level.getChunkSource();
+		if (bringing == null) {
+			bringing = realm;
+			bringingSince = net.minecraft.Util.getMillis();
+			HELD.add(realm);
+			TO_ASK.clear();
+			TO_ASK.addAll(land(realm));
+			ON_THE_WAY.clear();
+		}
+		ON_THE_WAY.removeIf(chunk -> chunks.getChunkNow(chunk.x, chunk.z) != null);
+		// Never waited on for good: land that won't come in five minutes, its steps go ahead without it (made as they reach it, as before).
+		if (net.minecraft.Util.getMillis() - bringingSince > GIVE_UP_MS && (!TO_ASK.isEmpty() || !ON_THE_WAY.isEmpty())) {
+			DefyingTheHeavens.LOGGER.warn("{}'s land still not all in after {} s ({} to come): readied without it", realm.getId(), GIVE_UP_MS / 1000,
+					TO_ASK.size() + ON_THE_WAY.size());
+			TO_ASK.clear();
+			ON_THE_WAY.clear();
+		}
+		while (ON_THE_WAY.size() < IN_FLIGHT && !TO_ASK.isEmpty()) {
+			ChunkPos chunk = TO_ASK.poll();
+			chunks.addRegionTicket(READYING, chunk, 0, chunk);
+			if (chunks.getChunkNow(chunk.x, chunk.z) == null) ON_THE_WAY.add(chunk); // (one already loaded, a player by it, needs no waiting on)
+		}
+		if (!TO_ASK.isEmpty() || !ON_THE_WAY.isEmpty()) return false;
+		LAND_IN.add(realm);
+		bringing = null;
+		return true;
+	}
+
+	/** Its land let go (readied, or no longer to be): it unloads as any land nobody is near does. */
+	private static void release(ServerLevel level, SecretRealm realm) {
+		LAND_IN.remove(realm);
+		if (bringing == realm) {
+			bringing = null;
+			TO_ASK.clear();
+			ON_THE_WAY.clear();
+		}
+		if (!HELD.remove(realm)) return;
+		// (Every chunk of its land, asked for or not: a ticket never set is no ticket to take away.)
+		for (ChunkPos chunk : land(realm)) level.getChunkSource().removeRegionTicket(READYING, chunk, 0, chunk);
 	}
 
 	private static void runStep(Runnable step, SecretRealm realm) {
@@ -193,6 +299,11 @@ public abstract class RealmWorks {
 
 	static void clear() {
 		STEPS.clear();
+		HELD.clear(); // (the server's tickets go with it)
+		LAND_IN.clear();
+		bringing = null;
+		TO_ASK.clear();
+		ON_THE_WAY.clear();
 	}
 
 	// --- Building ---

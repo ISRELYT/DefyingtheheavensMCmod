@@ -47,8 +47,8 @@ public final class ModCreativeTab {
 		void fill() {
 			// Cultivating
 			add(ModBlocks.MEDITATION_MAT, ModBlocks.RED_MEDITATION_MAT, ModBlocks.SPIRIT_PEDESTAL, ModBlocks.HEAVEN_ALTAR,
-					ModBlocks.ALCHEMY_CAULDRON, ModBlocks.FORMATION_CORE, ModItems.INSCRIPTION_BRUSH, ModItems.RING_OF_POWER,
-					ModItems.RING_OF_TRANSCENDENCE);
+					ModBlocks.ALCHEMY_CAULDRON, ModBlocks.FORMATION_CORE, ModBlocks.SECT_PLAQUE, ModBlocks.RANKING_STELE, ModItems.INSCRIPTION_BRUSH,
+					ModItems.RING_OF_POWER, ModItems.RING_OF_TRANSCENDENCE);
 			for (StorageFormations.Tier tier : StorageFormations.Tier.values()) add(StorageFormationItem.of(tier));
 			add(ModBlocks.gatheringFormations()); // the gathering formations, Qi's three then Yin's (GatheringFormations)
 			// The Method Manuals (CultivationMethod#fromManual): each method to its last realm (its first, for the heaven and ghost ones'
@@ -106,6 +106,9 @@ public final class ModCreativeTab {
 			// The Netherworld: talismans and the exorcist's sword, its herbs (a year old) and what they're grown from, Yin Jade, its
 			// pills at every grade, the slips
 			add(ModItems.YANG_FIRE_TALISMAN, ModItems.GHOST_QUELLING_TALISMAN, ModItems.PEACH_WOOD_SWORD, ModBlocks.RED_SPIDER_LILY);
+			// The brush's talismans (Talismans): its paper, then each pattern's, as found (of no hand: as strong as whoever uses it).
+			add(ModItems.TALISMAN_PAPER);
+			for (TalismanPattern pattern : TalismanPattern.values()) if (pattern.hasPower()) add(pattern.item());
 			for (Item herb : new Item[] {ModItems.OTHER_SHORE_FLOWER, ModItems.NETHERWORLD_LOTUS}) add(GinsengItem.create(herb, 1));
 			add(ModItems.OTHER_SHORE_FLOWER_SEEDS, ModItems.NETHERWORLD_LOTUS_SEEDS, ModItems.YIN_JADE, ModBlocks.YIN_JADE_ORE, ModBlocks.YIN_JADE_BLOCK);
 			for (Item pill : new Item[] {ModItems.YANG_PRESERVATION_PILL, ModItems.YIN_GATHERING_PILL}) {

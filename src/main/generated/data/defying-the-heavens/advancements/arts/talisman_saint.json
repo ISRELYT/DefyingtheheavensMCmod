@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/talisman",
+  "criteria": {
+    "talisman_saint": {
+      "conditions": {
+        "milestone": "talisman/saint"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.talisman_saint.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:five_thunder_talisman"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.talisman_saint.title"
+    }
+  },
+  "requirements": [
+    [
+      "talisman_saint"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

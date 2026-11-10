@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "talisman_drawn": {
+      "conditions": {
+        "milestone": "talisman/drawn"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.talisman.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:fire_talisman"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.talisman.title"
+    }
+  },
+  "requirements": [
+    [
+      "talisman_drawn"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

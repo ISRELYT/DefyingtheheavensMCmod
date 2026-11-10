@@ -160,6 +160,7 @@ public final class CultivatorTrades {
 				goods.add(new Goods(new ItemStack(ModBlocks.MEDITATION_MAT), 4, 2, Regard.PER_PIP));
 				goods.add(pill(ModItems.QI_GATHERING_PILL, PillGrade.LOW, 2, Regard.COURTEOUS));
 				goods.add(herb(random, 80, 150, Regard.WARM, ModItems.GINSENG, ModItems.LINGZHI, ModItems.HUANGJING));
+				goods.add(new Goods(new ItemStack(ModItems.TALISMAN_PAPER, 4), 2, 4, 0)); // the brush's paper (Talismans)
 			}
 			case INNER_DISCIPLE -> {
 				goods.add(new Goods(new ItemStack(pick(random, ModItems.SPIRIT_GINSENG_SEEDS, ModItems.PURPLE_LINGZHI_SPORES,
@@ -169,6 +170,9 @@ public final class CultivatorTrades {
 				goods.add(new Goods(new ItemStack(ModBlocks.MEDITATION_MAT), 4, 2, Regard.PER_PIP));
 				goods.add(pill(ModItems.CULTIVATION_PILL, PillGrade.LOW, 2, Regard.COURTEOUS));
 				goods.add(herb(random, 150, 300, Regard.WARM, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.OCHRE_HUANGJING));
+				// Talismans of its own drawing, as strong as it is (Talismans#drawnBy).
+				goods.add(new Goods(Talismans.drawnBy(pick(random, TalismanPattern.FIRE, TalismanPattern.FROST, TalismanPattern.DIVINE_SPEED), npc.getRank(),
+						npc.getPersonalName(), 2), 6, 2, Regard.COURTEOUS));
 			}
 			case ELDER, GRAND_ELDER -> {
 				goods.add(pill(pick(random, ModItems.CULTIVATION_PILL, ModItems.MARROW_CLEANSING_ELIXIR), PillGrade.MID, 2, 0));
@@ -179,6 +183,9 @@ public final class CultivatorTrades {
 				goods.add(artifact(random, ArtifactGrade.SPIRIT, npc, Regard.COURTEOUS));
 				goods.add(new Goods(ClothingItem.create(ModItems.clothing(ClothingTier.SPIRIT, pickPiece(random)), style), 40, 1, Regard.WARM));
 				goods.add(herb(random, 600, 1000, Regard.TRUSTED, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.SPIRIT_LOTUS));
+				// A talisman of its own drawing, one of the harder patterns (Talismans#drawnBy).
+				goods.add(new Goods(Talismans.drawnBy(pick(random, TalismanPattern.FIVE_THUNDER, TalismanPattern.BINDING, TalismanPattern.GOLDEN_LIGHT,
+						TalismanPattern.THOUSAND_LI_ESCAPE, TalismanPattern.CONCEALMENT), npc.getRank(), npc.getPersonalName(), 1), 20, 2, Regard.COURTEOUS));
 			}
 			case SECT_MASTER -> {
 				goods.add(pill(ModItems.CORE_PILL, PillGrade.MID, 1, 0));

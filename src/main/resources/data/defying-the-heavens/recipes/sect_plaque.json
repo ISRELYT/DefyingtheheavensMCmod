@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "NRN",
+    "PPP"
+  ],
+  "key": {
+    "N": {"item": "minecraft:gold_nugget"},
+    "R": {"item": "minecraft:red_dye"},
+    "P": {"tag": "minecraft:planks"}
+  },
+  "result": {"item": "defying-the-heavens:sect_plaque"}
+}

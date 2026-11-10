@@ -153,7 +153,10 @@ public enum Realm {
 	/** From Nascent Soul on, the cultivator can send their nascent soul out of the body (see {@link SoulProjection}). */
 	public boolean canProjectSoul() { return ordinal() >= NASCENT_SOUL.ordinal(); }
 
+	/** The realms, kept once (values() copies them on every call: Stage#ALL). */
+	private static final Realm[] ALL = values();
+
 	public static Realm byIndex(int index) {
-		return values()[Math.max(0, Math.min(values().length - 1, index))];
+		return ALL[Math.max(0, Math.min(ALL.length - 1, index))];
 	}
 }

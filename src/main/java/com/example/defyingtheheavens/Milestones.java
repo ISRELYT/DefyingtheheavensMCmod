@@ -58,6 +58,9 @@ public final class Milestones {
 	public static final String SECRET_ENTERED = "secret/entered", SECRET_OUT_ALIVE = "secret/out_alive", SECRET_INHERITOR = "secret/inheritor",
 			SECRET_OWN_BODY = "secret/own_body";
 
+	/** A talisman drawn (Talismans#draw); the craft of talismans at Saint (CraftMastery). */
+	public static final String TALISMAN_DRAWN = "talisman/drawn", TALISMAN_SAINT = "talisman/saint";
+
 	/** {@code legend} heard of (its rumour told: TalkSystem), or found (in hand: Legends#seen). */
 	public static String legendHeard(Legend legend) {
 		return "legend/heard_" + legend.getId();
@@ -74,6 +77,11 @@ public final class Milestones {
 	public static void onTribulation(ServerPlayer p, Realm into) {
 		award(p, TRIBULATION);
 		if (into.ordinal() >= Realm.TRUE_IMMORTAL.ordinal()) award(p, IMMORTAL_TRIBULATION);
+	}
+
+	/** A talisman drawn by {@code p} (Talismans#draw). */
+	public static void talismanDrawn(ServerPlayer p) {
+		award(p, TALISMAN_DRAWN);
 	}
 
 	/** A spell cast by {@code p} (Spells#cast): any, and which. */
@@ -113,6 +121,7 @@ public final class Milestones {
 		for (FourAxis.Axis axis : FourAxis.Axis.values()) axes &= FourAxis.complete(c, axis);
 		if (axes) award(p, FOUR_AXES);
 		if (c.laws().total() > 0) award(p, LAW);
+		if (CraftMastery.rank(c, CraftMastery.Craft.TALISMANS) == CraftMastery.Rank.SAINT) award(p, TALISMAN_SAINT);
 		if (!c.heaven().known().isEmpty()) award(p, HEAVEN_METHOD);
 		if (Ability.QI_SENSE.isUnlocked(c) && c.isAbilityEnabled(Ability.QI_SENSE)) award(p, QI_SENSE);
 		if (p.getAbilities().flying && !p.isCreative() && !p.isSpectator() && !s.ghost() && !c.isMortal()) award(p, QI_FLIGHT);

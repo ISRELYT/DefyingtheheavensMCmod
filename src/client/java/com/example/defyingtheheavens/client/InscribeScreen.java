@@ -29,8 +29,13 @@ public class InscribeScreen extends Screen implements HallFrame.Framed {
 	private int left, top, scroll;
 
 	public InscribeScreen(List<int[]> options) {
-		super(Component.translatable(ModLang.INSCRIBE_TITLE));
+		super(Component.translatable(talismans(options) ? ModLang.TALISMAN_TITLE : ModLang.INSCRIBE_TITLE));
 		this.options = options;
+	}
+
+	/** The list is a talisman's patterns (kind 2: the brush with Talisman Paper, Talismans#offer), not what may be written out. */
+	private static boolean talismans(List<int[]> options) {
+		return !options.isEmpty() && options.get(0)[0] == 2;
 	}
 
 	@Override
@@ -57,6 +62,15 @@ public class InscribeScreen extends Screen implements HallFrame.Framed {
 	}
 
 	private Component label(int[] option) {
+		if (option[0] == 2) {
+			// A pattern: its talisman, what it takes of one's qi, and the Talismans rank that draws it surely.
+			com.example.defyingtheheavens.TalismanPattern pattern = com.example.defyingtheheavens.TalismanPattern.byIndex(option[1]);
+			if (pattern == null) return Component.literal("?");
+			com.example.defyingtheheavens.PlayerCultivation c = ClientCultivationData.get();
+			int qi = (int) Math.ceil(com.example.defyingtheheavens.Talismans.qiCost(c, pattern));
+			return Component.translatable(ModLang.TALISMAN_OPTION, pattern.getDisplayName(), qi,
+					com.example.defyingtheheavens.CraftMastery.Rank.values()[pattern.difficulty].getDisplayName());
+		}
 		if (option[0] == 0) {
 			Technique technique = Technique.byIndex(option[1]);
 			return technique == null ? Component.literal("?") : Component.translatable(ModLang.INSCRIBE_TECHNIQUE, technique.getDisplayName());
@@ -92,7 +106,7 @@ public class InscribeScreen extends Screen implements HallFrame.Framed {
 		int x = left, y = top;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
 		HallHud.heading(g, font, title, x + 10, y + 7, W - 20);
-		Component hint = Component.translatable(ModLang.INSCRIBE_HINT);
+		Component hint = Component.translatable(talismans(options) ? ModLang.TALISMAN_HINT : ModLang.INSCRIBE_HINT);
 		g.drawString(font, hint, x + (W - font.width(hint)) / 2, y + 26, TalkUi.MUTED, false);
 		int hovered = rowAt(mouseX, mouseY);
 		for (int row = 0; row < visibleRows() && row + scroll < options.size(); row++) {

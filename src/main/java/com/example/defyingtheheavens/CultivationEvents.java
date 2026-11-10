@@ -185,6 +185,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Formations::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SectManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SectMembership::tick); // disciples told of their title as it changes
+		ServerTickEvents.END_SERVER_TICK.register(PlayerSects::tick); // players' own sects: aspirants, tribute, invitations, their grounds
 		ServerTickEvents.END_SERVER_TICK.register(NpcSpawner::tick);
 		ServerTickEvents.END_SERVER_TICK.register(BeastSpawner::tick); // the wild demon beasts, round players by their lands
 		ServerTickEvents.END_SERVER_TICK.register(RogueIndex::tick);
@@ -204,6 +205,15 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Clones::tick); // back from a crash in a clone; the main body's health told
 		ServerTickEvents.END_SERVER_TICK.register(SparSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);
+		// The Earth and Heaven Lists (Rankings): players noted every few seconds, the sects' rolls read in each day; cultivators as they load,
+		// and players slain (a kill wins its place).
+		ServerTickEvents.END_SERVER_TICK.register(Rankings::tick);
+		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
+			if (entity instanceof CultivatorNpc npc) Rankings.note(npc);
+		});
+		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
+			if (entity instanceof ServerPlayer && source.getEntity() instanceof net.minecraft.world.entity.LivingEntity killer) Rankings.slain(entity, killer);
+		});
 		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
 		ServerTickEvents.END_SERVER_TICK.register(HeavenRitual::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Physiques::tick);

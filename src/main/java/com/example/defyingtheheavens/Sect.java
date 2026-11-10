@@ -164,6 +164,21 @@ public final class Sect {
 	 */
 	public BlockPos board;
 	public long boardGoneDay = -1;
+	/** Its Ranking Stele beside its board (SectMissions#laySteles, Rankings): null until looked for, BlockPos.ZERO when there was no room. */
+	public BlockPos stele;
+	/**
+	 * A sect founded by a player (PlayerSects: the user's "Build as designed", 2026-11-10): its founder, the Sect Master (no cultivator holds the
+	 * seat), and their name. Null for the world's own sects.
+	 */
+	public UUID founder;
+	public String founderName = "";
+	/** A player's sect: the tribute its disciples have paid (Low stones' worth) and the game day it was last reckoned; when its next aspirant comes. */
+	public long tribute, tributeDay = -1, nextArrival = -1;
+	/** A player's sect: players its founder has invited, and until when (game time) each invitation stands. */
+	public final Map<UUID, Long> invited = new HashMap<>();
+
+	/** Founded by a player (PlayerSects), its Sect Master that player. */
+	public boolean isPlayers() { return founder != null; }
 
 	/**
 	 * The element the sect cultivates (QiElement, one of the five): its heaven methods are that element's, its elders teach them
@@ -286,7 +301,10 @@ public final class Sect {
 	public boolean recalculateTitles() {
 		List<Member> ordered = new ArrayList<>(members.values());
 		ordered.sort(SENIORITY);
-		EnumMap<NpcTitle, Integer> counts = titleCounts(ordered.size());
+		// A player's sect (PlayerSects): its founder holds the master's seat, counted among them, and its cultivators share out the rest (a Grand
+		// Elder at most).
+		EnumMap<NpcTitle, Integer> counts = titleCounts(ordered.size() + (isPlayers() ? 1 : 0));
+		if (isPlayers()) counts.remove(NpcTitle.SECT_MASTER);
 		boolean changed = false;
 		int i = 0;
 		for (NpcTitle title : new NpcTitle[] {NpcTitle.SECT_MASTER, NpcTitle.GRAND_ELDER, NpcTitle.ELDER, NpcTitle.INNER_DISCIPLE, NpcTitle.OUTER_DISCIPLE}) {
@@ -312,7 +330,9 @@ public final class Sect {
 		for (Member member : members.values()) {
 			if (member.rank > rank || member.rank == rank && member.cultivation > cultivation) above++;
 		}
-		EnumMap<NpcTitle, Integer> counts = titleCounts(members.size() + 1);
+		// In a player's sect its founder sits above everyone in the master's seat (SectMembership#titleOf gives them that seat).
+		if (isPlayers()) above++;
+		EnumMap<NpcTitle, Integer> counts = titleCounts(members.size() + 1 + (isPlayers() ? 1 : 0));
 		int reached = 0;
 		for (NpcTitle title : new NpcTitle[] {NpcTitle.SECT_MASTER, NpcTitle.GRAND_ELDER, NpcTitle.ELDER, NpcTitle.INNER_DISCIPLE, NpcTitle.OUTER_DISCIPLE}) {
 			reached += counts.getOrDefault(title, 0);
@@ -463,6 +483,22 @@ public final class Sect {
 		tag.put("Barred", barredList);
 		if (board != null) tag.putLong("Board", board.asLong());
 		tag.putLong("BoardGoneDay", boardGoneDay);
+		if (stele != null) tag.putLong("Stele", stele.asLong());
+		if (founder != null) {
+			tag.putUUID("Founder", founder);
+			tag.putString("FounderName", founderName);
+			tag.putLong("Tribute", tribute);
+			tag.putLong("TributeDay", tributeDay);
+			tag.putLong("NextArrival", nextArrival);
+			ListTag invitedList = new ListTag();
+			for (Map.Entry<UUID, Long> entry : invited.entrySet()) {
+				CompoundTag i = new CompoundTag();
+				i.putUUID("Player", entry.getKey());
+				i.putLong("Until", entry.getValue());
+				invitedList.add(i);
+			}
+			tag.put("Invited", invitedList);
+		}
 		return tag;
 	}
 
@@ -539,6 +575,19 @@ public final class Sect {
 		}
 		if (tag.contains("Board")) sect.board = BlockPos.of(tag.getLong("Board"));
 		sect.boardGoneDay = tag.contains("BoardGoneDay") ? tag.getLong("BoardGoneDay") : -1;
+		if (tag.contains("Stele")) sect.stele = BlockPos.of(tag.getLong("Stele"));
+		if (tag.hasUUID("Founder")) {
+			sect.founder = tag.getUUID("Founder");
+			sect.founderName = tag.getString("FounderName");
+			sect.tribute = tag.getLong("Tribute");
+			sect.tributeDay = tag.getLong("TributeDay");
+			sect.nextArrival = tag.getLong("NextArrival");
+			ListTag invitedList = tag.getList("Invited", Tag.TAG_COMPOUND);
+			for (int i = 0; i < invitedList.size(); i++) {
+				CompoundTag inv = invitedList.getCompound(i);
+				if (inv.hasUUID("Player")) sect.invited.put(inv.getUUID("Player"), inv.getLong("Until"));
+			}
+		}
 		return sect;
 	}
 

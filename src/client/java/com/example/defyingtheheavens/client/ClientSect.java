@@ -38,7 +38,7 @@ public final class ClientSect {
 	public record Info(boolean member, String sectName, int alignment, NpcTitle title, int standing, boolean onGrounds, int distance,
 					   String direction, boolean barrierUp, int treasuryTries, boolean elder, long ticksMember, boolean inBody, List<Member> members,
 					   int nearestDistance, int barredDays, boolean clan, boolean holy, boolean immortal, CelestialCourt.Rank court, int merit,
-					   int contribution, int earned, int missions, boolean body) {}
+					   int contribution, int earned, int missions, boolean body, String invitedTo) {}
 
 	static void set(String sectName, int titleIndex) {
 		name = sectName == null ? "" : sectName;
@@ -79,22 +79,32 @@ public final class ClientSect {
 			CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
 			int merit = buf.readVarInt();
 			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, inBody, members, 0, 0, clan, holy,
-					immortal, court, merit, contribution, earned, missions, body);
+					immortal, court, merit, contribution, earned, missions, body, "");
 		}
 		if (!buf.readBoolean()) {
+			String invited = buf.readUtf(); // a player's sect inviting them (PlayerSects)
 			CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
 			int merit = buf.readVarInt();
-			return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false, false, false, court, merit, 0, 0, 0, false);
+			return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false, false, false, court, merit, 0, 0, 0, false,
+					invited);
 		}
 		String near = buf.readUtf();
 		int alignment = buf.readInt();
 		int distance = buf.readVarInt();
 		String direction = buf.readUtf();
 		int barred = buf.readVarInt();
+		String invited = buf.readUtf();
 		CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
 		int merit = buf.readVarInt();
 		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, false, List.of(), distance, barred, false, false, false,
-				court, merit, 0, 0, 0, false);
+				court, merit, 0, 0, 0, false, invited);
+	}
+
+	/** The Sect tab's Accept button: the invitation of a player's sect standing for them is taken up (PlayerSects#accept). */
+	public static void acceptInvite() {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(2);
+		ClientPlayNetworking.send(ModPackets.SECT_ACT, buf);
 	}
 
 	/** The Sect tab's Leave button (in a member's body): the body leaves its sect. */

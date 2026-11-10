@@ -54,7 +54,8 @@ public class HermitSites extends SavedData {
 	/** A region left empty gets a new hermit this long (ticks: two weeks of game days) after its last one left. */
 	static final long REFILL = 14 * HeavenRitual.DAY;
 
-	private final Set<Long> decided = new HashSet<>();
+	/** (A long set of its own: boxed, a region's key hashes to x ^ z and the regions round a place crowd a few buckets: SectSites#decided.) */
+	private final it.unimi.dsi.fastutil.longs.LongSet decided = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
 	/** Each seated hermit's region, and the regions waiting for a new one (and from when). */
 	private final Map<UUID, Long> hermits = new HashMap<>();
 	private final Map<Long, Long> vacantUntil = new HashMap<>();
@@ -132,7 +133,7 @@ public class HermitSites extends SavedData {
 			Map.Entry<Long, Long> e = it.next();
 			if (e.getValue() > now) continue;
 			it.remove();
-			data.decided.remove(e.getKey());
+			data.decided.remove(e.getKey().longValue());
 			data.setDirty();
 			ChunkPos chunk = siteChunk(level.getSeed(), ChunkPos.getX(e.getKey()), ChunkPos.getZ(e.getKey()));
 			if (chunk != null && level.hasChunk(chunk.x, chunk.z)) PENDING.add(e.getKey());
@@ -259,7 +260,7 @@ public class HermitSites extends SavedData {
 
 	@Override
 	public CompoundTag save(CompoundTag tag) {
-		tag.putLongArray("Decided", decided.stream().mapToLong(Long::longValue).toArray());
+		tag.putLongArray("Decided", decided.toLongArray());
 		ListTag seated = new ListTag();
 		for (Map.Entry<UUID, Long> e : hermits.entrySet()) {
 			CompoundTag h = new CompoundTag();

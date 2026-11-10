@@ -50,7 +50,12 @@ public final class Rumours extends SavedData {
 	 * realm's tales (SecretRealms: its stirring, those who fell in it, who took its inheritance), told of throughout its world. Saved by name:
 	 * new kinds go at the end.
 	 */
-	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE, LEGEND, REALM }
+	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE, LEGEND, REALM,
+		/** A top-ten place on a world's list won (Rankings#won), and a sect founded by a player (PlayerSects): talked of round their world a few days. */
+		RANKING, FOUNDING }
+
+	/** A place won on a list, and a sect's founding, are talked of this long (ticks: three days). */
+	public static final long TALE_REMEMBERED = 3 * 24_000L;
 
 	/** A secret realm's stirring is talked of this long (ticks: two days), those who fell in it three. */
 	public static final long STIRRING_REMEMBERED = 2 * 24_000L, FALLEN_REMEMBERED = 3 * 24_000L;
@@ -90,6 +95,7 @@ public final class Rumours extends SavedData {
 				case KILLING -> now - since < KILLING_REMEMBERED;
 				case CAVE, CORE, STELE, LEGEND -> true;
 				case REALM -> id.endsWith(":stirs") ? now - since < STIRRING_REMEMBERED : !id.contains(":fallen:") || now - since < FALLEN_REMEMBERED;
+				case RANKING, FOUNDING -> now - since < TALE_REMEMBERED;
 			};
 		}
 
@@ -236,6 +242,16 @@ public final class Rumours extends SavedData {
 		PENDING.add(new Rumour("realm:" + realm.getId() + ":heir", Kind.REALM, realm.home(), realm.centre(), realm.getId(), 0, now, name));
 	}
 
+	/** {@code winner} took the {@code place}th place on {@code board} from {@code loser} (Rankings#won): told of round that list's world. */
+	public static void noteRanking(Rankings.Board board, int place, String winner, String loser, long now) {
+		PENDING.add(new Rumour("ranking:" + board.getId() + ":" + place, Kind.RANKING, board.home(), BlockPos.ZERO, winner, place, now, loser));
+	}
+
+	/** {@code founder} founded {@code sect} (PlayerSects): told of round its world. */
+	public static void noteFounding(Sect sect, String founder, long now) {
+		PENDING.add(new Rumour("founding:" + sect.id, Kind.FOUNDING, sect.dimension, sect.core, sect.name, 0, now, founder));
+	}
+
 	/** A player has killed a cultivator. */
 	public static void noteKilling(CultivatorNpc victim, ServerPlayer killer) {
 		PENDING.add(new Rumour("kill:" + victim.getUUID(), Kind.KILLING, victim.level().dimension(), victim.blockPosition(),
@@ -252,7 +268,8 @@ public final class Rumours extends SavedData {
 			else if (next instanceof Forget forget) data.rumours.remove(forget.id());
 		}
 		long now = server.overworld().getGameTime();
-		data.rumours.values().removeIf(r -> r.kind == Kind.KILLING && now - r.since >= KILLING_REMEMBERED);
+		data.rumours.values().removeIf(r -> r.kind == Kind.KILLING && now - r.since >= KILLING_REMEMBERED
+				|| (r.kind == Kind.RANKING || r.kind == Kind.FOUNDING) && now - r.since >= TALE_REMEMBERED);
 		data.setDirty();
 	}
 
@@ -283,8 +300,9 @@ public final class Rumours extends SavedData {
 			boolean legend = rumour.kind == Kind.LEGEND; // the legends are talked of in every world, however far off
 			if (!legend && rumour.dimension != level.dimension() || told.contains(rumour.id) || !rumour.current(now)) continue;
 			if (rumour.kind == Kind.STELE && !npc.isGhost()) continue; // only the dead tell of the steles
-			// A secret realm's tales go round its whole world.
-			if (!legend && rumour.kind != Kind.REALM && rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
+			// A secret realm's tales go round its whole world, and so do a list's places won and a sect's founding.
+			boolean worldWide = rumour.kind == Kind.REALM || rumour.kind == Kind.RANKING || rumour.kind == Kind.FOUNDING;
+			if (!legend && !worldWide && rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
 			if (gone(level, rumour)) {
 				PENDING.add(new Forget(rumour.id));
 				continue;
@@ -352,6 +370,14 @@ public final class Rumours extends SavedData {
 				if (rumour.id.endsWith(":heir")) yield Component.translatable(ModLang.rumour("realm.heir"), rumour.detail, name);
 				yield Component.translatable(ModLang.rumour("realm.fallen"), rumour.detail, name);
 			}
+			case RANKING -> {
+				// "ranking:<board>:<place>": who won it, from whom, and which list.
+				String[] parts = rumour.id.split(":");
+				Rankings.Board board = Rankings.Board.EARTH;
+				for (Rankings.Board b : Rankings.Board.values()) if (parts.length > 1 && b.getId().equals(parts[1])) board = b;
+				yield Component.translatable(ModLang.rumour("ranking"), rumour.subject, rumour.detail, rumour.initialYears, board.getDisplayName());
+			}
+			case FOUNDING -> Component.translatable(ModLang.rumour("founding"), rumour.subject, rumour.detail, direction, country, rough);
 		};
 	}
 

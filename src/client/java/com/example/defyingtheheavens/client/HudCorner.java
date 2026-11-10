@@ -56,5 +56,12 @@ public final class HudCorner {
 		return new int[] {0, foot + GAP - top};
 	}
 
+	/** The stack's foot as last drawn (GUI pixels; 0: nothing drawn), so a screen over it may keep clear of it (DialogueScreen's portrait). */
+	public static int foot() {
+		int foot = 0;
+		for (int[] row : drawn) foot = Math.max(foot, row[1]);
+		return foot;
+	}
+
 	private HudCorner() {}
 }

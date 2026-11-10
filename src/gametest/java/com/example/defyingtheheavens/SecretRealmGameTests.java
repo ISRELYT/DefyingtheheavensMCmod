@@ -274,6 +274,10 @@ public class SecretRealmGameTests implements FabricGameTest {
 			SecretRealms.openNow(server, VALLEY);
 			helper.assertTrue(r.openedAt >= 0 && r.laid && r.seal != null && r.sealBuilt, "Open, its land laid and its Seal built");
 			ServerLevel home = server.getLevel(VALLEY.home());
+			// Its gate is set only while its land is loaded (the sweep of 2026-11-10), and as its realm stands once that land loads: loaded here
+			// (a Seal built in an earlier run lies unloaded) and caught up as the server's tick would.
+			for (int dx = -1; dx <= 1; dx += 2) home.getChunk((r.seal.getX() + dx) >> 4, r.seal.getZ() >> 4);
+			SecretRealms.keepGates(server, data);
 			BlockState gate = home.getBlockState(r.seal.above());
 			helper.assertTrue(gate.is(ModBlocks.SECRET_REALM_GATE) && gate.getValue(SecretRealmGateBlock.PHASE) == SecretRealmGateBlock.Phase.OPEN, "Its gate open: " + gate);
 			ServerLevel realms = server.getLevel(ModDimensions.SECRET_REALM);
@@ -282,6 +286,7 @@ public class SecretRealmGameTests implements FabricGameTest {
 			helper.assertTrue(realms.getBlockState(cauldron).is(ModBlocks.ALCHEMY_CAULDRON), "The master's cauldron in his hall");
 			long now = server.overworld().getGameTime();
 			SecretRealms.closeNow(server, VALLEY);
+			SecretRealms.keepGates(server, data);
 			gate = home.getBlockState(r.seal.above());
 			helper.assertTrue(r.openedAt < 0 && r.nextOpen > now && gate.getValue(SecretRealmGateBlock.PHASE) == SecretRealmGateBlock.Phase.SEALED,
 					"Shut, sealed again, its next opening ahead");

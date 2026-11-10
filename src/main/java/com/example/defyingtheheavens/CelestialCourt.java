@@ -310,11 +310,11 @@ public final class CelestialCourt {
 
 	/** A Heavenly Venerable answers {@code player}'s asking of the Court: takes them into it, or tells them where they stand in it. */
 	static Component ask(ServerPlayer player, CultivatorNpc npc) {
-		Component name = Component.literal(npc.getPersonalName());
 		if (!isMember(player.server, player.getUUID())) {
 			if (!ImmortalGate.mayPass(player)) return Component.translatable(ModLang.talkLine("court.too_weak"));
 			join(player);
-			return Component.translatable(ModLang.talkLine("court.join"), name);
+			// In the Venerable's own words (every answer is shown quoted: TalkSystem#speech), where it once named itself in the third person.
+			return Component.translatable(ModLang.talkLine("court.join"));
 		}
 		int merit = meritOf(player.server, player.getUUID());
 		Rank rank = Rank.of(merit), next = rank.next();

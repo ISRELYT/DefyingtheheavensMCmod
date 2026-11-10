@@ -449,7 +449,21 @@ public final class Legends extends SavedData {
 				ServerLevel level = server.getLevel(entry.legend.home());
 				if (level == null) continue;
 				if (entry.site == null) {
-					entry.site = site(level, entry.legend);
+					if (entry.legend == Legend.XUANYUAN) {
+						// Its peak sought off the server thread: some two thousand of the generator's columns, seconds of work that stalled a world's
+						// first minute (the sweep of 2026-11-10); taken up when done.
+						if (peakSought == null) peakSought = java.util.concurrent.CompletableFuture.supplyAsync(() -> LegendSites.peak(level), net.minecraft.Util.backgroundExecutor());
+						if (!peakSought.isDone()) continue;
+						try {
+							entry.site = peakSought.join();
+						} catch (RuntimeException e) {
+							DefyingTheHeavens.LOGGER.warn("No peak found for {}'s resting place; it lies at the Firmament's heart", entry.legend.getId(), e);
+							entry.site = new BlockPos(0, level.getMinBuildHeight(), 0);
+						}
+						peakSought = null;
+					} else {
+						entry.site = site(level, entry.legend);
+					}
 					data.setDirty();
 					noteRumour(server, entry);
 					DefyingTheHeavens.LOGGER.info("{} rests near {} in {}", entry.legend.getId(), entry.site.toShortString(), level.dimension().location());
@@ -996,8 +1010,15 @@ public final class Legends extends SavedData {
 		}
 	}
 
-	/** A server stopping: nobody is bonding or being tamed any more, no bow gathering its sun, and Lei Zhen's storm is gone with the world. */
+	/** The Xuanyuan Sword's peak being sought off the server thread (#tick), or null. */
+	private static java.util.concurrent.CompletableFuture<BlockPos> peakSought;
+
+	/**
+	 * A server stopping: nobody is bonding or being tamed any more, no bow gathering its sun, Lei Zhen's storm is gone with the world, and no
+	 * peak is sought for it.
+	 */
 	public static void clear() {
+		peakSought = null;
 		BONDING.clear();
 		TAMING.clear();
 		LegendaryWeaponItem.clear();

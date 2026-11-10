@@ -791,6 +791,8 @@ public final class CaveAbodeWorks extends RealmWorks {
 		if (random.nextFloat() < 0.5f) out.add(slip(random, Realm.NASCENT_SOUL));
 		if (random.nextFloat() < 0.15f) out.add(slip(random, Realm.HEAVENLY_BEING));
 		if (random.nextFloat() < 0.4f) out.add(new ItemStack(ModItems.DEPARTURE_JADE));
+		// The master's talismans, of no known hand now (Talismans#found).
+		if (random.nextFloat() < 0.5f) out.addAll(Talismans.found(random, 2));
 		return out;
 	}
 

@@ -227,6 +227,9 @@ public final class ModAdvancements {
 		// Its id kept from the Storage Rings' days, so who earned it keeps it (the storage formations took the rings' place, 2026-10-28).
 		add("arts/storage_ring", "arts/root", ModItems.storageFormation(com.example.defyingtheheavens.StorageFormations.Tier.MID), FrameType.TASK,
 				"A Sealed World", "Refine a storage formation", milestone(Milestones.STORAGE_RING));
+		add("arts/talisman", "arts/root", ModItems.FIRE_TALISMAN, FrameType.TASK, "Ink and Cinnabar", "Draw a talisman", milestone(Milestones.TALISMAN_DRAWN));
+		add("arts/talisman_saint", "arts/talisman", ModItems.FIVE_THUNDER_TALISMAN, FrameType.CHALLENGE, "Saint of Talismans",
+				"Reach Saint in the craft of talismans", milestone(Milestones.TALISMAN_SAINT));
 		add("arts/thousand_year_fruit", "arts/root", ModItems.CULTIVATION_FRUIT, FrameType.TASK, "A Thousand Years Ripened",
 				"Eat a Cultivation Fruit a thousand years old or more", milestone(Milestones.THOUSAND_YEAR_FRUIT));
 		add("arts/sacred_vessel", "arts/immortal_stone", ModItems.JIANMU_BOUGH_VASE, FrameType.GOAL, "A Sacred Vessel", "Hold one of the five Sacred Vessels",

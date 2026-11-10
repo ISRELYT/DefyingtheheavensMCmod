@@ -74,6 +74,8 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 	private static final EntityDataAccessor<Byte> DATA_ACT = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.BYTE);
 	/** Grown past its kind ({@link #setBoundlessRank}): the client sizes it by this too. */
 	private static final EntityDataAccessor<Boolean> DATA_BOUNDLESS = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.BOOLEAN);
+	/** Ridden, a flier that can't take to the air with its rider where they are (SpiritBonds#groundedFor): the server's word, for the rider's client, which moves it. */
+	private static final EntityDataAccessor<Boolean> DATA_GROUNDED = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.BOOLEAN);
 	public static final int ACT_SHELL = 1, ACT_CHARGE = 2, ACT_COIL = 4, ACT_BREATH = 8;
 
 	private static final Map<EntityType<?>, BeastKind> KINDS = new HashMap<>();
@@ -168,6 +170,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 		entityData.define(DATA_RANK, -1);
 		entityData.define(DATA_ACT, (byte) 0);
 		entityData.define(DATA_BOUNDLESS, false);
+		entityData.define(DATA_GROUNDED, false);
 	}
 
 	@Override
@@ -333,6 +336,95 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 		return super.mobInteract(player, hand);
 	}
 
+	// --- Ridden (its owner on its back: SpiritBonds#mount) ---
+
+	/** Wide enough at its size now to bear a rider on its back (SpiritBonds#MOUNT_WIDTH): it grows a twelfth larger a stage ({@link #scale}). */
+	public boolean bearsARider() {
+		return getBbWidth() >= SpiritBonds.MOUNT_WIDTH - 1.0e-4;
+	}
+
+	/** The player on its back (only its owner is let on: SpiritBonds#mount), or null; never a soul that possesses it (SoulProjection). */
+	public Player rider() {
+		return getFirstPassenger() instanceof Player rider && !SoulProjection.isSoul(rider) ? rider : null;
+	}
+
+	/** Its rider steers it; anything else as a mob's (a soul possessing it: SoulMobMixin). */
+	@Override
+	public LivingEntity getControllingPassenger() {
+		Player rider = rider();
+		return rider != null ? rider : super.getControllingPassenger();
+	}
+
+	/** A flier its rider can take to the air on where it is (the server's word, kept in {@link #DATA_GROUNDED}). */
+	public boolean fliesWithItsRider() {
+		return kind().moves == BeastKind.Moves.FLYING && !entityData.get(DATA_GROUNDED);
+	}
+
+	/**
+	 * Where its rider sits, by its build: on a beast's back over its middle, a little forward of it on a bird (between the wings) and on an
+	 * ape (its shoulders), on top of a turtle's shell, low on a crocodile's.
+	 */
+	public Vec3 seat() {
+		double up, forward;
+		switch (kind().body) {
+			case BIRD -> { up = 0.62; forward = 0.1; }
+			case APE -> { up = 0.84; forward = -0.05; }
+			case TURTLE -> { up = 0.95; forward = 0; }
+			case CROCODILE -> { up = 0.85; forward = 0.05; }
+			case SERPENT -> { up = 0.7; forward = 0; }
+			case DRAGON -> { up = 0.78; forward = 0.1; }
+			default -> { up = 0.82; forward = 0; }
+		}
+		double length = getBbWidth() * forward;
+		float yaw = yBodyRot * Mth.DEG_TO_RAD;
+		return new Vec3(getX() - Mth.sin(yaw) * length, getY() + getBbHeight() * up, getZ() + Mth.cos(yaw) * length);
+	}
+
+	@Override
+	protected void positionRider(Entity passenger, Entity.MoveFunction move) {
+		if (passenger instanceof Player player && !SoulProjection.isSoul(player) && hasPassenger(passenger)) {
+			// Taken far off by a teleport (a rift, a step through space, a talisman's flash): off its back, not dragged back onto it.
+			if (!level().isClientSide && passenger.distanceToSqr(this) > SpiritBonds.TORN_AWAY * SpiritBonds.TORN_AWAY) {
+				letGoWhereTaken(player);
+				return;
+			}
+			Vec3 seat = seat();
+			move.accept(passenger, seat.x, seat.y + passenger.getMyRidingOffset(), seat.z);
+			player.yBodyRot = yBodyRot;
+			return;
+		}
+		super.positionRider(passenger, move);
+	}
+
+	/** Ridden, it faces as its rider does, and hops on the ground at their jump (a flier's jump is a climb: {@link #travel}). */
+	@Override
+	protected void tickRidden(Player player, Vec3 input) {
+		super.tickRidden(player, input);
+		if (rider() != player) return;
+		setRot(player.getYRot(), player.getXRot() * 0.5f);
+		yRotO = yBodyRot = yHeadRot = getYRot();
+		if (isControlledByLocalInstance() && onGround() && !isInWater() && !fliesWithItsRider()
+				&& ((com.example.defyingtheheavens.mixin.LivingEntityAccessor) player).dth$isJumping()) {
+			jumpFromGround();
+		}
+	}
+
+	/** Its rider's keys, as a horse's: half pace sideways, a quarter backing up. */
+	@Override
+	protected Vec3 getRiddenInput(Player player, Vec3 input) {
+		if (rider() != player) return super.getRiddenInput(player, input);
+		float forward = player.zza;
+		return new Vec3(player.xxa * 0.5f, 0, forward > 0 ? forward : forward * 0.25f);
+	}
+
+	/** Its kind's pace (a water beast's on land a crawl). */
+	@Override
+	protected float getRiddenSpeed(Player player) {
+		if (rider() != player) return super.getRiddenSpeed(player);
+		if (kind().moves == BeastKind.Moves.SWIMMING && !isInWater()) return 0.1f;
+		return (float) getAttributeValue(Attributes.MOVEMENT_SPEED);
+	}
+
 	@Override
 	public boolean killedEntity(ServerLevel level, LivingEntity killed) {
 		if (bondOwner != null) SpiritBonds.killed(this, killed);
@@ -427,6 +519,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 				getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 1.2);
 			}
 		}
+		if (!level().isClientSide) tendRidden();
 		if (level().isClientSide || tickCount % 40 != 0) return;
 		AttributeInstance speed = getAttribute(Attributes.MOVEMENT_SPEED);
 		if (speed == null) return;
@@ -435,6 +528,45 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 			speed.removeModifier(NIGHT_HUNT);
 			if (night) speed.addTransientModifier(new AttributeModifier(NIGHT_HUNT, "Night hunt", 0.25, AttributeModifier.Operation.MULTIPLY_TOTAL));
 		}
+	}
+
+	/**
+	 * Its rider, taken far off, let go where they were taken: getting off sets a rider down beside their mount (LivingEntity#dismountVehicle), so
+	 * they are put back where they were, their screen told they are off its back before it is told where they are.
+	 */
+	private void letGoWhereTaken(Player rider) {
+		Vec3 at = rider.position();
+		rider.stopRiding();
+		if (rider instanceof ServerPlayer sp) {
+			sp.connection.send(new net.minecraft.network.protocol.game.ClientboundSetPassengersPacket(this));
+			sp.connection.teleport(at.x, at.y, at.z, sp.getYRot(), sp.getXRot());
+		} else {
+			rider.moveTo(at.x, at.y, at.z, rider.getYRot(), rider.getXRot());
+		}
+	}
+
+	/**
+	 * Ridden, on the server: it fights nothing (its mind is quiet besides: SoulMobMixin), and a flier asks each half second whether it may take
+	 * to the air with its rider where they are (SpiritBonds#groundedFor), its wings holding it up if so; the dedicated server would otherwise
+	 * call a ridden beast hanging in the air "floating" and put its rider out.
+	 */
+	void tendRidden() {
+		Player rider = rider();
+		if (rider == null) {
+			if (entityData.get(DATA_GROUNDED)) entityData.set(DATA_GROUNDED, false);
+			return;
+		}
+		// Its rider taken far off by a teleport that didn't set them down first (one of the server's own: a rift, a step through space): let go
+		// here, before its rider is moved back onto it (positionRider, which checks the same).
+		if (rider.distanceToSqr(this) > SpiritBonds.TORN_AWAY * SpiritBonds.TORN_AWAY) {
+			letGoWhereTaken(rider);
+			return;
+		}
+		if (getTarget() != null) setTarget(null);
+		if (kind().moves != BeastKind.Moves.FLYING) return;
+		if (tickCount % 10 == 0 && rider instanceof ServerPlayer sp) entityData.set(DATA_GROUNDED, SpiritBonds.groundedFor(sp));
+		boolean grounded = entityData.get(DATA_GROUNDED);
+		if (isNoGravity() == grounded) setNoGravity(!grounded);
 	}
 
 	@Override
@@ -463,6 +595,20 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 
 	@Override
 	public void travel(Vec3 travel) {
+		// Ridden (moved by its rider's client: LivingEntity#travelRidden): a flier off the ground, or taking off, flies where its rider looks; a
+		// swimmer in the water keeps to its top with its rider above it; on the ground, as a horse goes (the rest of travel).
+		Player rider = rider();
+		if (rider != null && isControlledByLocalInstance()) {
+			boolean climbing = ((com.example.defyingtheheavens.mixin.LivingEntityAccessor) rider).dth$isJumping();
+			if (fliesWithItsRider() && (!onGround() || climbing)) {
+				flyRidden(rider, climbing);
+				return;
+			}
+			if (isInWater()) {
+				swimRidden(travel);
+				return;
+			}
+		}
 		// A water beast swims as a dolphin does, freely in three dimensions.
 		if (kind().moves == BeastKind.Moves.SWIMMING && isEffectiveAi() && isInWater()) {
 			moveRelative(getSpeed(), travel);
@@ -472,6 +618,40 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 			return;
 		}
 		super.travel(travel);
+	}
+
+	/**
+	 * A tick of flight with its rider: toward where they look (SoulProjection#flightWish: forward along their sight, so looking down goes down;
+	 * sideways level; Space a climb), gathering speed through the air to its pace with them (SpiritBonds#flightPace) and drifting to a stop
+	 * when the keys are let go, its wings holding it up.
+	 */
+	private void flyRidden(Player rider, boolean climbing) {
+		Vec3 wish = SoulProjection.flightWish(rider.xxa * 0.5f, rider.zza, climbing, rider.getLookAngle(), rider.getYRot());
+		Vec3 v = SoulProjection.flightVelocity(getDeltaMovement(), wish, SpiritBonds.flightPace(this));
+		setDeltaMovement(v);
+		move(MoverType.SELF, v);
+		resetFallDistance();
+		calculateEntityAnimation(true);
+	}
+
+	/**
+	 * A tick in the water with its rider: their keys along the water's top, it kept half under so its rider rides dry; a water beast swiftest,
+	 * an amphibious one well, a beast of the land slowly.
+	 */
+	private void swimRidden(Vec3 keys) {
+		double pace = getSpeed() * switch (kind().moves) {
+			case SWIMMING -> 0.04;
+			case AMPHIBIOUS -> 0.12;
+			default -> 0.05;
+		};
+		moveRelative((float) pace, new Vec3(keys.x, 0, keys.z));
+		double under = getFluidHeight(net.minecraft.tags.FluidTags.WATER), keep = getBbHeight() * 0.5;
+		Vec3 v = getDeltaMovement();
+		setDeltaMovement(v.x, under > keep + 0.05 ? 0.06 : under < keep - 0.05 ? -0.04 : 0, v.z);
+		move(MoverType.SELF, getDeltaMovement());
+		setDeltaMovement(getDeltaMovement().multiply(0.9, 0.5, 0.9));
+		resetFallDistance();
+		calculateEntityAnimation(false);
 	}
 
 	@Override public boolean canBreatheUnderwater() { return kind().moves == BeastKind.Moves.AMPHIBIOUS || kind().moves == BeastKind.Moves.SWIMMING; }

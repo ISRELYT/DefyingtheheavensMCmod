@@ -1,5 +1,8 @@
 package com.example.defyingtheheavens;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -60,8 +63,12 @@ public class SectSites extends SavedData {
 	 */
 	private static final double FOUNDED_NEAR = 64;
 
-	/** Per dimension, the placement regions decided (as ChunkPos.asLong(region x, region z)): the sects' sites, and the demon clans'. */
-	private final Map<ResourceKey<Level>, Set<Long>> decided = new HashMap<>(), decidedClans = new HashMap<>();
+	/**
+	 * Per dimension, the placement regions decided (as ChunkPos.asLong(region x, region z)): the sects' sites, and the demon clans'. Long sets of
+	 * their own (fastutil): boxed in a HashSet, a region's key hashes to x ^ z, so the regions round a place fall into a few buckets, made trees
+	 * that compare by reflection (the sweep of 2026-11-10: gigabytes of it, looked through every half second).
+	 */
+	private final Map<ResourceKey<Level>, LongSet> decided = new HashMap<>(), decidedClans = new HashMap<>();
 
 	/**
 	 * The site the generator is being asked about, off the server thread: the answer means sampling the ground across the
@@ -88,6 +95,7 @@ public class SectSites extends SavedData {
 	}
 
 	public static void clear() {
+		SITE_CACHE.clear();
 		asking = null;
 		pendingDimension = null;
 		pendingHeart = null;
@@ -188,7 +196,7 @@ public class SectSites extends SavedData {
 	}
 
 	private static long[] nearestUndecided(SectSites data, Place place) {
-		return nearestUndecided((place.clan() ? data.decidedClans : data.decided).getOrDefault(place.level().dimension(), Set.of()), place.placement(),
+		return nearestUndecided((place.clan() ? data.decidedClans : data.decided).getOrDefault(place.level().dimension(), LongSets.EMPTY_SET), place.placement(),
 				place.level().getChunkSource().getGeneratorState().getLevelSeed(), place.anchor(), place.reach());
 	}
 
@@ -196,7 +204,7 @@ public class SectSites extends SavedData {
 	 * The nearest region round {@code anchor} whose site lies within {@code reach} and that isn't in {@code done}: {region key,
 	 * site chunk}, or null if none is left.
 	 */
-	static long[] nearestUndecided(Set<Long> done, RandomSpreadStructurePlacement placement, long seed, BlockPos anchor, int reach) {
+	static long[] nearestUndecided(LongSet done, RandomSpreadStructurePlacement placement, long seed, BlockPos anchor, int reach) {
 		int spacing = placement.spacing();
 		int rx0 = Math.floorDiv(anchor.getX() >> 4, spacing), rz0 = Math.floorDiv(anchor.getZ() >> 4, spacing);
 		int span = reach / 16 / spacing + 1;
@@ -206,7 +214,7 @@ public class SectSites extends SavedData {
 			for (int rz = rz0 - span; rz <= rz0 + span; rz++) {
 				long region = ChunkPos.asLong(rx, rz);
 				if (done.contains(region)) continue;
-				ChunkPos chunk = placement.getPotentialStructureChunk(seed, rx * spacing, rz * spacing);
+				ChunkPos chunk = new ChunkPos(siteOf(placement, seed, rx, rz));
 				double dx = chunk.getMiddleBlockX() - anchor.getX(), dz = chunk.getMiddleBlockZ() - anchor.getZ();
 				double distance = dx * dx + dz * dz;
 				if (distance > bestDistance) continue;
@@ -215,6 +223,34 @@ public class SectSites extends SavedData {
 			}
 		}
 		return best;
+	}
+
+	/** A placement's sites by region (as ChunkPos longs), for the seed they were rolled with. */
+	private record SiteCache(long seed, it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap sites) {}
+
+	/**
+	 * Each placement's regions' site chunks, kept: worldgen's roll of one (RandomSpreadStructurePlacement#getPotentialStructureChunk) makes a
+	 * random source of its own every time, and the regions at the edge of reach, never decided, were rolled again at every look (two
+	 * gigabytes a quarter hour in the sweep of 2026-11-10). The same every time for a world's seed. Server thread only.
+	 */
+	private static final Map<RandomSpreadStructurePlacement, SiteCache> SITE_CACHE = new java.util.IdentityHashMap<>();
+
+	/** Region ({@code rx}, {@code rz})'s site chunk under {@code placement} (as ChunkPos#toLong), from the cache or rolled into it. */
+	static long siteOf(RandomSpreadStructurePlacement placement, long seed, int rx, int rz) {
+		SiteCache cache = SITE_CACHE.get(placement);
+		if (cache == null || cache.seed() != seed) {
+			it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap sites = new it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap();
+			sites.defaultReturnValue(Long.MIN_VALUE);
+			SITE_CACHE.put(placement, cache = new SiteCache(seed, sites));
+		}
+		long region = ChunkPos.asLong(rx, rz);
+		long site = cache.sites().get(region);
+		if (site == Long.MIN_VALUE) {
+			if (cache.sites().size() > 16384) cache.sites().clear();
+			site = placement.getPotentialStructureChunk(seed, rx * placement.spacing(), rz * placement.spacing()).toLong();
+			cache.sites().put(region, site);
+		}
+		return site;
 	}
 
 	/**
@@ -293,12 +329,12 @@ public class SectSites extends SavedData {
 	}
 
 	void decide(ResourceKey<Level> dimension, long region, boolean clan) {
-		(clan ? decidedClans : decided).computeIfAbsent(dimension, d -> new HashSet<>()).add(region);
+		(clan ? decidedClans : decided).computeIfAbsent(dimension, d -> new LongOpenHashSet()).add(region);
 		setDirty();
 	}
 
 	boolean isDecided(ResourceKey<Level> dimension, long region) {
-		return decided.getOrDefault(dimension, Set.of()).contains(region);
+		return decided.getOrDefault(dimension, LongSets.EMPTY_SET).contains(region);
 	}
 
 	@Override
@@ -308,12 +344,12 @@ public class SectSites extends SavedData {
 		return tag;
 	}
 
-	private static ListTag saveDecided(Map<ResourceKey<Level>, Set<Long>> decided) {
+	private static ListTag saveDecided(Map<ResourceKey<Level>, LongSet> decided) {
 		ListTag list = new ListTag();
-		for (Map.Entry<ResourceKey<Level>, Set<Long>> e : decided.entrySet()) {
+		for (Map.Entry<ResourceKey<Level>, LongSet> e : decided.entrySet()) {
 			CompoundTag d = new CompoundTag();
 			d.putString("Dimension", e.getKey().location().toString());
-			d.putLongArray("Regions", e.getValue().stream().mapToLong(Long::longValue).toArray());
+			d.putLongArray("Regions", e.getValue().toLongArray());
 			list.add(d);
 		}
 		return list;
@@ -326,14 +362,12 @@ public class SectSites extends SavedData {
 		return data;
 	}
 
-	private static void loadDecided(ListTag list, Map<ResourceKey<Level>, Set<Long>> decided) {
+	private static void loadDecided(ListTag list, Map<ResourceKey<Level>, LongSet> decided) {
 		for (int i = 0; i < list.size(); i++) {
 			CompoundTag d = list.getCompound(i);
 			ResourceLocation dimension = ResourceLocation.tryParse(d.getString("Dimension"));
 			if (dimension == null) continue;
-			Set<Long> regions = new HashSet<>();
-			for (long region : d.getLongArray("Regions")) regions.add(region);
-			decided.put(ResourceKey.create(Registries.DIMENSION, dimension), regions);
+			decided.put(ResourceKey.create(Registries.DIMENSION, dimension), new LongOpenHashSet(d.getLongArray("Regions")));
 		}
 	}
 }

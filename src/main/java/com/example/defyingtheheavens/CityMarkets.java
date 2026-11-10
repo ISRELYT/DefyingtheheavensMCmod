@@ -140,6 +140,13 @@ public final class CityMarkets {
 	/** {@code market}'s merchants kept: all at once the first time, then one an hour while a stall stands empty; each to its stall. */
 	private static void keep(ServerLevel level, Data data, Market market) {
 		if (!level.isPositionEntityTicking(market.square())) return;
+		// The city's Ranking Stele (Rankings), once its market has been peopled (markets peopled before the lists get theirs now).
+		Data.Entry known = data.markets.get(ChunkPos.asLong(market.square().getX(), market.square().getZ()));
+		if (known != null && known.peopled && !known.stele) {
+			laySquareStele(level, market.square());
+			known.stele = true;
+			data.setDirty();
+		}
 		List<CultivatorNpc> merchants = merchants(level, market);
 		for (CultivatorNpc merchant : merchants) toStall(merchant);
 		if (merchants.size() >= market.stalls().size()) return;
@@ -159,6 +166,24 @@ public final class CityMarkets {
 		entry.peopled = true;
 		entry.lastArrival = now;
 		data.setDirty();
+	}
+
+	/**
+	 * A Ranking Stele (Rankings) on a market's square, a few blocks from its middle on the first floor with room for its two blocks, its face to
+	 * the middle: the city's lists, set up as its market is first peopled.
+	 */
+	private static void laySquareStele(ServerLevel level, BlockPos square) {
+		for (int[] off : new int[][] {{3, 0}, {-3, 0}, {0, 3}, {0, -3}, {4, 4}, {-4, -4}}) {
+			BlockPos feet = floor(level, square.getX() + off[0], square.getZ() + off[1], square.getY());
+			if (feet == null || !level.getBlockState(feet.above(2)).isAir()) continue;
+			net.minecraft.core.Direction facing = net.minecraft.core.Direction.getNearest(-off[0], 0, -off[1]);
+			if (facing.getAxis().isVertical()) facing = net.minecraft.core.Direction.SOUTH;
+			net.minecraft.world.level.block.state.BlockState lower = ModBlocks.RANKING_STELE.defaultBlockState().setValue(RankingSteleBlock.FACING, facing);
+			level.setBlock(feet, lower, net.minecraft.world.level.block.Block.UPDATE_ALL);
+			level.setBlock(feet.above(), lower.setValue(RankingSteleBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER),
+					net.minecraft.world.level.block.Block.UPDATE_ALL);
+			return;
+		}
 	}
 
 	/** The merchants keeping {@code market}'s stalls now (loaded). */
@@ -210,6 +235,8 @@ public final class CityMarkets {
 		static final class Entry {
 			boolean peopled;
 			long lastArrival;
+			/** Its Ranking Stele set up (Rankings): once, even if it is taken down. */
+			boolean stele;
 		}
 
 		static Data get(ServerLevel level) {
@@ -224,6 +251,7 @@ public final class CityMarkets {
 				Entry entry = new Entry();
 				entry.peopled = market.getBoolean("Peopled");
 				entry.lastArrival = market.getLong("LastArrival");
+				entry.stele = market.getBoolean("Stele");
 				data.markets.put(market.getLong("Square"), entry);
 			}
 			return data;
@@ -237,6 +265,7 @@ public final class CityMarkets {
 				market.putLong("Square", e.getLongKey());
 				market.putBoolean("Peopled", e.getValue().peopled);
 				market.putLong("LastArrival", e.getValue().lastArrival);
+				market.putBoolean("Stele", e.getValue().stele);
 				list.add(market);
 			}
 			tag.put("Markets", list);
