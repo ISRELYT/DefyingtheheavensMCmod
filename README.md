@@ -2119,8 +2119,14 @@ and 8th layers of the realm, its Early, Mid and Late), **two** from Core Formati
 all. A spell belongs to its element and realm, not to one method: any heaven method of that element **of that realm or
 deeper** teaches it once it is understood to the spell's layer (and your cultivation has reached the stage the layer stands
 for), so a Four Axis fire method carries every fire spell. The Spells tab shows each one locked with both. They go on the spell
-wheel (V) as they come, never the ability wheel, cost heaven qi and have cooldowns (a player's spells wait them out only with the
-gamerule `spellCooldowns` on: off by default since 2026-10-24, the user's ask; cultivators keep theirs). A spell that needs something to take hold
+wheel (V) as they come, never the ability wheel, cost heaven qi and have cooldowns (a player's spells wait them out while the
+gamerule `spellCooldowns` is on, its default: off from 2026-10-24 at the user's ask, back on from 2026-11-10, and a world saved
+meanwhile has it turned on once at its next start, `ModGameRules#cooldownsBack`; cultivators always keep theirs). A cooldown is **half
+as long for every realm its caster stands above the spell's own** (the user's ask, 2026-11-10: "a true immortals wouldnt have to wait
+long for a 4 axis spell"), counted a stage at a time by the caster's highest path and never under a second unless the spell's own is
+shorter (`Spell#cooldownFor`, `Laws#cooldown`): a True Immortal waits about a thirty-second of a Four Axis spell's (9 s for the
+greatest, 300 s), Dao Integration half. The Law of Time takes its share off after; the Spells tab shows each one's cooldown as it is
+for you; cultivators' go the same way by their realm. A spell that needs something to take hold
 of (a being looked at, the ground, earth to draw on) isn't cast without it, and nothing is paid. Their qi harm is the
 element's own and passes armour; none touches its caster, spectators or its tamed creatures, and nothing of one (harm, hold,
 push, drowning, burning) touches another player unless the server lets players harm each other (PvP on, teams allowing);

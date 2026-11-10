@@ -862,7 +862,9 @@ public final class Codex {
 				Your scriptures and foundations teach arts as their layers settle in, and a demon's blood teaches its own; you'll find them \
 				on the Arts tab.
 				Ready an art there, or hold {spells} to open the art wheel and pick one, then press {cast} to cast it. Arts cost qi, and \
-				each has a cooldown before it can be cast again. Arrange the art wheel on the Arts tab.
+				each has a cooldown before it can be cast again: half as long for every realm you stand above the art's own, a little \
+				shorter with each stage you climb, though never under a second. The Arts tab shows each one's wait as it is for you. \
+				Arrange the art wheel on the Arts tab.
 				The higher your realm, the farther and wider your arts reach. Whether arts permanently change the land is a world setting, \
 				which an operator can switch at the bottom of the Arts tab.""");
 		page("spells_both", Items.DRAGON_BREATH, "arts/heaven_demon|sects/bloodline", Hint.BLOOD, "Arts of Both Paths", """

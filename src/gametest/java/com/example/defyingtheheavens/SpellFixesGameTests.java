@@ -17,7 +17,7 @@ import java.util.UUID;
 
 /**
  * The spells' fixes of 2026-10-24 (the user's asks and reports): a player's spells wait out no cooldowns while the gamerule spellCooldowns
- * is off (its default), a cultivator's still do; the spells that pick out foes take a rogue cultivator minding its own business (a Sword
+ * is off (its default until 2026-11-10), a cultivator's still do; the spells that pick out foes take a rogue cultivator minding its own business (a Sword
  * Prison struck none: HeavenSpells#mark), their healing not mending it (HeavenSpells#blessed); and the land's new wounds: a flood's basin
  * filled as it is cut (Devastation#flood), a claw's gouge (Devastation#gouge), a shaft burnt up to the sky with its walls on fire
  * (Devastation#shaft). The land's tests on a block of stone of their own, high over the test's spot, taken up again after.
@@ -55,7 +55,7 @@ public class SpellFixesGameTests implements FabricGameTest {
 		boolean was = level.getGameRules().getBoolean(ModGameRules.SPELL_COOLDOWNS);
 		try {
 			level.getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(false, level.getServer());
-			helper.assertTrue(!Spells.cooldownsHeld(p), "The rule off (its default): a player's spells wait out no cooldowns");
+			helper.assertTrue(!Spells.cooldownsHeld(p), "The rule off: a player's spells wait out no cooldowns");
 			level.getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(true, level.getServer());
 			helper.assertTrue(Spells.cooldownsHeld(p), "...on, they do");
 			CultivatorNpc npc = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 2));

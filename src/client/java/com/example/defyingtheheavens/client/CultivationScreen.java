@@ -3402,7 +3402,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 					: Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost()));
 			Component teacher = spell.isHeaven() ? spell.teacher(self.heaven()).getDisplayName() : spell.isDual() ? Component.empty() : spell.method().getDisplayName();
 			Component detail = known
-					? cost.copy().append(", ").append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(spell.cooldownTicks())))
+					// Its cooldown as it is for them: the shorter for each realm they stand above it, and by the Law of Time (Laws#cooldown).
+					? cost.copy().append(", ").append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(com.example.defyingtheheavens.Laws.cooldown(self, spell))))
 					: spell.isDual() ? Component.translatable(ModLang.SPELLS_LOCKED_BOTH, spell.dualRealm().getDisplayName())
 					: spell.layer() > MethodLayers.PER_REALM // a method's spell in its own realm past the first: where in it, too
 					? Component.translatable(ModLang.SPELLS_LOCKED_REALM, teacher, spell.layer(),

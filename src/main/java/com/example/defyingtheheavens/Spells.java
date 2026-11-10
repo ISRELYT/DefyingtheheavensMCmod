@@ -26,7 +26,8 @@ import java.util.UUID;
 /**
  * Casting spells (see Spell). The spell wheel (held open by its key) readies a spell with a click, or casts one at once with a
  * right click; the cast key casts the readied one. A cast needs the spell's layer, its ghostly qi, and its cooldown past (a
- * player's only while the gamerule spellCooldowns is on: off by default since 2026-10-24, {@link #cooldownsHeld}); not
+ * player's while the gamerule spellCooldowns is on, {@link #cooldownsHeld}: off by default from 2026-10-24, on again from 2026-11-10, and
+ * the shorter the higher its caster stands above it, Laws#cooldown); not
  * on the Soul River, and not while dispersed. A spell of both paths (TwoPaths, HeavenDemonSpells) needs the heaven path and the
  * Demon Path at its realm, and costs qi alone; the ghost foundations' great spells from Dao Integration on are GhostSpells'.
  */
@@ -140,7 +141,8 @@ public final class Spells {
 			s.setGhostQi(s.ghostQi() - spell.cost());
 			if (spell.qiCost() > 0) c.setQi(c.getQi() - spell.qiCost());
 		}
-		// The shorter by the Law of Time (Laws), the longer in a foe's domain of Time (LawDomains#stretched).
+		// The shorter for each realm above the spell's own and by the Law of Time (Laws#cooldown), the longer in a foe's domain of Time
+		// (LawDomains#stretched).
 		cooldowns(p).put(spell, now + LawDomains.stretched(p, Laws.cooldown(p, spell)));
 		RaceGifts.breakIllusion(p); // a fox unseen is seen as it casts
 		perform(p, spell, s);
@@ -166,7 +168,8 @@ public final class Spells {
 		// Space locked round it (Earth Veins Lock the Void, a player's domain of Space): no step through it, as a player is refused.
 		if (steps(spell) && (spell == Spell.NINE_NETHER_STEP && EarthSpells.spaceLocked(npc) || LawDomains.locksSpace(npc))) return false;
 		c.setQi(c.getQi() - cost);
-		cooldowns(npc).put(spell, now + LawDomains.stretched(npc, spell.cooldownTicks())); // the longer in a player's domain of Time
+		// The shorter for each realm above the spell's own, as a player's (Laws#cooldown); the longer in a player's domain of Time.
+		cooldowns(npc).put(spell, now + LawDomains.stretched(npc, Laws.cooldown(npc, spell)));
 		perform(npc, spell, c.netherworld());
 		return true;
 	}
@@ -226,7 +229,7 @@ public final class Spells {
 		return new java.util.EnumMap<>(Spell.class);
 	}
 
-	/** Whether {@code p}'s spells wait out their cooldowns: a cultivator's always, a player's while the gamerule spellCooldowns is on. */
+	/** Whether {@code p}'s spells wait out their cooldowns: a cultivator's always, a player's while the gamerule spellCooldowns is on (its default). */
 	public static boolean cooldownsHeld(LivingEntity p) {
 		return !(p instanceof ServerPlayer player) || player.serverLevel().getGameRules().getBoolean(ModGameRules.SPELL_COOLDOWNS);
 	}

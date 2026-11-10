@@ -13,6 +13,21 @@ public class CultivationSavedData extends SavedData {
 	private static final String FILE_ID = "defying_the_heavens_cultivation";
 
 	private final Map<UUID, PlayerCultivation> players = new HashMap<>();
+	/** Whether this world has had its arts' cooldowns turned back on (ModGameRules#cooldownsBack, 2026-11-10): done once only. */
+	private boolean cooldownsBack;
+
+	public boolean cooldownsBack() { return cooldownsBack; }
+
+	public void setCooldownsBack() {
+		cooldownsBack = true;
+		setDirty();
+	}
+
+	/** As a world saved before 2026-11-10 stands (game tests). */
+	void forgetCooldownsBack() {
+		cooldownsBack = false;
+		setDirty();
+	}
 
 	public static CultivationSavedData forServer(MinecraftServer server) {
 		return server.overworld().getDataStorage().computeIfAbsent(CultivationSavedData::load, CultivationSavedData::new, FILE_ID);
@@ -38,6 +53,7 @@ public class CultivationSavedData extends SavedData {
 				// skip corrupt entry
 			}
 		}
+		data.cooldownsBack = tag.getBoolean("CooldownsBack");
 		return data;
 	}
 
@@ -46,6 +62,7 @@ public class CultivationSavedData extends SavedData {
 		CompoundTag all = new CompoundTag();
 		players.forEach((id, c) -> all.put(id.toString(), c.save()));
 		tag.put("Players", all);
+		tag.putBoolean("CooldownsBack", cooldownsBack);
 		return tag;
 	}
 }

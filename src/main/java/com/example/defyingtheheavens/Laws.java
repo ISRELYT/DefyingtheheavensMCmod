@@ -293,11 +293,23 @@ public final class Laws {
 		return factor;
 	}
 
-	/** {@code spell}'s cooldown for {@code caster} (Spells#cast): shortened by the Law of Time. A cultivator's as it is. */
+	/**
+	 * {@code spell}'s cooldown for {@code caster} (Spells#cast, #castBy): the shorter for each realm it stands above the spell's own
+	 * (Spell#cooldownFor), and a player's by the Law of Time too; a cultivator's by its realm alone (the Laws are players' alone).
+	 */
 	public static int cooldown(LivingEntity caster, Spell spell) {
-		if (!(caster instanceof ServerPlayer p)) return spell.cooldownTicks();
-		int time = CultivationManager.get(p).laws().level(Law.TIME);
-		return (int) Math.round(spell.cooldownTicks() * (1 - COOLDOWN_PER_LEVEL * time));
+		if (caster instanceof ServerPlayer p) return cooldown(CultivationManager.get(p), spell);
+		if (caster instanceof CultivatorNpc npc) return spell.floored(spell.cooldownFor(TwoPaths.higherRank(npc.cultivation(), false)));
+		return spell.cooldownTicks();
+	}
+
+	/**
+	 * A player's cooldown for {@code spell} as {@code c} stands (the Arts tab shows it): by the realm of its highest path, as it truly stands
+	 * (TwoPaths#higherRank), then the Law of Time.
+	 */
+	public static int cooldown(PlayerCultivation c, Spell spell) {
+		int time = c.laws().level(Law.TIME);
+		return spell.floored(spell.cooldownFor(TwoPaths.higherRank(c, false)) * (1 - COOLDOWN_PER_LEVEL * time));
 	}
 
 	/** What the Spatial Tear's wait (SpatialTrialHandler#tear) is for {@code c}: shortened by the Law of Space. */

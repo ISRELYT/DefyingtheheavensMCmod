@@ -332,7 +332,36 @@ public enum Spell {
 	public double cost() { return cost; }
 	/** Qi it costs (the heaven methods' spells and those of both paths). */
 	public double qiCost() { return qiCost; }
+	/** Its own cooldown (ticks), as a caster of its own rank waits it out: {@link #cooldownFor} for one standing higher. */
 	public int cooldownTicks() { return cooldownTicks; }
+
+	/**
+	 * What each realm its caster stands above a spell's own leaves of its cooldown (the user's ask, 2026-11-10: "make them change based on realm
+	 * though so for example a true immortals wouldnt have to wait long for a 4 axis spell"): half, a realm's worth spread over its stages, so it
+	 * shortens a little with each stage climbed.
+	 */
+	public static final double COOLDOWN_PER_REALM = 0.5;
+	/** However far above a spell its caster stands, it comes round no sooner than this (ticks), unless its own cooldown is shorter still. */
+	public static final int COOLDOWN_FLOOR = 20;
+
+	/** The rank (PlayerCultivation#rank) it stands at: its layer's ({@link #realmNeeded}); one of both paths', its realm's Early stage. */
+	public int rank() {
+		return isDual() ? PlayerCultivation.rank(dualRealm, Stage.EARLY) : Math.max(0, realmNeeded());
+	}
+
+	/**
+	 * Its cooldown (ticks, unrounded) for a caster standing at {@code casterRank} (TwoPaths#higherRank): {@link #COOLDOWN_PER_REALM} of it
+	 * for each realm above its own {@link #rank}, never longer than its own. Laws#cooldown takes the Law of Time off it, then floors it.
+	 */
+	public double cooldownFor(int casterRank) {
+		double realmsAbove = Math.max(0, casterRank - rank()) / (double) Stage.values().length;
+		return cooldownTicks * Math.pow(COOLDOWN_PER_REALM, realmsAbove);
+	}
+
+	/** {@code ticks} of its cooldown, rounded, and no shorter than {@link #COOLDOWN_FLOOR} (or its own, if that is shorter still). */
+	public int floored(double ticks) {
+		return (int) Math.max(Math.min(cooldownTicks, COOLDOWN_FLOOR), Math.round(ticks));
+	}
 
 	/**
 	 * Whether this cultivator can cast it: the method cultivated to the spell's layer, a ghost method's by a ghost or a living

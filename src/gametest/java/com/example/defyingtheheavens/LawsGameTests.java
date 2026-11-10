@@ -264,9 +264,19 @@ public class LawsGameTests implements FabricGameTest {
 			float riftFire = Laws.outgoing(p, ModDamageTypes.qi(level, QiElement.FIRE, Realm.VOID_SHATTERING, null, p), 100);
 			helper.assertTrue(near(fire, 130) && near(water, 100) && near(ghostly, 140) && near(rift, 120) && near(riftFire, 130 * 1.2),
 					"Fire's spells by its Law, Void Shattering's by Space, the ghost path's by Life and Death (" + fire + ", " + water + ", " + ghostly + ", " + rift + ", " + riftFire + ")");
+			// Time: 15% off what the realm leaves of each cooldown (Spell#cooldownFor: a Golden Immortal stands far above both), floored at a second.
 			double time = 1 - Laws.COOLDOWN_PER_LEVEL * 5;
-			helper.assertTrue(Laws.cooldown(p, Spell.FLAME_BOLT) == Math.round(Spell.FLAME_BOLT.cooldownTicks() * time) && Laws.cooldown(p, Spell.SAMADHI_TRUE_FIRE) == 1190,
-					"Time: every cooldown 15% shorter at five levels (" + Laws.cooldown(p, Spell.SAMADHI_TRUE_FIRE) + ")");
+			int rank = TwoPaths.higherRank(c, false);
+			Spell great = Spell.SAMADHI_TRUE_FIRE;
+			long greatTimed = Math.round(great.cooldownFor(rank) * time);
+			helper.assertTrue(Laws.cooldown(p, Spell.FLAME_BOLT) == Spell.FLAME_BOLT.floored(Spell.FLAME_BOLT.cooldownFor(rank) * time)
+							&& Laws.cooldown(p, great) == Math.max(Math.min(great.cooldownTicks(), Spell.COOLDOWN_FLOOR), greatTimed),
+					"Time: every cooldown 15% shorter at five levels (" + Laws.cooldown(p, great) + " of " + great.cooldownFor(rank) + ")");
+			s.setLevel(Law.TIME, 0);
+			int untimed = Laws.cooldown(p, great);
+			s.setLevel(Law.TIME, 5);
+			helper.assertTrue(untimed > Spell.COOLDOWN_FLOOR ? Laws.cooldown(p, great) < untimed : Laws.cooldown(p, great) == untimed,
+					"...shorter than without the Law, unless the realm had brought it to its floor (" + untimed + ", " + Laws.cooldown(p, great) + ")");
 			helper.assertTrue(near(Laws.healed(p, 10), 14), "Life and Death: healing 40% greater at four levels");
 			helper.assertTrue(near(Laws.tearWait(c), 0.94), "Space: the Spatial Tear 6% sooner at two levels");
 			// Reach, while a spell is cast: its element's Law and, a spell of space, Space's.
@@ -281,9 +291,10 @@ public class LawsGameTests implements FabricGameTest {
 			Laws.castDone();
 			helper.assertTrue(near(fireReach, 1.15) && near(stepReach, 1.10) && near(crowReach, 1.15 * 1.10) && Laws.reach(p) == 1,
 					"Reach: Fire's 15%, a step through space 10%, the Golden Crow both; nothing when nothing is cast (" + fireReach + ", " + stepReach + ", " + crowReach + ")");
-			// A cultivator's spells are its realm's alone.
+			// A cultivator's spells are its realm's alone: its cooldowns by its realm, no Law of Time.
 			CultivatorNpc npc = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(1, 2, 1));
-			helper.assertTrue(Laws.cooldown(npc, Spell.FLAME_BOLT) == Spell.FLAME_BOLT.cooldownTicks(), "A cultivator's cooldowns its own");
+			int npcRank = TwoPaths.higherRank(npc.cultivation(), false);
+			helper.assertTrue(Laws.cooldown(npc, Spell.FLAME_BOLT) == Spell.FLAME_BOLT.floored(Spell.FLAME_BOLT.cooldownFor(npcRank)), "A cultivator's cooldowns by its realm alone");
 			npc.discard();
 			helper.succeed();
 		} finally {

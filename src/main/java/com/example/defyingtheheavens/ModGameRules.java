@@ -25,11 +25,13 @@ public final class ModGameRules {
 			GameRuleRegistry.register("demonBeastsSpawn", GameRules.Category.SPAWNING, GameRuleFactory.createBooleanRule(true));
 
 	/**
-	 * A player's spells wait out their cooldowns (Spells#cast). Off (the user's ask, 2026-10-24: "remove spell cooldowns for now
-	 * completely"), a player casts again at once: the cooldown still runs on its record, unshown and unheeded. Cultivators keep theirs.
+	 * A player's spells wait out their cooldowns (Spells#cast), the shorter the higher they stand above a spell (Laws#cooldown). Off, a player
+	 * casts again at once: the cooldown still runs on its record, unshown and unheeded. Cultivators keep theirs. Off by default from the user's
+	 * ask of 2026-10-24 ("remove spell cooldowns for now completely"), on again from 2026-11-10 ("add spell cooldowns back"), a world saved
+	 * meanwhile turned on once ({@link #cooldownsBack}).
 	 */
 	public static final GameRules.Key<GameRules.BooleanValue> SPELL_COOLDOWNS =
-			GameRuleRegistry.register("spellCooldowns", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(false));
+			GameRuleRegistry.register("spellCooldowns", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(true));
 
 	/**
 	 * A player's spells change the land for good (the user's ask, 2026-10-25: "a grief toggle"): their craters, cuts, fissures and bores,
@@ -78,8 +80,21 @@ public final class ModGameRules {
 		p.server.getPlayerList().broadcastSystemMessage(said.copy().withStyle(net.minecraft.ChatFormatting.GOLD), false);
 	}
 
-	/** Touching this class registers the rules. */
-	public static void register() {}
+	/**
+	 * A world started: if it has never had {@link #SPELL_COOLDOWNS} turned back on, it is now, once (a world saves its rules, so one saved
+	 * while the rule was off by default kept it off). Turned off again after, it stays off.
+	 */
+	static void cooldownsBack(net.minecraft.server.MinecraftServer server) {
+		CultivationSavedData data = CultivationSavedData.forServer(server);
+		if (data.cooldownsBack()) return;
+		server.getGameRules().getRule(SPELL_COOLDOWNS).set(true, server);
+		data.setCooldownsBack();
+	}
+
+	/** Touching this class registers the rules (and has each world's arts' cooldowns turned back on once: {@link #cooldownsBack}). */
+	public static void register() {
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(ModGameRules::cooldownsBack);
+	}
 
 	private ModGameRules() {}
 }
