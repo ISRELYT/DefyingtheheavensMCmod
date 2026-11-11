@@ -126,7 +126,8 @@
       "com.example.defyingtheheavens.MountGameTests",
       "com.example.defyingtheheavens.TalismanGameTests",
       "com.example.defyingtheheavens.RankingsGameTests",
-      "com.example.defyingtheheavens.PlayerSectGameTests"
+      "com.example.defyingtheheavens.PlayerSectGameTests",
+      "com.example.defyingtheheavens.NetherworldSpringsGameTests"
     ]
   }
 }

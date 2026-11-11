@@ -760,8 +760,9 @@ recording) does not: 2.25 ms before; 2.11 after the first fixes (all but the rea
 server thread: 18 samples and 300 MB allocated a game day before, 5 and 17 MB after. Its price: a realm's land is made whole before
 anyone goes in, 16,560 chunks (65 MB) in the secret realms of a world whose realms nobody has entered, against 13,389 (53 MB), once.
 
-Saved data stayed small (rumours 64 KB, sects 33 KB, the lists 20 KB after 10 days); the world's growth is new land. Noted, not changed:
-the Netherworld's lakes and springs flow on a new area's first load and wash its spider lilies and crimson roots into items.
+Saved data stayed small (rumours 64 KB, sects 33 KB, the lists 20 KB after 10 days); the world's growth is new land. Noted, and put right
+the next day (The Netherworld's springs, below): new Netherworld land washed its spider lilies and crimson roots into items on its first
+load.
 
 The talk box (`DialogueScreen`) scrolls what is said (wheel or arrow keys, gold arrows when there is more), and keeps it below the HUD's
 top-left stack (`HudCorner#foot`): a Heavenly Venerable's answer on the four primordial beasts was cut off at 427x240, Hundun never named.
@@ -791,6 +792,20 @@ Read through and found sound: riding (soul projection and meditation get one off
 its soul is flashed away; a flier is grounded wherever its rider couldn't fly), the talismans' strength and shells, the lists (a win, a
 death, the rolls read in, the stele dropping once), the sweep's site cache and peak search (each only on its own thread), and every new
 line of text against its arguments. Tests: `PlayerSectGameTests#aFallenSectHoldsNobodyAndARevivalStartsAfresh`.
+
+## The Netherworld's springs (2026-11-11)
+
+The user's ask: "do the netherworld lily fix now", the loose end the lag sweep noted. Fresh land looked over in game tests far out (245
+chunks of the Fields of the Other Shore, where the spider lilies grow thickest) washed 316 plants into items as it first came into
+reach: spider lilies, crimson roots, Other-Shore Flowers and their seeds, every one by running water in its scheduled ticks, carried 15
+to 18 blocks down the slopes by springs that opened onto the land. The lakes and the Yellow Springs' pools are held in and washed
+nothing (none in 245 chunks of the Springs).
+
+A spring (`NetherworldSpringFeature`, the `netherworld/spring_water` configured feature) now forms only where its one way out hangs over
+the abyss, nothing beneath it down to the bottom of the world: vanilla's spring otherwise, a waterfall into the dark, as the
+Netherworld's springs were meant to be; those that would have run over the land are no longer made. Looked over again, 245 fresh chunks
+of the Fields and 245 of the Springs washed none. Land made before keeps the springs it has. Tests: `NetherworldSpringsGameTests` (the
+rule at a chasm's edge; fresh Fields land, no plant washed away and no spring running over the land).
 
 ## Bloodlines: the demon races
 

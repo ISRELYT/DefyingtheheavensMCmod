@@ -210,15 +210,16 @@ public final class ModConfiguredFeatures {
 
 	/**
 	 * The Netherworld's features. Its stone is deepslate under soul soil, soul sand, mud, blackstone and basalt (see
-	 * ModNoiseSettings#netherworldSurface): springs break out of all of them, so the Yellow Springs spill over the plateaus'
-	 * edges as waterfalls into the dark.
+	 * ModNoiseSettings#netherworldSurface): springs break out of all of them where they hang over the abyss
+	 * (NetherworldSpringFeature), so the Yellow Springs spill over the plateaus' edges as waterfalls into the dark and never run
+	 * over the land.
 	 */
 	private static void netherworld(BootstapContext<ConfiguredFeature<?, ?>> context) {
 		@SuppressWarnings("deprecation")
 		Feature<LakeFeature.Configuration> lake = Feature.LAKE;
 		FeatureUtils.register(context, NW_LAKE, lake, new LakeFeature.Configuration(
 				BlockStateProvider.simple(Blocks.WATER), BlockStateProvider.simple(Blocks.MUD)));
-		FeatureUtils.register(context, NW_SPRING_WATER, Feature.SPRING, new SpringConfiguration(Fluids.WATER.defaultFluidState(), true, 4, 1,
+		FeatureUtils.register(context, NW_SPRING_WATER, ModFeatures.NETHERWORLD_SPRING, new SpringConfiguration(Fluids.WATER.defaultFluidState(), true, 4, 1,
 				HolderSet.direct(Block::builtInRegistryHolder, Blocks.DEEPSLATE, Blocks.BLACKSTONE, Blocks.BASALT, Blocks.SOUL_SOIL,
 						Blocks.SOUL_SAND, Blocks.MUD)));
 		// Small patches of soul fire on soul sand and soul soil, burning for ever (it never spreads or goes out).

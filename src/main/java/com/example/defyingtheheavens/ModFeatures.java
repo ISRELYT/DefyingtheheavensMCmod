@@ -13,6 +13,7 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.SpringConfiguration;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 
 /** Custom world-generation placement and feature types (used by datagen, see ModPlacedFeatures). */
@@ -57,6 +58,9 @@ public final class ModFeatures {
 	/** The Yellow Springs' riverlands flooded with golden water (see YellowSpringsPoolFeature). */
 	public static final Feature<NoneFeatureConfiguration> YELLOW_SPRINGS_POOL = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("yellow_springs_pool"), new YellowSpringsPoolFeature());
+	/** The Netherworld's springs: vanilla's, but only where they fall into the abyss (see NetherworldSpringFeature). */
+	public static final Feature<SpringConfiguration> NETHERWORLD_SPRING = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("netherworld_spring"), new NetherworldSpringFeature());
 	/** A Method Stele on its plinth, teaching a ghost method (see MethodSteleFeature). */
 	public static final Feature<NoneFeatureConfiguration> METHOD_STELE = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("method_stele"), new MethodSteleFeature());
