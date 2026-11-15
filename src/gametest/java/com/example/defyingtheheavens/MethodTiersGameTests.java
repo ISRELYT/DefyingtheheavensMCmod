@@ -212,6 +212,17 @@ public class MethodTiersGameTests implements FabricGameTest {
 		return zombie;
 	}
 
+	/**
+	 * {@link #zombie} with {@code health}: one that must outlive a spell before the next is tried on it (a spell strikes as its caster's might
+	 * makes it, 2026-11-15: Spells#harm, a Four Axis caster's Soul Rend past a zombie's twenty).
+	 */
+	private static Zombie zombie(ServerLevel level, int dx, int dz, double health) {
+		Zombie zombie = zombie(level, dx, dz);
+		zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(health);
+		zombie.setHealth((float) health);
+		return zombie;
+	}
+
 	private static void standAt(ServerPlayer player, int dx, int dz, float yaw) {
 		player.teleportTo(player.serverLevel(), SPELL_GROUND.getX() + dx + 0.5, SPELL_GROUND.getY(), SPELL_GROUND.getZ() + dz + 0.5, yaw, 0);
 		player.setYRot(yaw);
@@ -247,7 +258,7 @@ public class MethodTiersGameTests implements FabricGameTest {
 				}
 				standAt(player, 0, 0, 0); // facing south, +z
 				// Soul Rend: through both zombies in its line.
-				Zombie near = zombie(level, 0, 3), far = zombie(level, 0, 6);
+				Zombie near = zombie(level, 0, 3, 200), far = zombie(level, 0, 6, 200);
 				zombies.add(near);
 				zombies.add(far);
 				float full = near.getHealth();
@@ -273,8 +284,10 @@ public class MethodTiersGameTests implements FabricGameTest {
 						+ near.getEffect(MobEffects.MOVEMENT_SLOWDOWN) + ", " + (near.isAlive() ? "alive" : "gone") + ")");
 				Spells.cast(player, Spell.KINGS_DECREE);
 				helper.assertTrue(far.hasEffect(MobEffects.WEAKNESS) && far.hasEffect(MobEffects.GLOWING), "Cowed and shown by the King's Decree");
-				// Yama's Verdict: twice over on one below half its health.
+				// Yama's Verdict: twice over on one below half its health. (Its flinch from Soul Rend a moment ago let go first: a blow no harder
+				// than the last one inside its flinch takes nothing, and the rend now strikes as its caster's might makes it.)
 				float before = near.getHealth();
+				near.invulnerableTime = 0;
 				Spells.cast(player, Spell.YAMA_VERDICT);
 				helper.assertTrue(!near.isAlive() || near.getHealth() < before, "Judged");
 				// Nine Nether Step: a step through the dark, south down the ground.

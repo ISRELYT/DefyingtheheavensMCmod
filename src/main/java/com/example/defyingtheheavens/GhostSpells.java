@@ -186,12 +186,15 @@ public final class GhostSpells {
 		}
 	}
 
-	/** Strikes {@code target} for {@code amount} of the dead's harm by {@code p} (not past a barrier it couldn't break), and returns how much it took. */
-	static float strike(LivingEntity p, LivingEntity target, float amount) {
+	/**
+	 * Strikes {@code target} for {@code amount} of the dead's harm by {@code p} with {@code spell} (not past a barrier it couldn't break), the
+	 * harder the mightier {@code p} stands above the spell (Spells#harm), and returns how much it took.
+	 */
+	static float strike(LivingEntity p, LivingEntity target, float amount, Spell spell) {
 		if (HeavenSpells.walled(p, target)) return 0;
 		HeavenSpells.landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
-		target.hurt(ModDamageTypes.ghostly(HeavenSpells.level(p), p), amount);
+		target.hurt(ModDamageTypes.ghostly(HeavenSpells.level(p), p), amount * Spells.harm(p, spell));
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 
@@ -245,7 +248,7 @@ public final class GhostSpells {
 				double along = mid.dot(way);
 				if (along < 0 || along > reach || mid.subtract(way.scale(along)).length() > half + e.getBbWidth() / 2) continue;
 				struck.add(e);
-				strike(caster, e, GhostSystem.isDead(e) ? PROCESSION_DAMAGE * PROCESSION_DEAD_FACTOR : PROCESSION_DAMAGE);
+				strike(caster, e, GhostSystem.isDead(e) ? PROCESSION_DAMAGE * PROCESSION_DEAD_FACTOR : PROCESSION_DAMAGE, Spell.PROCESSION_OF_TEN_THOUSAND_GHOSTS);
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, PROCESSION_WEAKENS, 1));
 				e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, PROCESSION_WEAKENS, 1));
 				HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, HeavenSpells.middle(e), 10, 0.4, 0.05);
@@ -318,7 +321,7 @@ public final class GhostSpells {
 				}
 				if (drain) {
 					e.invulnerableTime = 0; // its draining isn't turned by the last tick's
-					dealt += strike(caster, e, GATE_DRAIN);
+					dealt += strike(caster, e, GATE_DRAIN, Spell.GATE_OF_TEN_THOUSAND_GHOSTS);
 					HeavenSpells.line(level, HeavenSpells.middle(e), mouth, ParticleTypes.SCULK_SOUL, Math.max(1.0, distance / 10));
 				}
 			}
@@ -332,7 +335,7 @@ public final class GhostSpells {
 			float dealt = 0;
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, GATE_RADIUS, e -> !HeavenSpells.spared(caster, e))) {
 				e.invulnerableTime = 0;
-				dealt += strike(caster, e, GATE_SLAM);
+				dealt += strike(caster, e, GATE_SLAM, Spell.GATE_OF_TEN_THOUSAND_GHOSTS);
 				HeavenSpells.push(at, e, 1.6);
 			}
 			if (dealt > 0 && casterHere()) HeavenSpells.mend(caster, dealt * GATE_MENDS);
@@ -412,7 +415,7 @@ public final class GhostSpells {
 				}
 				if (drain) {
 					e.invulnerableTime = 0;
-					strike(caster, e, onTheDead(e, NETHERS_DRAIN, NETHERS_DEAD_FACTOR));
+					strike(caster, e, onTheDead(e, NETHERS_DRAIN, NETHERS_DEAD_FACTOR), Spell.RIFT_TO_THE_NINE_NETHERS);
 					HeavenSpells.line(level, HeavenSpells.middle(e), heart, ParticleTypes.SCULK_SOUL, Math.max(1.0, distance / 8));
 				}
 			}
@@ -433,7 +436,7 @@ public final class GhostSpells {
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, NETHERS_MOUTH + 6, e -> !HeavenSpells.spared(caster, e))) {
 				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > NETHERS_MOUTH || e.getY() > ground.y + 10 || e.getY() < ground.y - 8) continue;
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, NETHERS_SEAL, NETHERS_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, NETHERS_SEAL, NETHERS_DEAD_FACTOR), Spell.RIFT_TO_THE_NINE_NETHERS);
 				e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, NETHERS_WEAKENS, 1));
 				HeavenSpells.push(ground, e, 1.2);
 			}
@@ -518,7 +521,7 @@ public final class GhostSpells {
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, BRIDGE_SPAN / 2 + BRIDGE_WIDTH + 14, e -> !struck.contains(e) && !HeavenSpells.spared(caster, e))) {
 				if (!by(e, at)) continue;
 				struck.add(e);
-				strike(caster, e, onTheDead(e, BRIDGE_DAMAGE, BRIDGE_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, BRIDGE_DAMAGE, BRIDGE_DEAD_FACTOR), Spell.BRIDGE_OF_NO_RETURN);
 				forget(e);
 				HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, HeavenSpells.middle(e), 12, 0.4, 0.04);
 			}
@@ -545,7 +548,7 @@ public final class GhostSpells {
 			}
 			for (LivingEntity e : paying) {
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, BRIDGE_TOLL, BRIDGE_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, BRIDGE_TOLL, BRIDGE_DEAD_FACTOR), Spell.BRIDGE_OF_NO_RETURN);
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2));
 			}
 			sound(middle(spans.size() / 2), SoundEvents.SOUL_ESCAPE, 2.0f, 0.4f);
@@ -605,7 +608,7 @@ public final class GhostSpells {
 			if (age % 20 == 10) {
 				for (LivingEntity e : shown()) {
 					e.invulnerableTime = 0;
-					strike(caster, e, onTheDead(e, MIRROR_DAMAGE, MIRROR_DEAD_FACTOR));
+					strike(caster, e, onTheDead(e, MIRROR_DAMAGE, MIRROR_DEAD_FACTOR), Spell.MIRROR_OF_RETRIBUTION);
 					e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, MIRROR_SHOWN, 1));
 					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, MIRROR_SHOWN, 1));
 					e.addEffect(new MobEffectInstance(MobEffects.GLOWING, MIRROR_SHOWN, 0));
@@ -617,7 +620,7 @@ public final class GhostSpells {
 				mirror.act("flash");
 				for (LivingEntity e : shown()) {
 					e.invulnerableTime = 0;
-					strike(caster, e, onTheDead(e, MIRROR_FLASH, MIRROR_DEAD_FACTOR));
+					strike(caster, e, onTheDead(e, MIRROR_FLASH, MIRROR_DEAD_FACTOR), Spell.MIRROR_OF_RETRIBUTION);
 				}
 				SpellFx.send(level, SpellFx.Kind.FLASH, mirror.position(), Vec3.ZERO, 12, NETHER_TEAL, 192);
 				sound(mirror.position(), SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.6f);
@@ -673,7 +676,7 @@ public final class GhostSpells {
 					for (LivingEntity e : locked) {
 						if (!HeavenSpells.present(e, level)) continue;
 						e.invulnerableTime = 0;
-						strike(caster, e, onTheDead(e, PAGODA_DRAIN, PAGODA_DEAD_FACTOR));
+						strike(caster, e, onTheDead(e, PAGODA_DRAIN, PAGODA_DEAD_FACTOR), Spell.SOUL_LOCKING_PAGODA);
 						SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), ground.add(0, PAGODA_HEIGHT * 0.5, 0).subtract(HeavenSpells.middle(e)), 1, 0);
 					}
 					sound(ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
@@ -695,7 +698,7 @@ public final class GhostSpells {
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PAGODA_RADIUS + PAGODA_HEIGHT, e -> !HeavenSpells.spared(caster, e))) {
 				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > PAGODA_RADIUS || e.getY() > ground.y + PAGODA_HEIGHT || e.getY() < ground.y - 8) continue;
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, PAGODA_SLAM, PAGODA_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, PAGODA_SLAM, PAGODA_DEAD_FACTOR), Spell.SOUL_LOCKING_PAGODA);
 				locked.add(e);
 			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PAGODA_RADIUS * 1.6f, 0, 192);
@@ -727,7 +730,7 @@ public final class GhostSpells {
 			for (LivingEntity e : locked) {
 				if (!HeavenSpells.present(e, level)) continue;
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, PAGODA_SEAL, PAGODA_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, PAGODA_SEAL, PAGODA_DEAD_FACTOR), Spell.SOUL_LOCKING_PAGODA);
 				e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, PAGODA_WEAKENS, 1));
 			}
 			locked.clear();
@@ -820,7 +823,7 @@ public final class GhostSpells {
 			if (age == IMPERMANENCE_COMES + 6) {
 				if (holds()) {
 					target.invulnerableTime = 0;
-					strike(caster, target, onTheDead(target, IMPERMANENCE_STRIKE, IMPERMANENCE_DEAD_FACTOR));
+					strike(caster, target, onTheDead(target, IMPERMANENCE_STRIKE, IMPERMANENCE_DEAD_FACTOR), Spell.BLACK_AND_WHITE_IMPERMANENCE);
 					target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
 				}
 				SpellFx.send(level, SpellFx.Kind.FLASH, at.add(0, 2, 0), Vec3.ZERO, 6, 0xF2FFFD, 192);
@@ -842,7 +845,7 @@ public final class GhostSpells {
 				HeavenSpells.still(target);
 				if (hooked < IMPERMANENCE_HOLDS && hooked % 20 == 10) {
 					target.invulnerableTime = 0;
-					strike(caster, target, onTheDead(target, IMPERMANENCE_CHAIN, IMPERMANENCE_DEAD_FACTOR));
+					strike(caster, target, onTheDead(target, IMPERMANENCE_CHAIN, IMPERMANENCE_DEAD_FACTOR), Spell.BLACK_AND_WHITE_IMPERMANENCE);
 					SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(target), places[1].add(0, 6, 0).subtract(HeavenSpells.middle(target)), 1.5f, 0);
 					sound(at, SoundEvents.CHAIN_STEP, 3.0f, 0.5f);
 				}
@@ -858,7 +861,7 @@ public final class GhostSpells {
 				// ...and tear away their share of it.
 				float share = Math.min(IMPERMANENCE_MOST, target.getMaxHealth() * IMPERMANENCE_SHARE);
 				target.invulnerableTime = 0;
-				strike(caster, target, onTheDead(target, share, IMPERMANENCE_DEAD_FACTOR));
+				strike(caster, target, onTheDead(target, share, IMPERMANENCE_DEAD_FACTOR), Spell.BLACK_AND_WHITE_IMPERMANENCE);
 				SpellFx.send(level, SpellFx.Kind.FLASH, HeavenSpells.middle(target), Vec3.ZERO, 8, NETHER_TEAL, 192);
 				sound(at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.6f);
 				sound(at, SoundEvents.WARDEN_SONIC_BOOM, 2.0f, 1.2f);
@@ -910,7 +913,7 @@ public final class GhostSpells {
 				for (LivingEntity e : marked) {
 					if (!HeavenSpells.present(e, level) || !e.isAlive()) continue;
 					e.invulnerableTime = 0;
-					strike(caster, e, onTheDead(e, BOOK_MARK, BOOK_DEAD_FACTOR));
+					strike(caster, e, onTheDead(e, BOOK_MARK, BOOK_DEAD_FACTOR), Spell.BOOK_OF_LIFE_AND_DEATH);
 				}
 				sound(caster.position(), SoundEvents.BOOK_PAGE_TURN, 3.0f, 0.6f);
 			}
@@ -939,12 +942,12 @@ public final class GhostSpells {
 			for (LivingEntity e : marked) {
 				if (!HeavenSpells.present(e, level) || !e.isAlive()) continue;
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, BOOK_STRIKE, BOOK_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, BOOK_STRIKE, BOOK_DEAD_FACTOR), Spell.BOOK_OF_LIFE_AND_DEATH);
 				if (e.isAlive() && e.getHealth() < e.getMaxHealth() * BOOK_EXECUTE) {
 					e.invulnerableTime = 0;
 					boolean great = e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || e instanceof net.minecraft.world.entity.boss.wither.WitherBoss
 							|| e instanceof net.minecraft.world.entity.monster.warden.Warden;
-					strike(caster, e, great ? onTheDead(e, BOOK_GREAT, BOOK_DEAD_FACTOR) : e.getMaxHealth() * 4 + e.getAbsorptionAmount());
+					strike(caster, e, great ? onTheDead(e, BOOK_GREAT, BOOK_DEAD_FACTOR) : e.getMaxHealth() * 4 + e.getAbsorptionAmount(), Spell.BOOK_OF_LIFE_AND_DEATH);
 				}
 				SpellFx.send(level, SpellFx.Kind.STREAK, from, HeavenSpells.middle(e).subtract(from), 0, CINNABAR, 192);
 			}
@@ -1026,7 +1029,7 @@ public final class GhostSpells {
 		private void haunt() {
 			for (LivingEntity e : within()) {
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, FENGDU_HARM, FENGDU_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, FENGDU_HARM, FENGDU_DEAD_FACTOR), Spell.FENGDU_WALLS_RISE);
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2));
 				HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, HeavenSpells.middle(e), 10, 0.5, 0.05);
 			}
@@ -1041,7 +1044,7 @@ public final class GhostSpells {
 		private void fall() {
 			for (LivingEntity e : within()) {
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, FENGDU_FALL, FENGDU_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, FENGDU_FALL, FENGDU_DEAD_FACTOR), Spell.FENGDU_WALLS_RISE);
 			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FENGDU_RADIUS * 1.2f, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 4, 0), Vec3.ZERO, 14, NETHER_TEAL, 256);
@@ -1114,7 +1117,7 @@ public final class GhostSpells {
 				}
 				if (held && tear) {
 					e.invulnerableTime = 0;
-					strike(caster, e, onTheDead(e, SOULS_HARM, SOULS_DEAD_FACTOR));
+					strike(caster, e, onTheDead(e, SOULS_HARM, SOULS_DEAD_FACTOR), Spell.TEN_THOUSAND_SOULS_ASCEND);
 					HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, HeavenSpells.middle(e), 8, 0.4, 0.05);
 				}
 			}
@@ -1125,7 +1128,7 @@ public final class GhostSpells {
 			helix.act("descend");
 			for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, SOULS_RADIUS + 2, 8, SOULS_HIGH + 16)) {
 				e.invulnerableTime = 0;
-				strike(caster, e, onTheDead(e, SOULS_SLAM, SOULS_DEAD_FACTOR));
+				strike(caster, e, onTheDead(e, SOULS_SLAM, SOULS_DEAD_FACTOR), Spell.TEN_THOUSAND_SOULS_ASCEND);
 				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, new Vec3(0, -2.5, 0));
 				HeavenSpells.safeFall(e, 100);
 			}

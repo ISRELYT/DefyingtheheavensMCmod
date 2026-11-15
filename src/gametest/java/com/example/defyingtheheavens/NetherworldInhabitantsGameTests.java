@@ -321,8 +321,10 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 		// Its cry breaks out once its ghost has risen over its caster.
 		helper.runAfterDelay(Spells.WAIL_RISES + 2, () -> {
 			Spells.forget(player.getUUID());
-			helper.assertTrue(Math.abs(whole - wailed.getHealth() - Spells.WAIL_DEAD_DAMAGE) < 0.01,
-					"The wail harms a Hungry Ghost as it harms a ghost (took " + (whole - wailed.getHealth()) + ")");
+			// As hard as its caster's might makes it (Spells#harm, 2026-11-15): a Nascent Soul's wail, a Qi Refining art, near three times its own.
+			float wail = Spells.WAIL_DEAD_DAMAGE * Spells.harm(player, Spell.GHOSTLY_WAIL);
+			helper.assertTrue(wail > Spells.WAIL_DEAD_DAMAGE * 2 && Math.abs(whole - wailed.getHealth() - wail) < 0.01,
+					"The wail harms a Hungry Ghost as it harms a ghost (took " + (whole - wailed.getHealth()) + " of " + wail + ")");
 		});
 		burning.addEffect(new net.minecraft.world.effect.MobEffectInstance(ModEffects.GHOST_FIRE, 40));
 		float before = burning.getHealth();

@@ -1701,6 +1701,10 @@ public final class ModLang {
 	// The Spells tab and the spell wheel (held open by its key)
 	public static final String SPELLS_COST = k("spells.cost");
 	public static final String SPELLS_COOLDOWN = k("spells.cooldown");
+	/** A known spell six realms or more below its caster: no cooldown at all (Spell#cooldownGone). */
+	public static final String SPELLS_NO_COOLDOWN = k("spells.no_cooldown");
+	/** How many times as hard a known spell strikes as its caster stands (Spell#harmFor). */
+	public static final String SPELLS_HARM = k("spells.harm");
 	public static final String SPELLS_LOCKED = k("spells.locked");
 	public static final String SPELLS_LOCKED_REALM = k("spells.locked_realm");
 	/** A heaven spell not yet known: the realm and stage one's cultivation must reach for it, as well as its layer (Spell#realmNeeded). */

@@ -12,8 +12,9 @@ import java.util.List;
 /**
  * Arts' cooldowns back (the user's ask, 2026-11-10: "add spell cooldowns back, make them change based on realm though so for example a true
  * immortals wouldnt have to wait long for a 4 axis spell"): half as long for each realm its caster stands above a spell's own, a stage at a
- * time, never longer than its own and never under a second (Spell#cooldownFor, #floored); a player's by its highest path, then the Law of
- * Time (Laws#cooldown); the gamerule on by default again, and a world that saved it off turned on once (ModGameRules#cooldownsBack).
+ * time, never longer than its own and never under a second while it waits at all (Spell#cooldownFor, #floored), none at all six realms above
+ * it (2026-11-15, Spell#cooldownGone: SpellMightGameTests); a player's by its highest path, then the Law of Time (Laws#cooldown); the gamerule
+ * on by default again, and a world that saved it off turned on once (ModGameRules#cooldownsBack).
  */
 public class SpellCooldownGameTests implements FabricGameTest {
 	private static final int STAGES = Stage.values().length;
@@ -35,16 +36,20 @@ public class SpellCooldownGameTests implements FabricGameTest {
 			double stageUp = spell.cooldownFor(own + 1);
 			if (base > 0 && !(stageUp < base && stageUp > base / 2.0)) wrong.add(spell.getId() + " a stage up: " + stageUp);
 			double last = base;
+			int floor = Math.min(base, Spell.COOLDOWN_FLOOR);
 			for (int rank = own; rank <= PlayerCultivation.rank(Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION); rank++) {
 				double now = spell.cooldownFor(rank);
 				if (now > last + 1.0e-9) wrong.add(spell.getId() + " longer at rank " + rank);
+				// While it waits at all, never under a second (or its own, if shorter).
+				int floored = spell.floored(now);
+				if (floored != 0 && floored < floor) wrong.add(spell.getId() + " under its floor at rank " + rank);
 				last = now;
 			}
-			// Never under a second (or its own, if shorter); and every art up to Four Axis's is down to that for a Heavenly Lord.
-			int floor = Math.min(base, Spell.COOLDOWN_FLOOR), topped = spell.floored(spell.cooldownFor(PlayerCultivation.rank(Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION)));
-			if (topped < floor || own <= PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION) && topped != floor) wrong.add(spell.getId() + " at the top " + topped);
+			// For a Heavenly Lord at its peak no art waits at all, but the two that keep their wait (Spell#keepsItsWait), at their floor.
+			int topped = spell.floored(spell.cooldownFor(PlayerCultivation.rank(Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION)));
+			if (spell.keepsItsWait() ? topped != floor : topped != 0) wrong.add(spell.getId() + " at the top " + topped);
 		}
-		helper.assertTrue(wrong.isEmpty(), "Each realm above an art's own halves its wait, a stage at a time, floored at a second: " + wrong);
+		helper.assertTrue(wrong.isEmpty(), "Each realm above an art's own halves its wait, a stage at a time, floored at a second, gone at the top: " + wrong);
 		helper.succeed();
 	}
 

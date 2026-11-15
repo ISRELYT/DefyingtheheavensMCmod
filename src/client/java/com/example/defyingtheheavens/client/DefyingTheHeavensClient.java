@@ -23,6 +23,12 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 public class DefyingTheHeavensClient implements ClientModInitializer {
+	/**
+	 * Whether the cast key has been let go since its last cast: it casts once a press. A key held down repeats its press some thirty times a second,
+	 * and a spell with no cooldown left (Spell#cooldownGone, 2026-11-15) would go off with every one of them, a True Immortal's every tick.
+	 */
+	private static boolean castLetGo = true;
+
 	@Override
 	public void onInitializeClient() {
 		// The Heaven Altar's offering screen.
@@ -297,9 +303,14 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 					else client.gui.setOverlayMessage(Component.translatable(ModLang.SPELLS_EMPTY), false);
 				}
 			}
-			while (ModKeybinds.CAST_SPELL.consumeClick()) {
-				if (client.player != null && client.screen == null && ClientMethods.anyKnown()) ClientMethods.cast(null);
+			// Once a press: the presses a held key repeats are let fall until it is let go (castLetGo).
+			boolean castPressed = false;
+			while (ModKeybinds.CAST_SPELL.consumeClick()) castPressed = true;
+			if (castPressed && castLetGo && client.player != null && client.screen == null && ClientMethods.anyKnown()) {
+				ClientMethods.cast(null);
+				castLetGo = false;
 			}
+			if (!ModKeybinds.CAST_SPELL.isDown()) castLetGo = true;
 			// Riding one's bound beast: it strikes what one looks at (SaddleStrikes; the server judges); off its back the key does nothing.
 			while (ModKeybinds.SADDLE_STRIKE.consumeClick()) {
 				if (client.player != null && client.screen == null && client.player.getVehicle() instanceof com.example.defyingtheheavens.DemonBeast beast

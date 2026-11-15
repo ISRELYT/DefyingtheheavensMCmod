@@ -128,7 +128,8 @@ public final class Spells {
 		long now = p.level().getGameTime();
 		long readyAt = cooldowns(p).getOrDefault(spell, 0L);
 		if (now < readyAt && cooldownsHeld(p)) {
-			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_SPELL_COOLING, spell.getDisplayName(), (readyAt - now + 19) / 20));
+			// One with no cooldown left (Spell#cooldownGone) is ready again the next tick: a second cast this same tick is let fall, untold.
+			if (readyAt - now > NEXT_TICK) HeavenSpells.tell(p, Component.translatable(ModLang.MSG_SPELL_COOLING, spell.getDisplayName(), (readyAt - now + 19) / 20));
 			return;
 		}
 		// A yang bomb set is set off for nothing (FireSpells#canCast), however little qi is left.
@@ -146,8 +147,8 @@ public final class Spells {
 			if (spell.qiCost() > 0) c.setQi(c.getQi() - spell.qiCost());
 		}
 		// The shorter for each realm above the spell's own and by the Law of Time (Laws#cooldown), the longer in a foe's domain of Time
-		// (LawDomains#stretched).
-		cooldowns(p).put(spell, now + LawDomains.stretched(p, Laws.cooldown(p, spell)));
+		// (LawDomains#stretched); none at all six realms above it, when it is ready again the next tick (once a tick at most).
+		cooldowns(p).put(spell, now + Math.max(NEXT_TICK, LawDomains.stretched(p, Laws.cooldown(p, spell))));
 		RaceGifts.breakIllusion(p); // a fox unseen is seen as it casts
 		perform(p, spell, s);
 		Milestones.onSpell(p, spell);
@@ -174,7 +175,7 @@ public final class Spells {
 		if (steps(spell) && (spell == Spell.NINE_NETHER_STEP && EarthSpells.spaceLocked(npc) || LawDomains.locksSpace(npc))) return false;
 		c.setQi(c.getQi() - cost);
 		// The shorter for each realm above the spell's own, as a player's (Laws#cooldown); the longer in a player's domain of Time.
-		cooldowns(npc).put(spell, now + LawDomains.stretched(npc, Laws.cooldown(npc, spell)));
+		cooldowns(npc).put(spell, now + Math.max(NEXT_TICK, LawDomains.stretched(npc, Laws.cooldown(npc, spell))));
 		perform(npc, spell, c.netherworld());
 		return true;
 	}
@@ -242,6 +243,24 @@ public final class Spells {
 	/** Ticks until {@code spell} can be cast again by {@code p}. */
 	public static int cooldownLeft(LivingEntity p, Spell spell) {
 		return (int) Math.max(0, cooldowns(p).getOrDefault(spell, 0L) - p.level().getGameTime());
+	}
+
+	/** A spell with no cooldown (Spell#cooldownGone) is ready again this many ticks after it is cast: the next, so once a tick at most. */
+	static final int NEXT_TICK = 1;
+
+	/**
+	 * How many times as hard {@code spell} strikes, cast by {@code caster} (Spell#harmFor, the user's ask of 2026-11-15): a player by its highest
+	 * qi path as the land and any pressure let it wield it (TwoPaths#higherRank: the Body Path is no qi path, and casts nothing), a cultivator by
+	 * its realm as the land holds it (CultivatorNpc#sustainedRank); anything else, or a caster gone, as the spell is. Every spell's harm goes by it:
+	 * HeavenSpells#strike, GhostSpells#strike, HeavenDemonSpells#strike, the dead's arts here, a golem's blows, an aura's.
+	 */
+	public static float harm(LivingEntity caster, Spell spell) {
+		if (spell == null) return 1;
+		int rank;
+		if (caster instanceof ServerPlayer player) rank = TwoPaths.higherRank(CultivationManager.get(player), true);
+		else if (caster instanceof CultivatorNpc npc) rank = npc.sustainedRank();
+		else return 1;
+		return (float) spell.harmFor(rank);
 	}
 
 	/** Takes {@code ticks} off every cooldown {@code p} has running (a heaven spell's rain: HeavenSpells). */
@@ -351,7 +370,7 @@ public final class Spells {
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.7f, 0.6f);
 		if (hit != null && hit.getEntity() instanceof LivingEntity target) {
 			// Burning only where it struck home (not a blow turned aside: PvP off, a ward).
-			if (target.hurt(ModDamageTypes.ghostly(level, p), BOLT_DAMAGE)) ignite(target);
+			if (target.hurt(ModDamageTypes.ghostly(level, p), BOLT_DAMAGE * harm(p, Spell.GHOST_FIRE_BOLT))) ignite(target);
 			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, end.x, end.y, end.z, 25, 0.3, 0.3, 0.3, 0.08);
 		}
 	}
@@ -418,7 +437,7 @@ public final class Spells {
 				Vec3 away = target.position().subtract(p.position()).multiply(1, 0, 1);
 				if (away.lengthSqr() > 1.0e-4) target.knockback(1.2, -away.x, -away.z);
 				level.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(), 4, 0.2, 0.3, 0.2, 0.03);
-				if (GhostSystem.isDead(target)) target.hurt(ModDamageTypes.ghostly(level, p), WAIL_DEAD_DAMAGE); // ghosts and the dead's kind
+				if (GhostSystem.isDead(target)) target.hurt(ModDamageTypes.ghostly(level, p), WAIL_DEAD_DAMAGE * harm(p, Spell.GHOSTLY_WAIL)); // ghosts and the dead's kind
 			}
 		}));
 	}
@@ -472,7 +491,7 @@ public final class Spells {
 			if (to.lengthSqr() > 1.0e-4 && to.normalize().dot(ahead) < TIDE_CONE) continue;
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, TIDE_TICKS, 1));
 			push(p, target, 1.5);
-			if (GhostSystem.isDead(target)) target.hurt(ModDamageTypes.ghostly(level, p), TIDE_DEAD_DAMAGE);
+			if (GhostSystem.isDead(target)) target.hurt(ModDamageTypes.ghostly(level, p), TIDE_DEAD_DAMAGE * harm(p, Spell.YELLOW_SPRINGS_TIDE));
 		}
 	}
 
@@ -501,7 +520,7 @@ public final class Spells {
 			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1, p.getZ(), 0, Math.cos(a) * Math.cos(b), Math.sin(b), Math.sin(a) * Math.cos(b), 0.45);
 		}
 		for (LivingEntity target : around(p, BURST_RADIUS, e -> !spared(p, e))) {
-			target.hurt(ModDamageTypes.ghostly(level, p), BURST_DAMAGE);
+			target.hurt(ModDamageTypes.ghostly(level, p), BURST_DAMAGE * harm(p, Spell.GHOST_CORE_BURST));
 			ignite(target);
 			push(p, target, 1.0);
 		}
@@ -543,7 +562,7 @@ public final class Spells {
 		}
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(from, to).inflate(1.0), e -> !spared(p, e))) {
 			if (target.getBoundingBox().inflate(0.4).clip(from, to).isEmpty()) continue;
-			target.hurt(ModDamageTypes.ghostly(level, p), REND_DAMAGE);
+			target.hurt(ModDamageTypes.ghostly(level, p), REND_DAMAGE * harm(p, Spell.SOUL_REND));
 			level.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 1, target.getZ(), 12, 0.3, 0.5, 0.3, 0.05);
 		}
 	}
@@ -600,7 +619,7 @@ public final class Spells {
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BELL_BLOCK, SoundSource.PLAYERS, 1.2f, 0.5f);
 		if (hit == null || !(hit.getEntity() instanceof LivingEntity target)) return;
 		boolean failing = target.getHealth() < target.getMaxHealth() / 2;
-		target.hurt(ModDamageTypes.ghostly(level, p), failing ? VERDICT_DAMAGE * 2 : VERDICT_DAMAGE);
+		target.hurt(ModDamageTypes.ghostly(level, p), (failing ? VERDICT_DAMAGE * 2 : VERDICT_DAMAGE) * harm(p, Spell.YAMA_VERDICT));
 		// Yama's tablet of judgement cast down out of the sky and driven into the ground behind it, facing its judge (SpellConstruct
 		// YAMA_TABLET), sinking back into the ground after.
 		Vec3 away = target.position().subtract(p.position()).multiply(1, 0, 1);
@@ -738,7 +757,7 @@ public final class Spells {
 			level.sendParticles(ParticleTypes.EXPLOSION, x, p.getY() + 1, z, 2, 0.4, 0.4, 0.4, 0);
 		}
 		for (LivingEntity target : around(p, ANNIHILATION_RADIUS, e -> !spared(p, e))) {
-			target.hurt(ModDamageTypes.ghostly(level, p), ANNIHILATION_DAMAGE);
+			target.hurt(ModDamageTypes.ghostly(level, p), ANNIHILATION_DAMAGE * harm(p, Spell.SIX_PATHS_ANNIHILATION));
 			push(p, target, 2.0);
 		}
 	}

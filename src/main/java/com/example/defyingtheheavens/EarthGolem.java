@@ -212,8 +212,9 @@ public class EarthGolem extends PathfinderMob implements GeoEntity {
 	public boolean doHurtTarget(Entity target) {
 		if (!(level() instanceof ServerLevel level) || !(target instanceof LivingEntity living)) return false;
 		triggerAnim("main", "pound");
-		float damage = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
 		LivingEntity caster = caster();
+		// Its blows are its spell's harm: the harder the mightier its caster stands above the spell (Spells#harm).
+		float damage = (float) getAttributeValue(Attributes.ATTACK_DAMAGE) * Spells.harm(caster, isTitan() ? Spell.EARTHEN_TITAN : Spell.SUMMON_GOLEM);
 		boolean hit = living.hurt(ModDamageTypes.qi(level, QiElement.EARTH, isTitan() ? Realm.FOUR_AXIS : Realm.NASCENT_SOUL, this, caster), damage);
 		if (hit) {
 			HeavenSpells.push(position(), living, isTitan() ? 2.5 : 1.2);

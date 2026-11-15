@@ -2555,9 +2555,11 @@ gamerule `spellCooldowns` is on, its default: off from 2026-10-24 at the user's 
 meanwhile has it turned on once at its next start, `ModGameRules#cooldownsBack`; cultivators always keep theirs). A cooldown is **half
 as long for every realm its caster stands above the spell's own** (the user's ask, 2026-11-10: "a true immortals wouldnt have to wait
 long for a 4 axis spell"), counted a stage at a time by the caster's highest path and never under a second unless the spell's own is
-shorter (`Spell#cooldownFor`, `Laws#cooldown`): a True Immortal waits about a thirty-second of a Four Axis spell's (9 s for the
-greatest, 300 s), Dao Integration half. The Law of Time takes its share off after; the Spells tab shows each one's cooldown as it is
-for you; cultivators' go the same way by their realm. A spell that needs something to take hold
+shorter (`Spell#cooldownFor`, `Laws#cooldown`): a True Immortal Early waits 13 s for the greatest Four Axis spell (Phoenix Nirvana,
+300 s), Dao Integration half. **Six realms above a spell there is no cooldown at all** (2026-11-15, see "Spells as strong as their
+casters"). The Law of Time takes its share off after; the Spells tab shows each one's cooldown as it is for you, and how many times as
+hard it strikes for you; cultivators' go the same way by their realm. A spell **strikes harder the mightier its caster stands above
+it** (2026-11-15, same section). A spell that needs something to take hold
 of (a being looked at, the ground, earth to draw on) isn't cast without it, and nothing is paid. Their qi harm is the
 element's own and passes armour; none touches its caster, spectators or its tamed creatures, and nothing of one (harm, hold,
 push, drowning, burning) touches another player unless the server lets players harm each other (PvP on, teams allowing);
@@ -6459,6 +6461,46 @@ Mouse Tweaks 2.26, Essential, AppleSkin, Controlling, Searchables, Terralith). N
 - **Mouse Tweaks** doesn't clash: the storage formation's grid is drawn, not made of slots, so the wheel only scrolls it; in the
   framed screens it gets the frame's mouse like everything else.
 - **Building**: JEI's jar is in `libs/` (`modCompileOnly files(...)`, `jei_version` in gradle.properties), so no download is needed.
+
+## Spells as strong as their casters (2026-11-15)
+
+The user's ask: "make it so that damage scales with realm so that heavenly lords can use lower tier spells and still do damage to true
+immortals with them ... balance it so low tier spells arent always good and there is still a need for high tier spells", and "make it so
+even true immortals have ZERO cooldown for the basic ones, with heavenly lords have ZERO cooldown for the later spells". Before it a
+spell struck as hard whoever cast it, while bodies doubled with every realm past True Immortal: a Heavenly Lord's greatest spell took a
+hundredth of another's health, which mends whole in 30 seconds, so the immortals could hardly kill each other with spells.
+
+- **Harm.** Every spell (the elements', the ghost path's, both paths'; a player's or a cultivator's) strikes **the square root of how much
+  mightier its caster stands than the spell** as hard (`Spell#harmFor`, `Spells#harm`). Might is a rank's blow, its realm's at its stage
+  and the bare hand's one (`Spell#might`); a player's by its highest qi path as the land and any pressure let it wield it, a cultivator's
+  by its realm as the land holds it. Cast at its own realm and stage, a spell strikes as it always did; never weaker.
+  - A Heavenly Lord Early: True Immortal spells x7.3 (x8.3 at Grand Perfection), Entering Nirvana x23, Four Axis x135, Flame Bolt x826.
+    Three or four Four Axis spells or about fifteen Flame Bolts kill a True Immortal; about fifteen True Immortal spells another
+    Heavenly Lord.
+  - A True Immortal: Flame Bolt x103 (one kills a Four Axis), Heavenly Being spells x24, Entering Nirvana x2.9. A Four Axis: Flame Bolt
+    x5.8.
+  - Why the great spells stay needed: a spell's harm is made to its own realm's might, so against one's peers a spell loses some 30%
+    for each realm it lies below one, and an immortal's spells below True Immortal two thirds at once (that realm's leap is tenfold).
+    A Heavenly Lord's True Immortal spell is about three times its Entering Nirvana one and twenty times its Four Axis one, and a
+    body mends whole in 30 s: against a peer only the greatest spells outpace it.
+  - Where it reaches: every strike of a spell (`HeavenSpells#strike`, `GhostSpells#strike`, `HeavenDemonSpells#strike`), the dead's arts
+    (`Spells`), a summoned golem's or titan's blows (`EarthGolem`), Flame Fist's and Vajra Body's thorns (`SpellAuras`). Not the fire,
+    frost, drowning or falls a spell leaves to the world (Solar Field's burning, a Water Prison's drowning: as fire and water do), nor a
+    Law domain's harm (it already goes by its owner's blow), talismans or weapons.
+- **Cooldowns.** Still half as long for each realm above a spell, a stage at a time, never under a second while there is any; and **six
+  realms above a spell, none at all** (`Spell#COOLDOWN_GONE_REALMS`, `#cooldownGone`): ready again the next tick. A True Immortal
+  casts every spell up to Nascent Soul's at will, Heavenly Being's from its Mid and Late stages; then each realm frees the next realm's
+  (Earth Immortal Four Axis's, Heaven Immortal Dao Integration's, Golden Immortal Void Shattering's, Taiyi Sacred Vessel's, Profound
+  Sovereign Entering Nirvana's) and a Heavenly Lord every spell there is, True Immortal's from its Mid and Late stages. Cultivators go
+  the same way. **My call:** Phoenix Nirvana (a death undone) and the Wheel of Samsara (made whole) keep their wait however high one
+  stands, to their floor (`Spell#keepsItsWait`): with none they would be cast again the moment they had saved one.
+- **The cast key casts once a press** (`DefyingTheHeavensClient#castLetGo`): a key held down repeats its press some thirty times a second,
+  and with no cooldown a True Immortal spell would go off every tick. Press again to cast again; the spell wheel's right click is as
+  before. A second cast in the same tick is let fall without a word.
+- **The Spells tab** shows "no cooldown" for those, and each known spell's "strikes xN as hard" as you stand: only for the spells that
+  strike, not the 30 wards, mendings, ways of moving and works on the land (`Spell#harms`).
+- Tests: `SpellMightGameTests` (the numbers above, the waits, a True Immortal cultivator's Flame Bolt on a creature, the next-tick cast),
+  `SpellCooldownGameTests` (the top now none at all).
 
 ## License
 

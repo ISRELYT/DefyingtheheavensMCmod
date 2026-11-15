@@ -168,14 +168,14 @@ public final class HeavenDemonSpells {
 	// --- Harm and light ---
 
 	/**
-	 * Strikes {@code target} for {@code amount} of heaven-and-demon harm by {@code p} (not past a barrier it couldn't break:
-	 * HeavenSpells#walled) and returns how much it took.
+	 * Strikes {@code target} for {@code amount} of heaven-and-demon harm by {@code p} with {@code spell} (not past a barrier it couldn't break:
+	 * HeavenSpells#walled), the harder the mightier {@code p} stands above the spell (Spells#harm), and returns how much it took.
 	 */
-	static float strike(LivingEntity p, LivingEntity target, float amount) {
+	static float strike(LivingEntity p, LivingEntity target, float amount, Spell spell) {
 		if (HeavenSpells.walled(p, target)) return 0;
 		HeavenSpells.landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
-		target.hurt(ModDamageTypes.heavenDemon(HeavenSpells.level(p), p), amount);
+		target.hurt(ModDamageTypes.heavenDemon(HeavenSpells.level(p), p), amount * Spells.harm(p, spell));
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 
@@ -242,7 +242,7 @@ public final class HeavenDemonSpells {
 		HeavenSpells.sound(level, p.position(), SoundEvents.EVOKER_CAST_SPELL, 1.0f, 1.3f);
 		HeavenSpells.sound(level, p.position(), SoundEvents.RAVAGER_ATTACK, 0.8f, 1.4f);
 		if (target == null) return;
-		float taken = strike(p, target, PALM_DAMAGE);
+		float taken = strike(p, target, PALM_DAMAGE, Spell.HEAVEN_DEMON_PALM);
 		HeavenSpells.push(p.position(), target, 1.8);
 		HeavenSpells.mend(p, taken * PALM_MENDS);
 		rake(level, to, to.subtract(from), 1.4, 3);
@@ -388,10 +388,10 @@ public final class HeavenDemonSpells {
 			if (age == 0 || age % 20 != 0) return true; // once a second, from a second on
 			seal.act("bite");
 			if (!caster.isAlive() || caster.isRemoved()) {
-				sealed.hurt(ModDamageTypes.heavenDemon(level, null), SEAL_DAMAGE);
+				sealed.hurt(ModDamageTypes.heavenDemon(level, null), SEAL_DAMAGE * Spells.harm(caster, Spell.DEVOURING_SEAL));
 				return true;
 			}
-			float taken = strike(caster, sealed, SEAL_DAMAGE);
+			float taken = strike(caster, sealed, SEAL_DAMAGE, Spell.DEVOURING_SEAL);
 			if (taken > 0 && caster.level() == level) {
 				HeavenSpells.mend(caster, taken * SEAL_MENDS);
 				// Its life, drawn off to the caster in crimson.
@@ -433,7 +433,7 @@ public final class HeavenDemonSpells {
 		Vec3 centre = at;
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(centre, centre).inflate(CLAW_RADIUS, 6, CLAW_RADIUS),
 				e -> !HeavenSpells.spared(p, e) && e.position().multiply(1, 0, 1).distanceToSqr(centre.multiply(1, 0, 1)) <= CLAW_RADIUS * CLAW_RADIUS)) {
-			strike(p, target, CLAW_DAMAGE);
+			strike(p, target, CLAW_DAMAGE, Spell.HEAVEN_DEMON_CLAW);
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, CLAW_WEAKENS, 0));
 			HeavenSpells.move(target, target.getDeltaMovement().add(0, 0.7, 0));
 		}
@@ -457,7 +457,7 @@ public final class HeavenDemonSpells {
 			Vec3 in = p.position().subtract(target.position());
 			double distance = in.length();
 			if (distance > 2) HeavenSpells.move(target, in.normalize().scale(Math.min(2.0, distance * 0.15)).add(0, 0.3, 0));
-			dealt += strike(p, target, ONE_DAMAGE);
+			dealt += strike(p, target, ONE_DAMAGE, Spell.HEAVEN_AND_DEMON_AS_ONE);
 		}
 		HeavenSpells.mend(p, dealt * ONE_MENDS);
 		p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, ONE_TICKS, 1));
@@ -546,7 +546,7 @@ public final class HeavenDemonSpells {
 			for (SpellConstruct sentHand : sent) if (sentHand.position().distanceToSqr(hand.ground()) < 1 && sentHand.phase() == null) sentHand.act("press");
 			float dealt = 0;
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, hand.ground(), AVATAR_RADIUS, e -> !HeavenSpells.spared(caster, e))) {
-				dealt += strike(caster, e, AVATAR_DAMAGE);
+				dealt += strike(caster, e, AVATAR_DAMAGE, Spell.HEAVEN_DEMON_AVATAR);
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, AVATAR_SLOWS, 2));
 				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, new Vec3(e.getDeltaMovement().x * 0.2, -1.6, e.getDeltaMovement().z * 0.2));
 			}
@@ -630,7 +630,7 @@ public final class HeavenDemonSpells {
 			if (hanging < SHATTER_TICKS && hanging % 20 == 10) {
 				for (LivingEntity e : HeavenSpells.aroundPoint(level, point, SHATTER_RADIUS, e -> !HeavenSpells.spared(caster, e))) {
 					e.invulnerableTime = 0;
-					strike(caster, e, SHATTER_CUTS);
+					strike(caster, e, SHATTER_CUTS, Spell.HEAVEN_DEMON_VOID_SHATTER);
 					level.sendParticles(ParticleTypes.END_ROD, e.getX(), e.getY() + e.getBbHeight() / 2, e.getZ(), 6, 0.3, 0.4, 0.3, 0.05);
 				}
 				sound(point, SoundEvents.AMETHYST_CLUSTER_BREAK, 3.0f, 0.5f);
@@ -642,7 +642,7 @@ public final class HeavenDemonSpells {
 		private void impact() {
 			fist.act("impact");
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, point, SHATTER_RADIUS, e -> !HeavenSpells.spared(caster, e))) {
-				strike(caster, e, SHATTER_DAMAGE);
+				strike(caster, e, SHATTER_DAMAGE, Spell.HEAVEN_DEMON_VOID_SHATTER);
 				if (HeavenSpells.greatBeast(caster, e)) continue;
 				Vec3 out = HeavenSpells.middle(e).subtract(point);
 				out = out.lengthSqr() < 1.0e-4 ? new Vec3(0, 1, 0) : out.normalize();
@@ -735,10 +735,10 @@ public final class HeavenDemonSpells {
 				if (d > BELL_WAVE || e.getY() > ground.y + 24 || e.getY() < ground.y - 10) continue;
 				e.invulnerableTime = 0;
 				if (d <= BELL_RADIUS) {
-					dealt += strike(caster, e, BELL_TOLL);
+					dealt += strike(caster, e, BELL_TOLL, Spell.HEAVEN_DEMON_BELL);
 					HeavenSpells.still(e);
 				} else {
-					dealt += strike(caster, e, BELL_WAVE_DAMAGE);
+					dealt += strike(caster, e, BELL_WAVE_DAMAGE, Spell.HEAVEN_DEMON_BELL);
 					HeavenSpells.push(ground, e, 1.6);
 				}
 			}
@@ -820,7 +820,7 @@ public final class HeavenDemonSpells {
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, ECLIPSE_RADIUS + 12, e -> !HeavenSpells.spared(caster, e))) {
 				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > ECLIPSE_RADIUS || e.getY() > sky.y || e.getY() < ground.y - 10) continue;
 				e.invulnerableTime = 0;
-				dealt += strike(caster, e, ECLIPSE_PULSES[k]);
+				dealt += strike(caster, e, ECLIPSE_PULSES[k], Spell.HEAVEN_DEMON_ECLIPSE);
 				HeavenSpells.still(e);
 			}
 			HeavenSpells.mend(caster, dealt * ECLIPSE_MENDS);
@@ -890,7 +890,7 @@ public final class HeavenDemonSpells {
 				}
 				if (churn && d <= CHAOS_RADIUS) {
 					e.invulnerableTime = 0;
-					dealt += strike(caster, e, CHAOS_CHURN);
+					dealt += strike(caster, e, CHAOS_CHURN, Spell.PRIMORDIAL_CHAOS);
 					HeavenSpells.particles(level, ParticleTypes.CRIMSON_SPORE, HeavenSpells.middle(e), 10, 0.5, 0.05);
 				}
 			}
@@ -902,7 +902,7 @@ public final class HeavenDemonSpells {
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, CHAOS_BURST_RADIUS + CHAOS_HIGH, e -> !HeavenSpells.spared(caster, e))) {
 				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > CHAOS_BURST_RADIUS || e.getY() > heart.y + CHAOS_RADIUS || e.getY() < ground.y - 10) continue;
 				e.invulnerableTime = 0;
-				dealt += strike(caster, e, CHAOS_BURST);
+				dealt += strike(caster, e, CHAOS_BURST, Spell.PRIMORDIAL_CHAOS);
 				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, HeavenSpells.middle(e).subtract(heart).normalize().scale(2.4).add(0, 0.6, 0));
 				HeavenSpells.safeFall(e, 120);
 			}

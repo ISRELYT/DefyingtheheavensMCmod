@@ -343,6 +343,14 @@ public enum Spell {
 	public static final double COOLDOWN_PER_REALM = 0.5;
 	/** However far above a spell its caster stands, it comes round no sooner than this (ticks), unless its own cooldown is shorter still. */
 	public static final int COOLDOWN_FLOOR = 20;
+	/**
+	 * How many realms above a spell its caster must stand for it to have no cooldown at all (the user's ask, 2026-11-15: "make it so even true
+	 * immortals have ZERO cooldown for the basic ones, with heavenly lords have ZERO cooldown for the later spells"): six, counted by stages as the
+	 * shortening is ({@link #cooldownGone}). A True Immortal casts the lower realms' spells at will (Heavenly Being's from its Mid and Late
+	 * stages, as their layers stand), and each realm past it frees the next realm's: an Earth Immortal Four Axis's, ... a Heavenly Lord every
+	 * spell there is, True Immortal's too.
+	 */
+	public static final int COOLDOWN_GONE_REALMS = 6;
 
 	/** The rank (PlayerCultivation#rank) it stands at: its layer's ({@link #realmNeeded}); one of both paths', its realm's Early stage. */
 	public int rank() {
@@ -350,18 +358,76 @@ public enum Spell {
 	}
 
 	/**
+	 * Whether a caster standing at {@code casterRank} casts it with no cooldown at all: {@link #COOLDOWN_GONE_REALMS} realms or more above its own
+	 * {@link #rank}. Never a spell that undoes a death or makes one whole ({@link #keepsItsWait}).
+	 */
+	public boolean cooldownGone(int casterRank) {
+		return !keepsItsWait() && casterRank - rank() >= COOLDOWN_GONE_REALMS * Stage.COUNT;
+	}
+
+	/**
+	 * A spell whose wait never goes, however far above it its caster stands (it still shortens, to its floor): Phoenix Nirvana, a death undone,
+	 * and the Wheel of Samsara, the body made whole. With no wait they would be cast again the moment they had saved one: one could never die.
+	 */
+	public boolean keepsItsWait() {
+		return this == PHOENIX_NIRVANA || this == SAMSARA_WHEEL;
+	}
+
+	/**
 	 * Its cooldown (ticks, unrounded) for a caster standing at {@code casterRank} (TwoPaths#higherRank): {@link #COOLDOWN_PER_REALM} of it
-	 * for each realm above its own {@link #rank}, never longer than its own. Laws#cooldown takes the Law of Time off it, then floors it.
+	 * for each realm above its own {@link #rank}, never longer than its own, and none at all from {@link #COOLDOWN_GONE_REALMS} realms above it
+	 * ({@link #cooldownGone}). Laws#cooldown takes the Law of Time off it, then floors it.
 	 */
 	public double cooldownFor(int casterRank) {
-		double realmsAbove = Math.max(0, casterRank - rank()) / (double) Stage.values().length;
+		if (cooldownGone(casterRank)) return 0;
+		double realmsAbove = Math.max(0, casterRank - rank()) / (double) Stage.COUNT;
 		return cooldownTicks * Math.pow(COOLDOWN_PER_REALM, realmsAbove);
 	}
 
-	/** {@code ticks} of its cooldown, rounded, and no shorter than {@link #COOLDOWN_FLOOR} (or its own, if that is shorter still). */
+	/**
+	 * {@code ticks} of its cooldown, rounded, and no shorter than {@link #COOLDOWN_FLOOR} (or its own, if that is shorter still); none where
+	 * the realm has taken it all ({@link #cooldownFor} 0: {@link #cooldownGone}).
+	 */
 	public int floored(double ticks) {
+		if (ticks <= 0) return 0;
 		return (int) Math.max(Math.min(cooldownTicks, COOLDOWN_FLOOR), Math.round(ticks));
 	}
+
+	/**
+	 * How many times as hard it strikes, cast by one standing at {@code casterRank} (the user's ask, 2026-11-15: "make it so that damage scales with
+	 * realm so that heavenly lords can use lower tier spells and still do damage to true immortals with them ... balance it so low tier spells arent
+	 * always good and there is still a need for high tier spells"): the square root of how much mightier its caster is than its own {@link #rank}
+	 * ({@link #might}), never less than once. A Heavenly Lord's True Immortal spells some 7 to 8 times as hard, its Entering Nirvana ones 23, its
+	 * Four Axis ones 135, its Flame Bolt 826; a True Immortal's Flame Bolt 103 times. Yet against one's peers a spell loses some 30% for each
+	 * realm it lies below one (and an immortal's below True Immortal two thirds at once, that realm's leap being tenfold), so the greatest spells
+	 * one knows are still the ones to strike them with. Its own realm's caster strikes as it always did.
+	 */
+	public double harmFor(int casterRank) {
+		int own = rank();
+		return casterRank <= own ? 1 : Math.sqrt(might(casterRank) / might(own));
+	}
+
+	/** A rank's might (PlayerCultivation#rank): its realm's blow at its stage (CultivationStats#attackDamage) and the bare hand's one besides. */
+	public static double might(int rank) {
+		int at = Math.max(0, rank);
+		return 1 + CultivationStats.attackDamage(Realm.byIndex(at / Stage.COUNT), Stage.byIndex(at % Stage.COUNT));
+	}
+
+	/**
+	 * Whether it strikes anything with harm of its own, which its caster's might makes greater ({@link #harmFor}): every spell but its wards,
+	 * its mendings, its ways of moving or carrying one, its works on the land, its gifts of life and its hands' cold fire (whose burning is a
+	 * burn's), Solar Field (which sets what is near burning, as fire does), Rain Call (which slows), King's Decree and the Chains of Hell
+	 * (which weaken and hold). The Arts tab shows no "strikes as hard" for these.
+	 */
+	public boolean harms() {
+		return !HARMLESS.contains(this);
+	}
+
+	private static final java.util.Set<Spell> HARMLESS = java.util.EnumSet.of(GHOST_FIRE, SOUL_DASH, MARROW_WARD, KINGS_DECREE, NINE_NETHER_STEP,
+			HELL_CHAINS, SAMSARA_WHEEL, HEAVEN_DEMON_MANTLE, CRIMSON_TEMPERING, EMERALD_HEALING_ART, VERDANT_GROWTH, HARDENED_BODY, DIRT_TIDE,
+			AZURE_COATING_TECHNIQUE, AZURE_BREATHING_TECHNIQUE, BLADE_POLISH, FLAME_ARMOUR, LIFE_FORCE_GAIN, EARTH_WALL_TECHNIQUE, CAVE_FORMATION,
+			RAIN_CALL, MINERAL_PURIFICATION, SOLAR_FIELD, ANCIENT_BARK_SKIN, MOUNTAIN_STANCE, MIST_VEIL, GOLDEN_BELL_SHIELD, LOTUS_OF_REBIRTH,
+			SPRING_OF_MYRIAD_LIFE, RETURN_TO_THE_BOUGH);
 
 	/**
 	 * Whether this cultivator can cast it: the method cultivated to the spell's layer, a ghost method's by a ghost or a living

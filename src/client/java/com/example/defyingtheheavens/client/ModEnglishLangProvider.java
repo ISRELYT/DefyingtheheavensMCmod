@@ -945,6 +945,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.BTN_PRACTISE, "Practise");
 		t.add(ModLang.SPELLS_COST, "%s ghost qi");
 		t.add(ModLang.SPELLS_COOLDOWN, "%s s cooldown");
+		t.add(ModLang.SPELLS_NO_COOLDOWN, "no cooldown");
+		t.add(ModLang.SPELLS_HARM, "strikes x%s as hard");
 		t.add(ModLang.SPELLS_LOCKED, "%s, layer %s");
 		t.add(ModLang.SPELLS_LOCKED_REALM, "%s, layer %s (%s, %s of 9)");
 		t.add(ModLang.SPELLS_LOCKED_STAGE, "...and your cultivation at %s");

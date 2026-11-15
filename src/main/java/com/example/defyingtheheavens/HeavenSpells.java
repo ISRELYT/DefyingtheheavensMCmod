@@ -1301,14 +1301,15 @@ public final class HeavenSpells {
 
 	/**
 	 * Strikes {@code target} for {@code amount} of {@code spell}'s element's qi harm (of its realm, for the wards: SpellAuras) by
-	 * {@code p} ({@code via}: the thing that struck, or null for the caster's own hand), and returns how much it took.
+	 * {@code p} ({@code via}: the thing that struck, or null for the caster's own hand), and returns how much it took. The harder the
+	 * mightier its caster stands above the spell (Spells#harm, Spell#harmFor).
 	 */
 	public static float strike(LivingEntity p, LivingEntity target, float amount, Spell spell, net.minecraft.world.entity.Entity via) {
 		if (walled(p, target)) return 0;
 		landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
 		ServerLevel level = (ServerLevel) target.level();
-		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount * law(p, spell.element()));
+		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount * law(p, spell.element()) * Spells.harm(p, spell));
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 

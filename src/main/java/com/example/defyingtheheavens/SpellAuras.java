@@ -245,7 +245,7 @@ public final class SpellAuras {
 		// that took the server down, found in the sweep of 2026-10-23).
 		if (amount > 0 && mine.containsKey(SpellAura.VAJRA_BODY) && source.getEntity() instanceof LivingEntity striker && source.getDirectEntity() == striker
 				&& striker != target && !source.is(DamageTypeTags.IS_PROJECTILE) && !HeavenSpells.isQi(source) && target.level() instanceof ServerLevel level) {
-			striker.hurt(ModDamageTypes.qi(level, QiElement.METAL, Realm.NASCENT_SOUL, null, target), VAJRA_THORNS);
+			striker.hurt(ModDamageTypes.qi(level, QiElement.METAL, Realm.NASCENT_SOUL, null, target), VAJRA_THORNS * Spells.harm(target, Spell.VAJRA_BODY));
 		}
 		return amount;
 	}
@@ -286,7 +286,7 @@ public final class SpellAuras {
 		}
 		target.setSecondsOnFire(FLAME_FIST_BURN_SECONDS);
 		target.invulnerableTime = 0;
-		target.hurt(ModDamageTypes.qi(level, QiElement.FIRE, Realm.QI_REFINING, null, attacker), FLAME_FIST_DAMAGE);
+		target.hurt(ModDamageTypes.qi(level, QiElement.FIRE, Realm.QI_REFINING, null, attacker), FLAME_FIST_DAMAGE * Spells.harm(attacker, Spell.FLAME_FIST));
 		SpellFx.send(level, SpellFx.Kind.FLAME_BURST, HeavenSpells.middle(target), net.minecraft.world.phys.Vec3.ZERO, 0.6f, 0);
 		HeavenSpells.sound(level, target.position(), SoundEvents.FIRECHARGE_USE, 0.6f, 1.4f);
 	}

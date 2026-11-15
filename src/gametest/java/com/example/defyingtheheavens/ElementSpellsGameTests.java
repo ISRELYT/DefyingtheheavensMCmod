@@ -243,7 +243,11 @@ public class ElementSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.FLAME_BOLT), "Cast");
 		helper.runAfterDelay(25, () -> {
 			try {
-				helper.assertTrue(husk.getHealth() < 40 && husk.getHealth() >= 34 && husk.isOnFire(), "The bolt struck for 5 and set it burning (" + husk.getHealth() + ")");
+				// Its harm as its caster's might (Spells#harm, 2026-11-15): a Four Axis master, held to Heavenly Being's peak in the realms below, some
+				// four and a half times the bolt's own 5; its burning a little more.
+				float struck = FireSpells.BOLT_DAMAGE * Spells.harm(p, Spell.FLAME_BOLT);
+				helper.assertTrue(struck > FireSpells.BOLT_DAMAGE * 4 && husk.getHealth() <= 40 - struck + 0.01f && husk.getHealth() >= 40 - struck - 6 && husk.isOnFire(),
+						"The bolt struck for " + struck + " and set it burning (" + husk.getHealth() + ")");
 				helper.succeed();
 			} finally {
 				sweep(level, floor.centre().getCenter(), 30);

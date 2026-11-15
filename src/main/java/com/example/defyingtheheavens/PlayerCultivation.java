@@ -931,7 +931,7 @@ public class PlayerCultivation {
 
 	/** Single ordering over every realm/stage pair; higher is stronger. */
 	public static int rank(Realm realm, Stage stage) {
-		return realm.ordinal() * Stage.values().length + stage.ordinal();
+		return realm.ordinal() * Stage.COUNT + stage.ordinal(); // (Stage.values() copies the stages on every call)
 	}
 
 	// --- Realm Suppression ---
@@ -1008,8 +1008,8 @@ public class PlayerCultivation {
 		return Math.max(0, (heldBelow() ? Math.min(rank, CAP_RANK) : rank) - pressureStages);
 	}
 
-	public Realm getEffectiveRealm() { return Realm.byIndex(effectiveRank() / Stage.values().length); }
-	public Stage getEffectiveStage() { return Stage.byIndex(effectiveRank() % Stage.values().length); }
+	public Realm getEffectiveRealm() { return Realm.byIndex(effectiveRank() / Stage.COUNT); }
+	public Stage getEffectiveStage() { return Stage.byIndex(effectiveRank() % Stage.COUNT); }
 
 	// --- Realm Suppress pressure (another cultivator's ability) ---
 

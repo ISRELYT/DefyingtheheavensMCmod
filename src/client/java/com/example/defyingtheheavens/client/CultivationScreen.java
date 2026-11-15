@@ -3487,8 +3487,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 					: Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost()));
 			Component teacher = spell.isHeaven() ? spell.teacher(self.heaven()).getDisplayName() : spell.isDual() ? Component.empty() : spell.method().getDisplayName();
 			Component detail = known
-					// Its cooldown as it is for them: the shorter for each realm they stand above it, and by the Law of Time (Laws#cooldown).
-					? cost.copy().append(", ").append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(com.example.defyingtheheavens.Laws.cooldown(self, spell))))
+					// Its cooldown as it is for them: the shorter for each realm they stand above it, and by the Law of Time (Laws#cooldown), none at all
+					// six realms above it (Spell#cooldownGone); and how many times as hard it strikes as they stand (Spell#harmFor).
+					? cost.copy().append(", ").append(cooldownLine(self, spell)).append(harmLine(self, spell))
 					: spell.isDual() ? Component.translatable(ModLang.SPELLS_LOCKED_BOTH, spell.dualRealm().getDisplayName())
 					: spell.layer() > MethodLayers.PER_REALM // a method's spell in its own realm past the first: where in it, too
 					? Component.translatable(ModLang.SPELLS_LOCKED_REALM, teacher, spell.layer(),
@@ -3524,6 +3525,25 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	/** Ticks as seconds, a decimal only where it isn't whole: "2", "1.5". */
 	private static String seconds(int ticks) {
 		return ticks % 20 == 0 ? String.valueOf(ticks / 20) : String.format(Locale.ROOT, "%.1f", ticks / 20.0);
+	}
+
+	/** A known spell's cooldown as it is for {@code c} (Laws#cooldown): its seconds, or none at all (Spell#cooldownGone). */
+	private static Component cooldownLine(PlayerCultivation c, Spell spell) {
+		int ticks = com.example.defyingtheheavens.Laws.cooldown(c, spell);
+		return ticks <= 0 ? Component.translatable(ModLang.SPELLS_NO_COOLDOWN) : Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(ticks));
+	}
+
+	/**
+	 * How many times as hard {@code spell} strikes as {@code c} stands (Spell#harmFor, by its highest qi path as it is wielded, as Spells#harm
+	 * weighs it), after a comma; nothing where it strikes as it is (its own realm and stage, or below), nor for a spell that strikes nothing
+	 * (Spell#harms: a ward, a mending, a way of moving...).
+	 */
+	private static Component harmLine(PlayerCultivation c, Spell spell) {
+		if (!spell.harms()) return Component.empty();
+		double harm = spell.harmFor(TwoPaths.higherRank(c, true));
+		if (harm < 1.05) return Component.empty();
+		String times = harm < 10 ? String.format(Locale.ROOT, "%.1f", harm) : String.format(Locale.ROOT, "%,d", Math.round(harm));
+		return Component.literal(", ").append(Component.translatable(ModLang.SPELLS_HARM, times));
 	}
 
 	/**

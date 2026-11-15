@@ -134,7 +134,8 @@
       "com.example.defyingtheheavens.NatalTreasureGameTests",
       "com.example.defyingtheheavens.SectListGameTests",
       "com.example.defyingtheheavens.PersonalDiscipleGameTests",
-      "com.example.defyingtheheavens.SectErrandsGameTests"
+      "com.example.defyingtheheavens.SectErrandsGameTests",
+      "com.example.defyingtheheavens.SpellMightGameTests"
     ]
   }
 }
