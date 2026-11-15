@@ -35,6 +35,23 @@ public class HeavenAltarScreen extends AbstractContainerScreen<HeavenAltarMenu> 
 		imageHeight = H;
 	}
 
+	/**
+	 * With a recipe viewer beside it (JEI), the altar steps left as far as it must to leave the viewer's list five columns (a storage
+	 * formation's): centred in a 16:9 window's frame, 427 across, it left only two. Never nearer the edge than {@link #EDGE}; wider windows
+	 * keep it centred.
+	 */
+	@Override
+	protected void init() {
+		super.init();
+		if (RECIPE_VIEWER) leftPos = Math.max(EDGE, Math.min(leftPos, width - W - VIEWER_ROOM));
+	}
+
+	private static final boolean RECIPE_VIEWER = net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("jei")
+			|| net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("roughlyenoughitems")
+			|| net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("emi");
+	/** The room the viewer's list is left (five of its columns), and the least gap kept at the frame's left. */
+	private static final int VIEWER_ROOM = 116, EDGE = 8;
+
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		renderBackground(g);

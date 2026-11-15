@@ -185,7 +185,8 @@ public final class CultivatorTrades {
 				goods.add(herb(random, 600, 1000, Regard.TRUSTED, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.SPIRIT_LOTUS));
 				// A talisman of its own drawing, one of the harder patterns (Talismans#drawnBy).
 				goods.add(new Goods(Talismans.drawnBy(pick(random, TalismanPattern.FIVE_THUNDER, TalismanPattern.BINDING, TalismanPattern.GOLDEN_LIGHT,
-						TalismanPattern.THOUSAND_LI_ESCAPE, TalismanPattern.CONCEALMENT), npc.getRank(), npc.getPersonalName(), 1), 20, 2, Regard.COURTEOUS));
+						TalismanPattern.THOUSAND_LI_ESCAPE, TalismanPattern.CONCEALMENT, TalismanPattern.HOMEWARD, TalismanPattern.QI_SEALING,
+						TalismanPattern.REVEALING), npc.getRank(), npc.getPersonalName(), 1), 20, 2, Regard.COURTEOUS));
 			}
 			case SECT_MASTER -> {
 				goods.add(pill(ModItems.CORE_PILL, PillGrade.MID, 1, 0));

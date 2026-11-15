@@ -63,6 +63,9 @@ dependencies {
 
 	// Optional integrations: compiled against, never required at runtime (put the mod in run/mods to test with it).
 	modCompileOnly "maven.modrinth:jade:${project.jade_version}"
+	// JEI (the recipe pages of client/compat/jei): the jar the players' own instance runs, kept in libs/ (JEI is MIT-licensed), so building
+	// needs no download.
+	modCompileOnly files("libs/jei-1.20.1-fabric-${project.jei_version}.jar")
 }
 
 processResources {

@@ -346,6 +346,24 @@ public class BeastArt {
 	 * {@code ... <assets> body}, the Body Path's techniques' icons (BodyArts).
 	 */
 	public static void main(String[] args) throws Exception {
+		// Ghostly Possession's icon alone (Icons#ghostPossession): {@code <assets> ghostpossession}.
+		if (args.length == 2 && args[1].equals("ghostpossession")) {
+			write(Path.of(args[0]).resolve("textures/gui/ability/ghost_possession.png"), Icons.ghostPossession());
+			System.out.println("written");
+			return;
+		}
+		// Natal Recall's icon alone (Icons#natalRecall): {@code <assets> natalrecall}.
+		if (args.length == 2 && args[1].equals("natalrecall")) {
+			write(Path.of(args[0]).resolve("textures/gui/ability/natal_recall.png"), Icons.natalRecall());
+			System.out.println("written");
+			return;
+		}
+		// The races' bones alone (Beasts#writeBones): {@code <assets> bones <check folder>}.
+		if (args.length == 3 && args[1].equals("bones")) {
+			Beasts.writeBones(Path.of(args[0]), Path.of(args[2]));
+			System.out.println("written");
+			return;
+		}
 		if (args.length == 2 && args[1].equals("body")) {
 			BodyArts.writeAll(Path.of(args[0]));
 			System.out.println("written");

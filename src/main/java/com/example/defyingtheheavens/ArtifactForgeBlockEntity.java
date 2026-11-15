@@ -103,6 +103,10 @@ public class ArtifactForgeBlockEntity extends BlockEntity {
 			tell(player, Component.translatable(ModLang.FORGE_WORKING, working.output().getDescription(), progressPercent()));
 			return InteractionResult.CONSUME;
 		}
+		// Sneaking with a blade in hand: bound to one's core as one's natal treasure, or unbound (NatalTreasures#atForge).
+		if (player.isShiftKeyDown() && held.getItem() instanceof ArtifactWeaponItem && player instanceof ServerPlayer sp) {
+			return NatalTreasures.atForge(sp, held);
+		}
 		if (contents.size() >= ArtifactRecipes.MAX_MATERIALS) {
 			tell(player, Component.translatable(ModLang.FORGE_FULL));
 			return InteractionResult.CONSUME;
@@ -126,6 +130,12 @@ public class ArtifactForgeBlockEntity extends BlockEntity {
 	private void begin(BlockState state, Player player, ArtifactRecipes.Recipe recipe) {
 		if (heat(level, worldPosition) <= 0) {
 			tell(player, Component.translatable(ModLang.FORGE_NEEDS_HEAT));
+			return;
+		}
+		// A natal treasure raised a grade (NatalTreasures): only its owner works it, their qi into their own blade.
+		ItemStack blade = NatalTreasures.bladeIn(contents);
+		if (blade != null && !player.getUUID().equals(NatalTreasures.ownerOf(blade))) {
+			tell(player, Component.translatable(ModLang.MSG_NATAL_ONLY_OWNER, blade.getHoverName()));
 			return;
 		}
 		working = recipe;
@@ -200,6 +210,9 @@ public class ArtifactForgeBlockEntity extends BlockEntity {
 		QiElement element = ArtifactRecipes.element(contents);
 		List<ItemStack> cores = new ArrayList<>();
 		for (ItemStack stack : contents) if (stack.is(ModItems.DEMON_CORE)) cores.add(stack.copy());
+		// A natal treasure being raised a grade (NatalTreasures): failed, it comes back as it was; else it is the blade that rises.
+		ItemStack blade = NatalTreasures.bladeIn(contents);
+		if (blade != null) blade = blade.copy();
 		working = null;
 		forger = null;
 		progress = 0;
@@ -211,6 +224,7 @@ public class ArtifactForgeBlockEntity extends BlockEntity {
 		boolean failed = level.random.nextDouble() < CraftMastery.failChance(rank, recipe.grade().difficulty());
 		if (failed) {
 			for (ItemStack core : cores) Containers.dropItemStack(level, x, y, z, core);
+			if (blade != null) Containers.dropItemStack(level, x, y, z, blade);
 			level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 24, 0.3, 0.3, 0.3, 0.02);
 			level.playSound(null, worldPosition, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 0.7f);
 			Component lost = Component.translatable(ModLang.FORGE_FAILED, recipe.output().getDescription());
@@ -219,7 +233,15 @@ public class ArtifactForgeBlockEntity extends BlockEntity {
 			return;
 		}
 		Artifacts.Quality quality = rollQuality(rank, level.random.nextDouble());
-		ItemStack artifact = Artifacts.create(recipe.kind(), recipe.grade(), quality, element);
+		ItemStack artifact;
+		if (blade != null) {
+			artifact = NatalTreasures.raised(blade, recipe); // its own work kept
+			quality = Artifacts.quality(artifact);
+		} else {
+			artifact = Artifacts.create(recipe.kind(), recipe.grade(), quality, element);
+			// A blade remembers who forged it: its forger may bind it to their core (NatalTreasures).
+			if (forgerNow != null && artifact.getItem() instanceof ArtifactWeaponItem) NatalTreasures.stampForger(artifact, forgerNow);
+		}
 		ItemEntity item = new ItemEntity(level, x, y, z, artifact, 0, 0.25, 0);
 		item.setDefaultPickUpDelay();
 		level.addFreshEntity(item);

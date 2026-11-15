@@ -221,10 +221,10 @@ final class CityPieces {
 		int base = WALL_HEIGHT + 1, x0 = 4, x1 = w - 5, z0 = 2, z1 = d - 3;
 		g.fill(level, chunk, x0, base - 1, z0, x1, base - 1, z1, p.floor);
 		g.walls(level, chunk, p, x0, z0, x1, z1, base, base + 5, 4, 3, 4, false);
-		for (int x = x0 + 2; x <= x1 - 2; x += 4) {
-			g.put(level, chunk, x, base + 3, z0, p.window);
-			g.put(level, chunk, x, base + 3, z1, p.window);
-		}
+		// Windows in the middle of the bays, mirrored about the door (SectPiece#bayWindows; laid every four blocks from one end before
+		// 2026-11-13, so that a fence stood in a door pillar and another in the doorway's top corner).
+		g.bayWindows(level, chunk, p, x0, x1, base + 3, z0, 4, true);
+		g.bayWindows(level, chunk, p, x0, x1, base + 3, z1, 4, false);
 		g.air(level, chunk, x0 + 1, base, z0 + 1, x1 - 1, base + 6, z1 - 1);
 		g.roof(level, chunk, p, x0 - 2, z0 - 2, x1 + 2, z1 + 2, base + 7, 2, false, true);
 		g.fill(level, chunk, x0, base + 8, z0, x1, base + 10, z1, p.wall);
@@ -294,10 +294,9 @@ final class CityPieces {
 		// The upper storey: its floor on a beam, walled, windows front and back.
 		g.fill(level, chunk, x0, 5, z0, x1, 5, z1, p.floor);
 		g.walls(level, chunk, p, x0, z0, x1, z1, 6, 8, 4, 0, 0, false);
-		for (int x = x0 + 2; x < x1; x += 3) {
-			g.put(level, chunk, x, 7, z0, p.window);
-			g.put(level, chunk, x, 7, z1, p.window);
-		}
+		// Its windows in the middle of the bays, front and back, mirrored (SectPiece#bayWindows; every three blocks from one end before 2026-11-13).
+		g.bayWindows(level, chunk, p, x0, x1, 7, z0, 4, false);
+		g.bayWindows(level, chunk, p, x0, x1, 7, z1, 4, false);
 		g.air(level, chunk, x0 + 1, 6, z0 + 1, x1 - 1, 8, z1 - 1);
 		g.roof(level, chunk, p, 0, 0, w - 1, z1, 9, SectPiece.ridgeCourses(0, 0, w - 1, z1), true, false);
 	}

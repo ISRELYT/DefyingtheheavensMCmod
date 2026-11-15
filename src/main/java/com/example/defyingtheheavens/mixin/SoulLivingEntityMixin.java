@@ -84,8 +84,10 @@ public abstract class SoulLivingEntityMixin {
 		LivingEntity self = (LivingEntity) (Object) this;
 		if (!self.level().isClientSide && cir.getReturnValueZ()) {
 			Physiques.onHurt(self, source, health.get() - self.getHealth());
-			// A blow landed: one concealed by a talisman who dealt it is noticed again (Talismans#struck).
+			// A blow landed: one concealed by a talisman who dealt it is noticed again (Talismans#struck), and a Homeward Talisman burning on
+			// the one it struck burns out (Talismans#hurt).
 			com.example.defyingtheheavens.Talismans.struck(source);
+			com.example.defyingtheheavens.Talismans.hurt(self);
 		}
 	}
 

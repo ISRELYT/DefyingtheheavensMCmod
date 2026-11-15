@@ -136,6 +136,27 @@ public final class CultivationStats {
 		return Math.max(1, bodyHealth(TwoPaths.body(CultivationManager.get(p), true)) / VANILLA_MENDS);
 	}
 
+	/**
+	 * The health a second {@code p}'s body mends at now, as fed as it is (SpatialTrialHandler#press: the user's ask, 2026-11-13, whoever
+	 * out-heals spatial pressure shouldn't feel it at all): vanilla's natural regeneration, quick (food full and some saturation: up to two a
+	 * second, all of it with Qi Sustenance, which keeps one fed) or slow (food 18 or more: a quarter), times the realm's {@link #mendFactor}
+	 * (FoodDataMixin); and Regeneration's on top. Nothing natural with the game rule off, nor out in the Chaos Frontier's storm unsheltered.
+	 */
+	public static double mendingNow(ServerPlayer p) {
+		double mending = 0;
+		if (p.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_NATURAL_REGENERATION) && !ChaosFrontier.exposed(p)) {
+			FoodData food = p.getFoodData();
+			if (CultivationManager.get(p).isAbilityActive(Ability.QI_SUSTENANCE)) mending = 2;
+			else if (food.getFoodLevel() >= MAX_FOOD && food.getSaturationLevel() > 0) mending = 2 * Math.min(food.getSaturationLevel(), 6) / 6.0;
+			else if (food.getFoodLevel() >= 18) mending = 0.25;
+			mending *= mendFactor(p);
+		}
+		net.minecraft.world.effect.MobEffectInstance regeneration = p.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+		// Vanilla's: one health every 50 >> amplifier ticks (every tick past the fifth level).
+		if (regeneration != null) mending += 20.0 / Math.max(1, 50 >> regeneration.getAmplifier());
+		return mending;
+	}
+
 	/** Health a second a body of {@code maxHealth} mends at rest (an NPC cultivator's out of combat): two, or the whole of it in {@link #MEND_SECONDS}. */
 	public static float mendPerSecond(float maxHealth) {
 		return (float) Math.max(2.0, maxHealth / MEND_SECONDS);

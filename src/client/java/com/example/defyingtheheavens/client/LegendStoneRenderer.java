@@ -45,4 +45,10 @@ public class LegendStoneRenderer implements BlockEntityRenderer<LegendStoneBlock
 				poseStack, buffers, level, (int) stone.getBlockPos().asLong());
 		poseStack.popPose();
 	}
+
+	/** The sword stands well above its stone: drawn while the stone itself is out of sight (and so not hidden by Entity Culling, which reads this). */
+	@Override
+	public boolean shouldRenderOffScreen(LegendStoneBlockEntity stone) {
+		return true;
+	}
 }

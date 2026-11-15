@@ -59,6 +59,11 @@ public final class ModDamageTypes {
 	 * throws nothing about, and it reaches the dead as the living (GhostSystem#reaches).
 	 */
 	public static final ResourceKey<DamageType> CHAOS_STORM = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("chaos_storm"));
+	/**
+	 * A Spatial Gap storm's bolt (SpatialStorms, 2026-11-13): tagged to pass armour and its enchantments, so it strikes the same for
+	 * everyone; Resistance and a ward still turn some of it. It doesn't jolt a flight (no_impact): the storm's winds carry one instead.
+	 */
+	public static final ResourceKey<DamageType> SPATIAL_STORM = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("spatial_storm"));
 	/** The Sunken Sword Tomb's lingering sword intent, and its Sword Path's pressure (SwordTombWorks): the cuts of swords long fallen. */
 	public static final ResourceKey<DamageType> SWORD_INTENT = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("sword_intent"));
 	/**
@@ -99,6 +104,7 @@ public final class ModDamageTypes {
 		}
 		context.register(HEAVEN_DEMON, new DamageType(DefyingTheHeavens.MOD_ID + ".heaven_demon", DamageScaling.NEVER, 0.1f));
 		context.register(CHAOS_STORM, new DamageType(DefyingTheHeavens.MOD_ID + ".chaos_storm", DamageScaling.NEVER, 0.0f));
+		context.register(SPATIAL_STORM, new DamageType(DefyingTheHeavens.MOD_ID + ".spatial_storm", DamageScaling.NEVER, 0.1f));
 		context.register(SWORD_INTENT, new DamageType(DefyingTheHeavens.MOD_ID + ".sword_intent", DamageScaling.NEVER, 0.1f));
 		context.register(BODY_ART, new DamageType(DefyingTheHeavens.MOD_ID + ".body_art", DamageScaling.NEVER, 0.1f));
 	}
@@ -116,6 +122,11 @@ public final class ModDamageTypes {
 	/** Lingering sword intent left by {@code attacker}'s blow (WarArts: Sword Intent's second cut; null for none). */
 	public static DamageSource swordIntent(Level level, net.minecraft.world.entity.Entity attacker) {
 		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SWORD_INTENT), attacker);
+	}
+
+	/** A Spatial Gap storm's bolt. */
+	public static DamageSource spatialStorm(Level level) {
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SPATIAL_STORM));
 	}
 
 	/** The Chaos Frontier's storm. */

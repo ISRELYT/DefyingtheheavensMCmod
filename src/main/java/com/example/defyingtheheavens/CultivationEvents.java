@@ -57,6 +57,7 @@ public final class CultivationEvents {
 		SecretRealms.onJoin(player); // logged out in a secret realm (or the server stopped): beside its Seal
 		GhostSystem.arrived(player); // a ghost that left scattered: together again at the Gate
 		LifespanTribulation.onJoin(player); // a spent life ended by a death they never came back from: born anew now
+		NatalTreasures.login(player); // a natal treasure that broke in another's hands while they were away: gone, their soul wounded
 	}
 
 	/**
@@ -71,6 +72,10 @@ public final class CultivationEvents {
 		CoreDetonation.onDisconnect(player);
 		// One in their clone goes back to their main body first (the clone stands on where it was): saved there (Clones).
 		Clones.onDisconnect(player);
+		// One of the dead in a body by its own possession gives it back first (GhostPossession: a body of the dead lain down, a living one its
+		// owner's again; a projected soul's goes with SoulProjection's, below).
+		GhostPossession.onDisconnect(player);
+		CorpseWalk.onDisconnect(player);
 		// One whose body is held doesn't take it with them: it plays on under the soul, and they watch again as they come back (Possession).
 		Possession.onDisconnect(player);
 		// A bearer sets down those in its sleeve where each was taken in; one in a sleeve stays in it (Sleeves).
@@ -110,6 +115,8 @@ public final class CultivationEvents {
 		Spells.forget(player.getUUID());
 		PortalRestrictionHandler.forget(player.getUUID());
 		QiFlight.forget(player.getUUID());
+		Talismans.forget(player.getUUID()); // a Homeward Talisman burning burns out
+		NatalTreasures.forget(player.getUUID()); // a severing asked for at the forge forgotten (Natal Recall's wait outlasts no logout)
 		RaceGifts.onDisconnect(player); // an Illusion up ends (the gifts' cooldowns outlast a logout)
 		BodyTechniques.end(player); // the body's techniques under way end, Blood Frenzy goes out (their cooldowns outlast a logout)
 		WeightedTraining.forget(player.getUUID());
@@ -147,6 +154,10 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(FiveElementsCycling::tick); // the five circling one whose cycle has closed
 		ServerTickEvents.END_SERVER_TICK.register(CloneSeclusion::tick); // clones in seclusion, banking their makers' stages
 		ServerTickEvents.END_SERVER_TICK.register(BorrowedLife::tick); // souls drawing on the living bodies they are in
+		ServerTickEvents.END_SERVER_TICK.register(CorpseWalk::tick); // the bodies of the dead walked in: their rot, their yin, the world about them
+		ServerTickEvents.END_SERVER_TICK.register(GhostPossession::tick); // the dead in bodies by their own possession: kept in them, their upkeep
+		ServerTickEvents.END_SERVER_TICK.register(Talismans::tick); // Homeward Talismans burning; who a Revealing Talisman's eyes find hidden
+		ServerTickEvents.END_SERVER_TICK.register(NatalTreasures::tick); // wounded souls kept wounded (milk, death) till their time, then healed
 		ServerTickEvents.END_SERVER_TICK.register(NetherworldManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Lifespan::tick);
@@ -208,6 +219,8 @@ public final class CultivationEvents {
 		// The Earth and Heaven Lists (Rankings): players noted every few seconds, the sects' rolls read in each day; cultivators as they load,
 		// and players slain (a kill wins its place).
 		ServerTickEvents.END_SERVER_TICK.register(Rankings::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SectList::tick); // the Sect List's top three looked at each minute: a place changing hands talked of
+		ServerTickEvents.END_SERVER_TICK.register(SectErrands::tick); // a player's sect's people out on errands: unseen, met, come back, home
 		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
 			if (entity instanceof CultivatorNpc npc) Rankings.note(npc);
 		});
@@ -278,6 +291,9 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			JOINED.clear();
 			Corpses.clear();
+			Talismans.clear();
+			NatalTreasures.clear();
+			SectList.clear();
 			RiftHaunting.clear();
 			FiveElementsCycling.clear();
 			CloneSeclusion.clear();
@@ -287,6 +303,7 @@ public final class CultivationEvents {
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
 			Possession.clear();
+			CorpseWalk.clear();
 			Clones.clear();
 			Rumours.clearPending();
 			HermitSites.clearPending();
@@ -530,7 +547,10 @@ public final class CultivationEvents {
 				boolean totem = sp.getMainHandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING)
 						|| sp.getOffhandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING);
 				if (totem && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return true;
-				SoulProjection.onBodyDying(sp, source);
+				// One of the dead in it by its own possession is thrown out, a ghost again (GhostPossession#bodyDying); a soul sent out, a soul again
+				// (a body of the dead falling back down where it stands either way).
+				if (GhostPossession.isTenant(sp)) GhostPossession.bodyDying(sp, source);
+				else SoulProjection.onBodyDying(sp, source);
 				return false;
 			}
 			if (entity instanceof ServerPlayer sp) SoulProjection.onSoulDying(sp);
@@ -580,12 +600,22 @@ public final class CultivationEvents {
 		AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) ->
 				Incorporeal.is(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-			if (SoulProjection.isSoul(player)) return InteractionResult.FAIL;
+			// A soul's one act on a block: rising in a body of the dead (CorpseWalk, 2026-11-13), as it enters a being.
+			if (SoulProjection.isSoul(player)) {
+				if (hand != InteractionHand.MAIN_HAND || !world.getBlockState(hit.getBlockPos()).is(ModBlocks.CORPSE)) return InteractionResult.FAIL;
+				if (world.isClientSide) return InteractionResult.SUCCESS; // the server decides
+				return player instanceof ServerPlayer sp ? SoulProjection.tryPossessCorpse(sp, hit.getBlockPos()) : InteractionResult.FAIL;
+			}
 			// One whose body is held only watches it (a spectator could otherwise look into a chest it looks at).
 			if (player instanceof ServerPlayer held && (Possession.isHeld(held.getUUID()) || Sleeves.isCarried(held.getUUID()))) return InteractionResult.FAIL;
 			if (!Incorporeal.isRuledGhost(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
 			BlockState state = world.getBlockState(hit.getBlockPos());
+			// One of the dead steps into a body as it is (CorpseWalk#ghostEnters): it is a soul already.
+			if (state.is(ModBlocks.CORPSE)) {
+				if (world.isClientSide) return InteractionResult.SUCCESS;
+				return player instanceof ServerPlayer ghost ? GhostPossession.enterCorpse(ghost, hit.getBlockPos()) : InteractionResult.FAIL;
+			}
 			if (state.is(ModTags.GHOST_USABLE)) return InteractionResult.PASS;
 			// A ghost palace's treasury is the dead's own (PalaceTreasury): the client asks for any chest or storage formation in the
 			// Netherworld, the server decides.
@@ -597,6 +627,13 @@ public final class CultivationEvents {
 		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal), and read a slip.
 		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayUse(player, player.getItemInHand(hand))
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
+		// The dead eat nothing (CorpseWalk): a body walked in takes no food (a potion it drinks, as the undead do).
+		UseItemCallback.EVENT.register((player, world, hand) -> {
+			net.minecraft.world.item.ItemStack held = player.getItemInHand(hand);
+			if (!held.isEdible() || !CorpseWalk.walking(player)) return InteractionResultHolder.pass(held);
+			if (player instanceof ServerPlayer sp) sp.displayClientMessage(Component.translatable(ModLang.MSG_CORPSE_NO_FOOD), true);
+			return InteractionResultHolder.fail(held);
+		});
 		// Five Elements Cycling's offerings, sneak-used into the air: taken in, not used (FiveElementsCycling#use).
 		UseItemCallback.EVENT.register(FiveElementsCycling::use);
 		// A spirit herb used on a water cauldron steeps a Medicinal Bath (MedicinalBath#use), not eaten.

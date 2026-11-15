@@ -5,6 +5,7 @@ import com.example.defyingtheheavens.RingContainer;
 import com.example.defyingtheheavens.RingSlot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
@@ -27,6 +28,8 @@ public final class BaublePanel {
 	private static final ResourceLocation INVENTORY = new ResourceLocation("textures/gui/container/inventory.png");
 
 	private static boolean open;
+	/** Where the panel was last drawn on the screen, for JEI to keep its bookmarks clear of (compat/jei/DthJeiPlugin). */
+	private static Rect2i shown;
 
 	public static void register() {
 		RingSlot.setVisibility(() -> {
@@ -38,6 +41,9 @@ public final class BaublePanel {
 	public static boolean isOpen() { return open; }
 	public static void toggle() { open = !open; }
 	public static void close() { open = false; }
+
+	/** The panel's place on the screen while it is open, else null. */
+	public static Rect2i shownArea() { return open ? shown : null; }
 
 	public static boolean isOverButton(int left, int top, double mouseX, double mouseY) {
 		return mouseX >= left + BUTTON_X && mouseX < left + BUTTON_X + BUTTON_SIZE
@@ -58,6 +64,7 @@ public final class BaublePanel {
 	/** The panel: a small window in the vanilla style (dark outline, light bevel) with a frame for each slot. */
 	public static void renderPanel(GuiGraphics graphics, int left, int top) {
 		int x0 = left + PANEL_X, y0 = top + PANEL_Y, x1 = x0 + PANEL_W, y1 = y0 + PANEL_H;
+		shown = new Rect2i(x0, y0, PANEL_W, PANEL_H);
 		graphics.fill(x0 + 1, y0, x1 - 1, y1, 0xFF000000);         // outline, with the corners clipped like vanilla
 		graphics.fill(x0, y0 + 1, x1, y1 - 1, 0xFF000000);
 		graphics.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, 0xFFC6C6C6); // body

@@ -543,6 +543,32 @@ public class SectPiece extends StructurePiece {
 		return spots;
 	}
 
+	/**
+	 * Windows ({@code p.window}) along a front or back wall from x0 to x1, at height {@code y} on row {@code z}: in the middle of each bay
+	 * between the pillars {@link #walls} sets there ({@link #pillarSpots} with {@code bay}, mirrored about the middle), two side by side
+	 * where a bay's plaster is an even number of blocks wide; so they mirror each other about the wall's middle and never fall on a pillar,
+	 * nor, with {@code door}, in the doorway's bay. (2026-11-13, the user's "the fences not being in the correct spot, its not symmetrical":
+	 * the Immortal Realm's gate pavilions laid them every four blocks from one end, one in a door pillar, one in the doorway's top corner.)
+	 */
+	void bayWindows(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int x1, int y, int z, int bay, boolean door) {
+		for (int at : bayWindowSpots(x1 - x0, bay, door)) put(level, chunk, x0 + at, y, z, p.window);
+	}
+
+	/** Where {@link #bayWindows} sets a wall {@code length} long (corner to corner) its windows, from its first corner. */
+	static java.util.List<Integer> bayWindowSpots(int length, int bay, boolean door) {
+		int[] spots = pillarSpots(length, bay, true);
+		int middle = length / 2;
+		java.util.List<Integer> windows = new java.util.ArrayList<>();
+		for (int i = 0; i + 1 < spots.length; i++) {
+			int a = spots[i], b = spots[i + 1], span = b - a - 1;
+			if (span <= 0 || door && a < middle && middle < b) continue;
+			int left = a + 1 + (span - 1) / 2, right = a + 1 + span / 2;
+			windows.add(left);
+			if (right != left) windows.add(right);
+		}
+		return windows;
+	}
+
 	/** Whether {@code at} is in the middle of its bay between the pillars at {@code spots} (a window's place). */
 	private static boolean inBayMiddle(int[] spots, int at) {
 		for (int i = 0; i + 1 < spots.length; i++) {

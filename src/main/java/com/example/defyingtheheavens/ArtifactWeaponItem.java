@@ -144,10 +144,44 @@ public class ArtifactWeaponItem extends SwordItem {
 		return slot == EquipmentSlot.MAINHAND ? modifiers.get(Artifacts.Quality.NORMAL.ordinal()) : super.getDefaultAttributeModifiers(slot);
 	}
 
-	/** A Fine or Perfect piece's blow by its work (Fabric's stack-aware modifiers: a stack's own NBT modifiers would still win). */
+	/**
+	 * A Fine or Perfect piece's blow by its work (Fabric's stack-aware modifiers: a stack's own NBT modifiers would still win); a natal treasure's
+	 * might in its owner's hand besides, grown with their realm (NatalTreasures#might).
+	 */
 	@Override
 	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(ItemStack stack, EquipmentSlot slot) {
-		return slot == EquipmentSlot.MAINHAND ? modifiers.get(Artifacts.quality(stack).ordinal()) : getDefaultAttributeModifiers(slot);
+		if (slot != EquipmentSlot.MAINHAND) return getDefaultAttributeModifiers(slot);
+		Multimap<Attribute, AttributeModifier> own = modifiers.get(Artifacts.quality(stack).ordinal());
+		double natal = NatalTreasures.might(stack);
+		if (natal <= 0) return own;
+		ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+		builder.putAll(own);
+		builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(NATAL_ID, "Natal treasure", natal, AttributeModifier.Operation.MULTIPLY_TOTAL));
+		return builder.build();
+	}
+
+	private static final UUID NATAL_ID = UUID.fromString("3f8a2c6e-1b4d-4e9a-a7c5-6d2e8f1a9b4c");
+
+	/** Its owner's rank kept on a natal treasure while they hold it, each second (NatalTreasures#held). */
+	@Override
+	public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+		super.inventoryTick(stack, level, entity, slot, selected);
+		if (!level.isClientSide && entity instanceof net.minecraft.server.level.ServerPlayer holder && holder.tickCount % 20 == 0) NatalTreasures.held(stack, holder);
+	}
+
+	/** Its wear, a sword's: worn out in its holder's hands, a natal treasure's bond breaks with it (NatalTreasures#broken). */
+	@Override
+	public boolean mineBlock(ItemStack stack, Level level, net.minecraft.world.level.block.state.BlockState state, net.minecraft.core.BlockPos pos, LivingEntity miner) {
+		if (state.getDestroySpeed(level, pos) != 0.0f) wear(stack, 2, miner);
+		return true;
+	}
+
+	/** {@code stack} worn {@code amount} in {@code holder}'s main hand, its breaking told (NatalTreasures#broken). */
+	protected static void wear(ItemStack stack, int amount, LivingEntity holder) {
+		stack.hurtAndBreak(amount, holder, broke -> {
+			broke.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+			NatalTreasures.broken(stack, broke);
+		});
 	}
 
 	/** What Sword Flight costs its rider on {@code held}: a flying sword's saving off (its work's worth in it); any other blade, all of it. */
@@ -162,7 +196,8 @@ public class ArtifactWeaponItem extends SwordItem {
 			if (kind == ArtifactKind.SPEAR) pierce(level, stack, target, attacker);
 			else sweep(level, stack, target, attacker);
 		}
-		return super.hurtEnemy(stack, target, attacker);
+		wear(stack, 1, attacker); // a sword's wear (SwordItem#hurtEnemy), its breaking told
+		return true;
 	}
 
 	protected static DamageSource blowOf(LivingEntity attacker) {
@@ -225,6 +260,16 @@ public class ArtifactWeaponItem extends SwordItem {
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag) {
 		Artifacts.describe(stack, grade, lines);
+		// Its forger (blades forged since 2026-11-13), and a natal treasure's owner and might (NatalTreasures).
+		net.minecraft.nbt.CompoundTag tag = stack.getTag();
+		if (tag != null && tag.contains(NatalTreasures.OWNER_NAME) && NatalTreasures.idOf(stack) != null) {
+			Tooltips.add(lines, Component.translatable(ModLang.TOOLTIP_NATAL_OF, tag.getString(NatalTreasures.OWNER_NAME)).withStyle(ChatFormatting.GOLD));
+			double might = NatalTreasures.might(stack);
+			if (might > 0) Tooltips.add(lines, Component.translatable(ModLang.TOOLTIP_NATAL_MIGHT, Artifacts.percent(might)).withStyle(ChatFormatting.GOLD));
+		}
+		if (tag != null && tag.contains(NatalTreasures.FORGER_NAME)) {
+			Tooltips.add(lines, Component.translatable(ModLang.TOOLTIP_FORGED_BY, tag.getString(NatalTreasures.FORGER_NAME)).withStyle(ChatFormatting.DARK_GRAY));
+		}
 		int g = grade.ordinal();
 		double power = Artifacts.power(stack);
 		Component perk = switch (kind) {

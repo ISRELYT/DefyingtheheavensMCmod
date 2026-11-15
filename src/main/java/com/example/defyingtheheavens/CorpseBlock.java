@@ -117,10 +117,16 @@ public class CorpseBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
 		super.playerWillDestroy(level, pos, state, player);
 	}
 
+	/**
+	 * Set while a body is lifted whole into a soul's keeping (CorpseWalk: a soul rising in it carries what it holds, its bones and all):
+	 * nothing spills.
+	 */
+	static boolean rising;
+
 	/** Broken (by hand, a blast or anything that takes it away): what it held spills out where it lay, and bones leave some bones. */
 	@Override
 	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
-		if (!state.is(newState.getBlock())) {
+		if (!state.is(newState.getBlock()) && !rising) {
 			if (level.getBlockEntity(pos) instanceof CorpseBlockEntity body) {
 				for (ItemStack stack : body.takeAll()) Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5, stack);
 			}

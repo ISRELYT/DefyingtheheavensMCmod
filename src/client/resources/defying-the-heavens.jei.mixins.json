@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.example.defyingtheheavens.client.compat.jei.mixin",
+  "plugin": "com.example.defyingtheheavens.client.compat.jei.JeiMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "JeiMouseUtilMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

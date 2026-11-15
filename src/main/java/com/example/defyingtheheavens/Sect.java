@@ -176,6 +176,12 @@ public final class Sect {
 	public long tribute, tributeDay = -1, nextArrival = -1;
 	/** A player's sect: players its founder has invited, and until when (game time) each invitation stands. */
 	public final Map<UUID, Long> invited = new HashMap<>();
+	/** A player's sect: its people sent out on errands by its founder (SectErrands), by the member's id. */
+	public final Map<UUID, SectErrands.Errand> errands = new HashMap<>();
+	/** ...the spoils they brought back, waiting at its core (collected with the tribute: PlayerSects#collect). */
+	public final List<net.minecraft.world.item.ItemStack> spoils = new ArrayList<>();
+	/** ...those resting from wounds taken on an errand, and until when (game time). */
+	public final Map<UUID, Long> resting = new HashMap<>();
 
 	/** Founded by a player (PlayerSects), its Sect Master that player. */
 	public boolean isPlayers() { return founder != null; }
@@ -498,6 +504,25 @@ public final class Sect {
 				invitedList.add(i);
 			}
 			tag.put("Invited", invitedList);
+			// Its people sent out (SectErrands), the spoils they brought back, those resting from wounds.
+			ListTag errandList = new ListTag();
+			for (Map.Entry<UUID, SectErrands.Errand> entry : errands.entrySet()) {
+				CompoundTag e = entry.getValue().save();
+				e.putUUID("Member", entry.getKey());
+				errandList.add(e);
+			}
+			tag.put("Errands", errandList);
+			ListTag spoilList = new ListTag();
+			for (net.minecraft.world.item.ItemStack stack : spoils) spoilList.add(stack.save(new CompoundTag()));
+			tag.put("Spoils", spoilList);
+			ListTag restingList = new ListTag();
+			for (Map.Entry<UUID, Long> entry : resting.entrySet()) {
+				CompoundTag r = new CompoundTag();
+				r.putUUID("Member", entry.getKey());
+				r.putLong("Until", entry.getValue());
+				restingList.add(r);
+			}
+			tag.put("Resting", restingList);
 		}
 		return tag;
 	}
@@ -586,6 +611,22 @@ public final class Sect {
 			for (int i = 0; i < invitedList.size(); i++) {
 				CompoundTag inv = invitedList.getCompound(i);
 				if (inv.hasUUID("Player")) sect.invited.put(inv.getUUID("Player"), inv.getLong("Until"));
+			}
+			ListTag errandList = tag.getList("Errands", Tag.TAG_COMPOUND);
+			for (int i = 0; i < errandList.size(); i++) {
+				CompoundTag e = errandList.getCompound(i);
+				SectErrands.Errand errand = SectErrands.Errand.load(e);
+				if (errand != null && e.hasUUID("Member")) sect.errands.put(e.getUUID("Member"), errand);
+			}
+			ListTag spoilList = tag.getList("Spoils", Tag.TAG_COMPOUND);
+			for (int i = 0; i < spoilList.size(); i++) {
+				net.minecraft.world.item.ItemStack stack = net.minecraft.world.item.ItemStack.of(spoilList.getCompound(i));
+				if (!stack.isEmpty()) sect.spoils.add(stack);
+			}
+			ListTag restingList = tag.getList("Resting", Tag.TAG_COMPOUND);
+			for (int i = 0; i < restingList.size(); i++) {
+				CompoundTag r = restingList.getCompound(i);
+				if (r.hasUUID("Member")) sect.resting.put(r.getUUID("Member"), r.getLong("Until"));
 			}
 		}
 		return sect;

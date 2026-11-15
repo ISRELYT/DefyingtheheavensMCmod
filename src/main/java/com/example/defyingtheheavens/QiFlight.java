@@ -140,8 +140,8 @@ public final class QiFlight {
 			setFlight(p, p.getAbilities().mayfly, SwordFlight.QI_FLIGHT_SPEED);
 			return 0;
 		}
-		// Under the Weak Water nothing flies, the living or the dead (weighDown).
-		if (weighedDown(p)) {
+		// Under the Weak Water nothing flies, the living or the dead (weighDown); nor a body of the dead walked in, by any flight (CorpseWalk).
+		if (weighedDown(p) || CorpseWalk.walking(p)) {
 			land(p);
 			return 0;
 		}
@@ -150,7 +150,7 @@ public final class QiFlight {
 		if (Incorporeal.isGhost(p)) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
-			if (!ModDimensions.isSoulRiver(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(p, c));
+			if (!ModDimensions.isSoulRiver(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, dragged(p, freeSpeed(p, c)));
 			else land(p);
 			return 0;
 		}
@@ -160,7 +160,7 @@ public final class QiFlight {
 		if (TwoPaths.inGhostForm(c) && !carried) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
-			if (!p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(p, c));
+			if (!p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, dragged(p, freeSpeed(p, c)));
 			else land(p);
 			return 0;
 		}
@@ -172,7 +172,7 @@ public final class QiFlight {
 		if (!onQi && !onSword && !carried && BodyTechniques.treads(c)) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
-			setFlight(p, true, BodyTechniques.TREAD_SPEED);
+			setFlight(p, true, dragged(p, BodyTechniques.TREAD_SPEED));
 			TREADING.add(id);
 			return 0;
 		}
@@ -191,7 +191,7 @@ public final class QiFlight {
 		}
 		// Granted before any flight is paid for: a player flying without mayfly (a flight carried over from a relog, say)
 		// would otherwise be kicked by dedicated servers for "floating too long".
-		setFlight(p, true, onSword ? SwordFlight.SWORD_SPEED : speedIn(p.level().dimension(), c));
+		setFlight(p, true, dragged(p, onSword ? SwordFlight.SWORD_SPEED : speedIn(p.level().dimension(), c)));
 		if (!p.getAbilities().flying) {
 			SwordFlight.update(p, false);
 			return 0;
@@ -236,6 +236,15 @@ public final class QiFlight {
 	private static void land(ServerPlayer p) {
 		SwordFlight.update(p, false);
 		setFlight(p, false, SwordFlight.QI_FLIGHT_SPEED);
+	}
+
+	/**
+	 * {@code speed} as a Spatial Gap storm's winds leave it (2026-11-13, "storms that matter"): {@link SpatialStorms#DRAG} of it while one
+	 * holds {@code p} (SpatialStorms#drags: under or inside one in force), any flight alike; else as it is. The storm's drift carrying one
+	 * along is the client's (GapSinkMixin).
+	 */
+	static float dragged(ServerPlayer p, float speed) {
+		return SpatialStorms.drags(p) ? speed * SpatialStorms.DRAG : speed;
 	}
 
 	/**
@@ -336,6 +345,8 @@ public final class QiFlight {
 		double step = stepAt(p.getAbilities().getFlyingSpeed());
 		PlayerCultivation c = CultivationManager.get(p);
 		if (MeteorFlight.mayStreak(p, c)) step = Math.max(step, MeteorFlight.topPerTick(c));
+		// A Spatial Gap storm's winds carry one along on top of one's own flight (the client's: GapSinkMixin).
+		if (ModDimensions.isSpatialGap(p.level().dimension())) step += SpatialStorms.MAX_DRIFT;
 		double reach = step * (Math.min(MOST_SAVED_TICKS, Math.max(1, ticks)) + SLACK_TICKS);
 		return (float) Math.max(limit, reach * reach);
 	}
@@ -346,7 +357,14 @@ public final class QiFlight {
 	 * still known after a relog.
 	 */
 	private static boolean isOurs(UUID id, float speed) {
-		if (speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED || speed == BodyTechniques.TREAD_SPEED || Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
+		if (Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
+		// One held by a storm's winds (dragged) saved with that halved speed: the half is exact, so twice it is the speed it came of.
+		return isOurs(speed) || isOurs(speed / SpatialStorms.DRAG);
+	}
+
+	/** {@link #isOurs(UUID, float)} by value alone. */
+	private static boolean isOurs(float speed) {
+		if (speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED || speed == BodyTechniques.TREAD_SPEED) return true;
 		for (Realm realm : Realm.values()) {
 			for (Stage stage : Stage.values()) {
 				float flight = formerSpeed(realm, stage), space = AstralRealm.spaceSpeed(realm, stage);

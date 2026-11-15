@@ -94,6 +94,12 @@ public final class SectMissions {
 	static final long TALKED_OF = HeavenRitual.DAY;
 	/** The board's acts (C2S mission_act). */
 	public static final int TAKE = 0, ABANDON = 1, HAND_IN = 2, SLIP = 3, BUY = 4;
+	/**
+	 * A player's sect's founder sending one of its people out (SectErrands#send), one act for each task in its order ({@code SEND + task}); the
+	 * id: their place on the page's roll, shifted up by {@link #SEND_INDEX}, the quarry's realm for a hunt above {@link #SEND_REALM}, and the
+	 * row's mark (SectErrands#check) under it.
+	 */
+	public static final int SEND = 5, SEND_INDEX = 20, SEND_REALM = 16;
 	/** What a mission on the board may be done with now (S2C mission_board): bits. */
 	public static final int CAN_TAKE = 1, CAN_ABANDON = 2, CAN_HAND_IN = 4, CAN_SLIP = 8;
 	/** An artifact asked for: its kind's id after this. */
@@ -744,11 +750,14 @@ public final class SectMissions {
 		return dx * dx + dz * dz;
 	}
 
-	/** {@code ticks} of game time as days and hours: "1 day 4 hours", "6 hours", "less than an hour". */
-	static Component clock(long ticks) {
+	/** {@code ticks} of game time as days and hours: "1 day 4 hours", "2 days", "1 hour", "less than an hour" (2026-11-13: it said "1 days 0 hours"). */
+	public static Component clock(long ticks) {
 		long days = Math.max(0, ticks) / HeavenRitual.DAY, hours = Math.max(0, ticks) % HeavenRitual.DAY / 1000;
-		if (days > 0) return Component.translatable(ModLang.MISSION_TIME_DAYS, days, hours);
-		if (hours > 0) return Component.translatable(ModLang.MISSION_TIME_HOURS, hours);
+		Component day = days == 1 ? Component.translatable(ModLang.MISSION_TIME_DAY) : Component.translatable(ModLang.MISSION_TIME_N_DAYS, days);
+		Component hour = hours == 1 ? Component.translatable(ModLang.MISSION_TIME_HOUR) : Component.translatable(ModLang.MISSION_TIME_HOURS, hours);
+		if (days > 0 && hours > 0) return Component.translatable(ModLang.MISSION_TIME_DAYS, day, hour);
+		if (days > 0) return day;
+		if (hours > 0) return hour;
 		return Component.translatable(ModLang.MISSION_TIME_SOON);
 	}
 
@@ -866,6 +875,10 @@ public final class SectMissions {
 		for (int i = 0; i < wares.size(); i++) SectExchange.write(buf, player, sect, d, wares.get(i), i);
 		buf.writeBoolean(said != null);
 		if (said != null) buf.writeComponent(said);
+		// Its founder's own page, at a player's sect's board: sending its people out (SectErrands).
+		boolean founder = sect.isPlayers() && SectMembership.isFounder(sect, player.getUUID());
+		buf.writeBoolean(founder);
+		if (founder) SectErrands.writePage(buf, player.server, sect);
 		ServerPlayNetworking.send(player, ModPackets.MISSION_BOARD, buf);
 	}
 
@@ -899,7 +912,9 @@ public final class SectMissions {
 			case HAND_IN -> handIn(player, sect, d, id);
 			case SLIP -> newSlip(player, sect, d, id);
 			case BUY -> SectExchange.buy(player, sect, d, id);
-			default -> null;
+			default -> act >= SEND && act < SEND + SectErrands.Task.values().length
+					? SectErrands.send(player, sect, id >>> SEND_INDEX, id & 0xFFFF, SectErrands.Task.byIndex(act - SEND), (id >>> SEND_REALM) & 0xF)
+					: null;
 		};
 		send(player, sect, said);
 	}
@@ -1406,14 +1421,14 @@ public final class SectMissions {
 
 	/**
 	 * Every five seconds: each sect a player has come near (within {@link #LAY_NEAR} of its core, the land there running) has its board on
-	 * its plaza; one found gone is set up again the day after. Only a sect's grounds as laid out (its core a Formation Core, a gate): never a
-	 * test's.
+	 * its plaza; one found gone is set up again the day after. Only a sect's grounds as laid out (its core a Formation Core, a gate), or a
+	 * player's sect's round its founder's core (2026-11-13: its founder sends its people out from it): never a test's.
 	 */
 	static void layBoards(MinecraftServer server) {
 		long today = Regard.day(server.overworld().getGameTime());
 		for (Sect sect : SectData.get(server).all()) {
-			// A player's sect (PlayerSects) sets up no board of its own on its founder's grounds.
-			if (sect.extinct || sect.isPlayers() || sect.posts(Sect.Post.GATE).isEmpty()) continue;
+			// A player's sect (PlayerSects) has its board too, gate or none: its founder sends its people out from it (SectErrands).
+			if (sect.extinct || !sect.isPlayers() && sect.posts(Sect.Post.GATE).isEmpty()) continue;
 			ServerLevel level = server.getLevel(sect.dimension);
 			if (level == null || !level.isPositionEntityTicking(sect.core) || !level.getBlockState(sect.core).is(ModBlocks.FORMATION_CORE)) continue;
 			if (level.getNearestPlayer(sect.core.getX() + 0.5, sect.core.getY(), sect.core.getZ() + 0.5, LAY_NEAR, false) == null) continue;
@@ -1424,8 +1439,8 @@ public final class SectMissions {
 						sect.boardGoneDay = -1;
 						SectManager.dirty(server);
 					}
-					// Its Ranking Stele beside it, once (Rankings).
-					if (sect.stele == null) laySteleBeside(level, sect);
+					// Its Ranking Stele beside it, once (Rankings): not on a player's own grounds (they may make one).
+					if (sect.stele == null && !sect.isPlayers()) laySteleBeside(level, sect);
 					continue;
 				}
 				if (sect.boardGoneDay < 0) {

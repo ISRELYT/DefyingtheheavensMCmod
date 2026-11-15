@@ -475,6 +475,30 @@ public class PlayerCultivation {
 	public java.util.UUID spiritBeast() { return spiritBeast; }
 	public void setSpiritBeast(java.util.UUID beast) { this.spiritBeast = beast; }
 
+	/** The natal treasure bound to one's core (NatalTreasures: the id written on it), or null: one at a time. */
+	private java.util.UUID natalTreasure;
+	/** Until when (game time) one's soul is wounded: a natal treasure broken, or its bond severed (NatalTreasures#wound); 0 none. */
+	private long soulWoundUntil;
+	/** A wounded soul now (NatalTreasures, each second; the client's own by its effects: ModEffects#SOUL_WOUND): half the qi pool. Not saved. */
+	private boolean soulWounded;
+
+	public java.util.UUID natalTreasure() { return natalTreasure; }
+	public void setNatalTreasure(java.util.UUID id) { this.natalTreasure = id; }
+	public long soulWoundUntil() { return soulWoundUntil; }
+	public void setSoulWoundUntil(long until) { this.soulWoundUntil = Math.max(0, until); }
+	public boolean soulWounded() { return soulWounded; }
+	public void setSoulWounded(boolean wounded) { this.soulWounded = wounded; }
+
+	/** One's personal disciple (PersonalDisciples: a cultivator's UUID), or null: one at a time. */
+	private java.util.UUID personalDisciple;
+	/** Until when (game time) one mourns a disciple that died, taking no other; 0 none. */
+	private long discipleMournUntil;
+
+	public java.util.UUID personalDisciple() { return personalDisciple; }
+	public void setPersonalDisciple(java.util.UUID id) { this.personalDisciple = id; }
+	public long discipleMournUntil() { return discipleMournUntil; }
+	public void setDiscipleMournUntil(long until) { this.discipleMournUntil = Math.max(0, until); }
+
 	/**
 	 * The title one has taken (PlayerTitles; the user's ask, 2026-10-27: "from void shattering onwards ... name themselves or give themselves
 	 * a title"), "" for none. Kept below Void Shattering, only not shown or used there.
@@ -1185,7 +1209,8 @@ public class PlayerCultivation {
 		// The paths' harmony fills it as it strengthens the body (TwoPaths#harmony; the user, 2026-10-24: walking all three paths to True
 		// Immortal Grand Perfection near doubled their health, and their qi not at all).
 		return base * favourFactor() * (1 + TwoPaths.harmony(this)) * (1 - pressurePenalty) * physiqueQiFactor()
-				* StatPoints.poolFactor(this) * Clones.strength(this); // a clone's pool half its maker's
+				* StatPoints.poolFactor(this) * Clones.strength(this) // a clone's pool half its maker's
+				* NatalTreasures.poolFactor(this); // a wounded soul's (its natal treasure broken, its bond severed) half
 	}
 
 	/**
@@ -1440,6 +1465,10 @@ public class PlayerCultivation {
 		practising.clear();
 		practising.putAll(old.practising);
 		spiritBeast = old.spiritBeast;
+		natalTreasure = old.natalTreasure;
+		soulWoundUntil = old.soulWoundUntil;
+		personalDisciple = old.personalDisciple;
+		discipleMournUntil = old.discipleMournUntil;
 		selectedAbility = old.selectedAbility;
 		disabledAbilities.clear();
 		disabledAbilities.addAll(old.disabledAbilities);
@@ -1561,6 +1590,10 @@ public class PlayerCultivation {
 			break;
 		}
 		if (obsession != null) tag.putString("Obsession", obsession.getId());
+		if (natalTreasure != null) tag.putUUID("NatalTreasure", natalTreasure);
+		if (soulWoundUntil > 0) tag.putLong("SoulWoundUntil", soulWoundUntil);
+		if (personalDisciple != null) tag.putUUID("PersonalDisciple", personalDisciple);
+		if (discipleMournUntil > 0) tag.putLong("DiscipleMournUntil", discipleMournUntil);
 		if (!methodReach.isEmpty() || !practising.isEmpty() || spiritBeast != null) {
 			CompoundTag methods = new CompoundTag(), reach = new CompoundTag(), practise = new CompoundTag();
 			methodReach.forEach((method, realm) -> reach.putInt(method.getId(), realm));
@@ -1716,6 +1749,10 @@ public class PlayerCultivation {
 		}
 		for (TwoPaths.Path path : TwoPaths.Path.values()) c.setPractising(path, CultivationMethod.byId(practise.getString(path.name())));
 		c.spiritBeast = methods.hasUUID("SpiritBeast") ? methods.getUUID("SpiritBeast") : null;
+		c.natalTreasure = tag.hasUUID("NatalTreasure") ? tag.getUUID("NatalTreasure") : null;
+		c.soulWoundUntil = tag.getLong("SoulWoundUntil");
+		c.personalDisciple = tag.hasUUID("PersonalDisciple") ? tag.getUUID("PersonalDisciple") : null;
+		c.discipleMournUntil = tag.getLong("DiscipleMournUntil");
 		c.epithet = PlayerTitles.clean(tag.getString("Epithet"));
 		if (tag.contains("AxisProgress", Tag.TAG_INT_ARRAY)) {
 			int[] progress = tag.getIntArray("AxisProgress");

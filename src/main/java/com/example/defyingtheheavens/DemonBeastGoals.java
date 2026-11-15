@@ -88,8 +88,8 @@ final class DemonBeastGoals {
 			case COIL -> new CoilGoal(beast);
 			case SWOOP, DIVE -> new SwoopGoal(beast, signature == BeastKind.Signature.DIVE, null);
 			case CHAOS -> new SwoopGoal(beast, false, BeastShot.Kind.CHAOS);
-			case THROW -> new ShootGoal(beast, BeastShot.Kind.FIRE_STONE, 3, 16, 50);
-			case WATER_JET -> new ShootGoal(beast, BeastShot.Kind.WATER, 3, 20, 45);
+			case THROW -> new ShootGoal(beast, BeastShot.Kind.FIRE_STONE, 3, 16, restAfter(signature));
+			case WATER_JET -> new ShootGoal(beast, BeastShot.Kind.WATER, 3, 20, restAfter(signature));
 			case SHELL -> new ShellGoal(beast);
 			default -> null; // PACK, VENOM, DRAG: in its blows and its hurts (onBite, onHurt)
 		};
@@ -144,18 +144,43 @@ final class DemonBeastGoals {
 	}
 
 	/** What of a push is left on {@code other} past its knockback resistance (a netherite-clad player, a heavy mob: little or none). */
-	private static double pushShare(LivingEntity other) {
+	static double pushShare(LivingEntity other) {
 		return Math.max(0, 1 - other.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE));
 	}
 
-	private static void sound(DemonBeast beast, SoundEvent sound, float volume, float pitch) {
+	static void sound(DemonBeast beast, SoundEvent sound, float volume, float pitch) {
 		beast.level().playSound(null, beast.blockPosition(), sound, SoundSource.HOSTILE, volume, pitch);
 	}
 
-	private static float attack(DemonBeast beast) {
+	static float attack(DemonBeast beast) {
 		var attack = beast.getAttribute(Attributes.ATTACK_DAMAGE);
 		return attack == null ? 3 : (float) attack.getValue();
 	}
+
+	/**
+	 * How long its move is spent after it (ticks): the wild's rests, and a ridden beast's strike's (SaddleStrikes); a move that is no strike of its
+	 * own (the pack's, the venom's, the drag's: in its bite) a bite's {@link #BITE_REST}.
+	 */
+	static int restAfter(BeastKind.Signature how) {
+		return switch (how) {
+			case CHARGE, SPARK_CHARGE -> 80;
+			case STUN_CHARGE -> 110;
+			case POUNCE -> 90;
+			case ICE_SLAM -> 100;
+			case POUND -> 130;
+			case BREATH -> 120;
+			case COIL -> 200;
+			case SWOOP, CHAOS -> 50;
+			case DIVE -> 80;
+			case THROW -> 50;
+			case WATER_JET -> 45;
+			case SHELL -> 300;
+			default -> BITE_REST;
+		};
+	}
+
+	/** A bite's wait, from the saddle (SaddleStrikes): a second. */
+	static final int BITE_REST = 20;
 
 	/** How much further an elder's moves reach than its wild kin's: by its size (DemonBeast#scale, BeastKind#modelScale); a wild beast's, as they were. */
 	static double grown(DemonBeast beast) {
@@ -252,7 +277,7 @@ final class DemonBeastGoals {
 		@Override
 		public void stop() {
 			beast.setActing(DemonBeast.ACT_CHARGE, false);
-			rest(beast, how == BeastKind.Signature.STUN_CHARGE ? 110 : 80);
+			rest(beast, restAfter(how));
 			way = null;
 		}
 	}
@@ -310,7 +335,7 @@ final class DemonBeastGoals {
 
 		@Override
 		public void stop() {
-			rest(beast, 90);
+			rest(beast, restAfter(BeastKind.Signature.POUNCE));
 		}
 	}
 
@@ -380,7 +405,7 @@ final class DemonBeastGoals {
 
 		@Override
 		public void stop() {
-			rest(beast, frost ? 100 : 130);
+			rest(beast, restAfter(frost ? BeastKind.Signature.ICE_SLAM : BeastKind.Signature.POUND));
 		}
 	}
 
@@ -441,7 +466,7 @@ final class DemonBeastGoals {
 		@Override
 		public void stop() {
 			beast.setActing(DemonBeast.ACT_BREATH, false);
-			rest(beast, 120);
+			rest(beast, restAfter(BeastKind.Signature.BREATH));
 		}
 	}
 
@@ -502,7 +527,7 @@ final class DemonBeastGoals {
 		@Override
 		public void stop() {
 			beast.setActing(DemonBeast.ACT_COIL, false);
-			rest(beast, 200);
+			rest(beast, restAfter(BeastKind.Signature.COIL));
 		}
 	}
 
@@ -569,7 +594,7 @@ final class DemonBeastGoals {
 						if (struck && dive && beast.level() instanceof ServerLevel level) gust(level); // the gust of a strike that landed
 						phase = 2;
 						ticks = 0;
-						rest(beast, dive ? 80 : 50);
+						rest(beast, restAfter(dive ? BeastKind.Signature.DIVE : BeastKind.Signature.SWOOP));
 					} else if (ticks > 60) {
 						phase = 2;
 						ticks = 0;
@@ -697,7 +722,7 @@ final class DemonBeastGoals {
 		@Override
 		public void stop() {
 			beast.setActing(DemonBeast.ACT_SHELL, false);
-			rest(beast, 300);
+			rest(beast, restAfter(BeastKind.Signature.SHELL));
 		}
 	}
 

@@ -1,4 +1,4 @@
-// 1.20.1	2026-11-11T18:14:27.6861392	Defying The Heavens/Advancements
+// 1.20.1	2026-11-13T18:59:28.9962883	Defying The Heavens/Advancements
 3fdb8f7545ef667ba2ce8f08c5d48d078e413f2c data\defying-the-heavens\advancements\springs\nine_nether_peaks.json
 f613a81c809415ede8effca4c42eeb41e6f89221 data\defying-the-heavens\advancements\arts\first_spell.json
 77bcae4fc90c4e760ee3f16dc705868ff70cba19 data\defying-the-heavens\advancements\worlds\secret_out_alive.json
@@ -57,8 +57,8 @@ b22d3381864cc52dedef96a82adf5268b7894d9b data\defying-the-heavens\advancements\c
 1d94a23d173c3371fe8f12d7e1539124992db82a data\defying-the-heavens\advancements\arts\core_detonation.json
 e8c9eb0b531c7f803841cb37dbab1475c3fde4ef data\defying-the-heavens\advancements\arts\legend_dao_duel.json
 ec1b0f0d397bfcea3b60d2d225b1dac46dfb7c59 data\defying-the-heavens\advancements\arts\five_phases.json
-0aaf4c85c9f7baa3b09ec4e06e7ec3631ac5fc82 data\defying-the-heavens\advancements\worlds\spatial_gap.json
 83396d63d3ac8a3be3d93cf96afd0cbc56929cb4 data\defying-the-heavens\advancements\worlds\secret_realm.json
+0aaf4c85c9f7baa3b09ec4e06e7ec3631ac5fc82 data\defying-the-heavens\advancements\worlds\spatial_gap.json
 ed49d8aa6cb9f66e35be71a714df3b32a567d140 data\defying-the-heavens\advancements\cultivation\heavenly_lord.json
 967fff6baa4da14ce25e5ec9e32c2890e48cd2b8 data\defying-the-heavens\advancements\arts\dao_fragment.json
 81e6b7bf38fc3e867534650ba01b42b8ec0d4889 data\defying-the-heavens\advancements\arts\legend_sea_needle.json
@@ -77,8 +77,8 @@ d5029bca36bd90d26adee7a268cebf19ed33e6f7 data\defying-the-heavens\advancements\a
 0dc6b4a9b852efc51dcb8ceb87702f7df8c4834e data\defying-the-heavens\advancements\sects\pillar.json
 dd6860558cee0c67369c2168d9e4f20baf487fd3 data\defying-the-heavens\advancements\arts\possession.json
 9269b90caf6cff4d0896aa987e1d2e147baaef66 data\defying-the-heavens\advancements\springs\hungry_ghost.json
-a20a4cf89be3da0d9ac7fc90815eb0d0d11bd90d data\defying-the-heavens\advancements\cultivation\physique.json
 3f7d2aa92b915e203eecc7ff0674efe41ee9a6b9 data\defying-the-heavens\advancements\arts\origin_stone.json
+a20a4cf89be3da0d9ac7fc90815eb0d0d11bd90d data\defying-the-heavens\advancements\cultivation\physique.json
 9afec9ca507e45a3c99d61724e38352bf3afce0d data\defying-the-heavens\advancements\arts\storage_ring.json
 328f951cc8d9c6728ad418412c5b6b3b2f3769d7 data\defying-the-heavens\advancements\cultivation\root.json
 598db120897e87e848d01142d35dc34178701de2 data\defying-the-heavens\advancements\arts\chaos_fiend.json

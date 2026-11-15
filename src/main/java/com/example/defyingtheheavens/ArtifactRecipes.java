@@ -38,12 +38,14 @@ public final class ArtifactRecipes {
 	 * at least its grade's realm) or an element's token.
 	 */
 	public record Recipe(ArtifactKind kind, ArtifactGrade grade, Map<Item, Integer> materials, boolean core, boolean token) {
+		/** Exactly its materials (no blade among them: a blade's is a refining, ArtifactRecipes#refining). */
 		boolean matches(Tally tally) {
-			return tally.counts().equals(materials) && tally.cores().size() == (core ? 1 : 0) && tally.tokens().size() == (token ? 1 : 0)
-					&& coresFit(tally);
+			return tally.blades().isEmpty() && tally.counts().equals(materials) && tally.cores().size() == (core ? 1 : 0)
+					&& tally.tokens().size() == (token ? 1 : 0) && coresFit(tally);
 		}
 
 		boolean couldBecome(Tally tally) {
+			if (!tally.blades().isEmpty()) return false;
 			for (Map.Entry<Item, Integer> entry : tally.counts().entrySet()) {
 				if (entry.getValue() > materials.getOrDefault(entry.getKey(), 0)) return false;
 			}
@@ -65,8 +67,13 @@ public final class ArtifactRecipes {
 		}
 	}
 
-	/** What the forge holds, counted: plain materials by item, the demon cores and the element tokens apart. */
-	record Tally(Map<Item, Integer> counts, List<ItemStack> cores, List<ItemStack> tokens) {}
+	/** What the forge holds, counted: plain materials by item, the demon cores, the element tokens and natal treasures (NatalTreasures) apart. */
+	record Tally(Map<Item, Integer> counts, List<ItemStack> cores, List<ItemStack> tokens, List<ItemStack> blades) {
+		/** The same without its blades: what a refining's materials are. */
+		Tally materialsOnly() {
+			return new Tally(counts, cores, tokens, List.of());
+		}
+	}
 
 	private static List<Recipe> recipes;
 
@@ -119,33 +126,62 @@ public final class ArtifactRecipes {
 
 	static Tally tally(List<ItemStack> contents) {
 		Map<Item, Integer> counts = new HashMap<>();
-		List<ItemStack> cores = new ArrayList<>(), tokens = new ArrayList<>();
+		List<ItemStack> cores = new ArrayList<>(), tokens = new ArrayList<>(), blades = new ArrayList<>();
 		for (ItemStack stack : contents) {
 			if (stack.is(ModItems.DEMON_CORE)) cores.add(stack);
 			else if (tokenElement(stack) != null) tokens.add(stack);
+			else if (NatalTreasures.isNatal(stack)) blades.add(stack);
 			else counts.merge(stack.getItem(), stack.getCount(), Integer::sum);
 		}
-		return new Tally(counts, cores, tokens);
+		return new Tally(counts, cores, tokens, blades);
 	}
 
-	/** One of {@code stack} can go in on top of {@code contents} and still lead to some working. */
+	/**
+	 * One of {@code stack} can go in on top of {@code contents} and still lead to some working: a forging, or a refining (a natal treasure, one,
+	 * and its next grade's materials of its kind: {@link #refining}).
+	 */
 	public static boolean canAdd(List<ItemStack> contents, ItemStack stack) {
 		if (stack.isEmpty() || contents.size() >= MAX_MATERIALS) return false;
 		List<ItemStack> next = new ArrayList<>(contents);
 		next.add(stack.copyWithCount(1));
 		Tally tally = tally(next);
+		if (!tally.blades().isEmpty()) {
+			Recipe raise = tally.blades().size() == 1 ? nextFor(tally.blades().get(0)) : null;
+			return raise != null && raise.couldBecome(tally.materialsOnly());
+		}
 		for (Recipe recipe : all()) {
 			if (recipe.couldBecome(tally)) return true;
 		}
 		return false;
 	}
 
-	/** The working {@code contents} makes exactly, or null. */
+	/** The working {@code contents} makes exactly: a refining, or a forging; or null. */
 	public static @Nullable Recipe match(List<ItemStack> contents) {
 		if (contents.isEmpty()) return null;
 		Tally tally = tally(contents);
+		if (!tally.blades().isEmpty()) return refining(tally);
 		for (Recipe recipe : all()) {
 			if (recipe.matches(tally)) return recipe;
+		}
+		return null;
+	}
+
+	/**
+	 * A natal treasure raised a grade (NatalTreasures; the user's "Build as designed", 2026-11-13): one natal treasure in the forge and the next
+	 * grade's materials of its kind, exactly; that grade's working (its time, its qi, its forger's odds), the blade itself what rises. Or null.
+	 */
+	static @Nullable Recipe refining(Tally tally) {
+		if (tally.blades().size() != 1) return null;
+		Recipe raise = nextFor(tally.blades().get(0));
+		return raise != null && raise.matches(tally.materialsOnly()) ? raise : null;
+	}
+
+	/** The working of the grade above {@code blade}'s, of its kind; null for an Immortal blade (or none of its kind there). */
+	static @Nullable Recipe nextFor(ItemStack blade) {
+		if (!(blade.getItem() instanceof ArtifactWeaponItem weapon) || weapon.grade() == ArtifactGrade.IMMORTAL) return null;
+		ArtifactGrade next = ArtifactGrade.values()[weapon.grade().ordinal() + 1];
+		for (Recipe recipe : all()) {
+			if (recipe.kind() == weapon.kind() && recipe.grade() == next) return recipe;
 		}
 		return null;
 	}

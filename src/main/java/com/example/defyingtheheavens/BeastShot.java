@@ -37,6 +37,8 @@ public class BeastShot extends ThrowableItemProjectile {
 	private static final int LIFETIME = 100;
 
 	private float damage = 3;
+	/** Loosed from the saddle (SaddleStrikes: its rider's aim): it may strike another beast, never its own beast nor its rider. */
+	private boolean fromSaddle;
 
 	public BeastShot(EntityType<? extends BeastShot> type, Level level) {
 		super(type, level);
@@ -80,6 +82,9 @@ public class BeastShot extends ThrowableItemProjectile {
 	/** What it deals to what it strikes. */
 	public float damage() { return damage; }
 
+	/** Loosed at its rider's aim (SaddleStrikes): another beast may be struck, the rider and its own beast never. */
+	void fromSaddle() { fromSaddle = true; }
+
 	@Override
 	public void tick() {
 		super.tick();
@@ -111,6 +116,10 @@ public class BeastShot extends ThrowableItemProjectile {
 
 	@Override
 	protected boolean canHitEntity(Entity target) {
+		if (fromSaddle) {
+			Entity owner = getOwner();
+			return target != owner && (owner == null || !target.isPassengerOfSameVehicle(owner)) && super.canHitEntity(target);
+		}
 		return !(target instanceof DemonBeast) && super.canHitEntity(target);
 	}
 

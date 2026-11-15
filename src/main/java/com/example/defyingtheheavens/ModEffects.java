@@ -76,6 +76,26 @@ public final class ModEffects {
 	 */
 	public static final MobEffect CONCEALED = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("concealed"),
 			new MarkerEffect(MobEffectCategory.BENEFICIAL, 0x7A9CC8));
+	/**
+	 * A Qi-Sealing Talisman's strike (Talismans#seal): no spell cast (Spells#cast, #castBy) and no flight (QiFlight#weighDown; a cultivator's,
+	 * CultivatorNpc#setQiFlying) while it lasts.
+	 */
+	public static final MobEffect QI_SEALED = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("qi_sealed"),
+			new MarkerEffect(MobEffectCategory.HARMFUL, 0x5A4AC8));
+	/**
+	 * A Revealing Talisman burnt (Talismans#reveal): Concealment barriers seen through (Concealments#weigh), those hidden by Concealment Talismans
+	 * outlined to one (Talismans#tick), as far as its strength reaches. Its amplifier is the talisman's strength (its rank).
+	 */
+	public static final MobEffect REVEALING = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("revealing"),
+			new MarkerEffect(MobEffectCategory.BENEFICIAL, 0xF0A030));
+	/**
+	 * A wounded soul: one's natal treasure broken, or its bond severed (NatalTreasures#wound). While it lasts the qi pool is half
+	 * (PlayerCultivation#maxQi: NatalTreasures#poolFactor) and one's blows {@link #WOUND_WEAKER} weaker.
+	 */
+	public static final double WOUND_WEAKER = 0.3;
+	public static final MobEffect SOUL_WOUND = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("soul_wound"),
+			new MarkerEffect(MobEffectCategory.HARMFUL, 0x8A2A4A).addAttributeModifier(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE,
+					"9c4e2a1b-7d3f-4b6a-8e5c-1a2b3c4d5e6f", -WOUND_WEAKER, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL));
 
 	private static final class MarkerEffect extends MobEffect {
 		MarkerEffect(MobEffectCategory category, int color) {

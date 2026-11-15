@@ -21,13 +21,18 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class FoodDataMixin {
 	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;heal(F)V"))
 	private void dth$mendAtTheRealmsPace(Player player, float amount, Operation<Void> original) {
-		if (player instanceof ServerPlayer exposed && ChaosFrontier.exposed(exposed)) return;
+		if (player instanceof ServerPlayer exposed && mendsNothing(exposed)) return;
 		original.call(player, player instanceof ServerPlayer p ? (float) (amount * CultivationStats.mendFactor(p)) : amount);
 	}
 
 	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/food/FoodData;addExhaustion(F)V"))
 	private void dth$noFoodForNoMending(FoodData food, float exhaustion, Operation<Void> original, @Local(argsOnly = true) Player player) {
-		if (player instanceof ServerPlayer exposed && ChaosFrontier.exposed(exposed)) return;
+		if (player instanceof ServerPlayer exposed && mendsNothing(exposed)) return;
 		original.call(food, exhaustion);
+	}
+
+	/** Out in the Chaos Frontier's storm unsheltered, or walking in a body of the dead (it mends by the yin about it alone: CorpseWalk). */
+	private static boolean mendsNothing(ServerPlayer p) {
+		return ChaosFrontier.exposed(p) || com.example.defyingtheheavens.CorpseWalk.walking(p);
 	}
 }

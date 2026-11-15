@@ -234,6 +234,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE + ".player", "%1$s was crushed by spatial pressure while fighting %2$s");
 		t.add(ModLang.DEATH_CHAOS_STORM, "%1$s was unmade by the chaos storm");
 		t.add(ModLang.DEATH_CHAOS_STORM + ".player", "%1$s was unmade by the chaos storm while fighting %2$s");
+		t.add(ModLang.DEATH_SPATIAL_STORM, "%1$s was struck down by a spatial storm");
+		t.add(ModLang.DEATH_SPATIAL_STORM + ".player", "%1$s was struck down by a spatial storm while fighting %2$s");
 		t.add(ModLang.DEATH_SOUL_SEVERED, "%1$s's nascent soul was severed from their body");
 		t.add(ModLang.DEATH_SOUL_SEVERED + ".player", "%1$s's nascent soul was severed from their body by %2$s");
 		t.add(ModLang.DEATH_OLD_AGE, "%1$s's years ran out");
@@ -384,6 +386,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case PRIMORDIAL_ROAR -> "Primordial Roar";
 				case MYRIAD_FISTS -> "Myriad Fists";
 				case DHARMA_BODY -> "Dharma Body of Heaven and Earth";
+				case GHOST_POSSESSION -> "Ghostly Possession";
+				case NATAL_RECALL -> "Natal Recall";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -533,12 +537,23 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "heaven and earth, %2$s blocks of gold. Where a blow of your hand lands, its fist comes down out of the sky on it for "
 						+ "%3$s%% of your blow; when you stomp (Mountain Stomp, Earthshaker) it stamps its foot, striking all round it for "
 						+ "%4$s%%. %5$s vigor, every %6$s s.";
+				case GHOST_POSSESSION -> "The dead's own possession: no soul sent out, so nothing tethers you. Look at a body within %1$s blocks "
+						+ "and use it to slip inside: one of the dead lying where it fell, or a living player or cultivator, at least a realm "
+						+ "below your highest path (a mortal's ghost takes only mortals). In it you are the body, its things and its strength "
+						+ "yours, and no ghost to the world. Going in costs %2$s%% of your ghostly qi, staying %3$s ghostly qi a second, however "
+						+ "far you go. Use it again to leave.";
+				case NATAL_RECALL -> "Call your natal treasure to your hand from anywhere in this world: off the ground, out of anyone's pack, "
+						+ "or from a chest in loaded land. Costs %1$s%% of your qi pool; once every %2$s s.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
 		t.add(ModLang.abilityKey(Ability.CLONE.getId()) + ".description.clone", "You are in your clone. Use this to go back to your body "
 				+ "(the clone stays standing where it is). Sneak and use it within %s blocks of your body to draw the clone back in. A clone "
 				+ "can't meditate, project its soul, break through or detonate a core.");
+		// Ghostly Possession while one of the dead is in a body by it (GhostPossession): the way out of it.
+		t.add(ModLang.abilityKey(Ability.GHOST_POSSESSION.getId()) + ".description.leave", "You are in this body by your own possession, using "
+				+ "it as your own: its things, its strength, its cultivation. Use this to leave it: a living body is its owner's again, one of the "
+				+ "dead lies down where you stand, and you are a ghost again.");
 		// Soul Projection while the soul is in another's body (Possession): the way out of it.
 		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.leave", "You are in another's body, using it as your own: "
 				+ "its things, its strength, its cultivation. Use this to leave it; your soul goes out where the body stands, and the body is "
@@ -1234,6 +1249,25 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.FORGE_NEEDS_CORE, "a demon core of %s or above");
 		t.add(ModLang.FORGE_NEEDS_TOKEN, "an element's token (blaze powder, a prismarine shard, a sapling, clay or an iron nugget)");
 		t.add(ModLang.FORGE_NEEDS_ELEMENT_CORE, "a %s demon core of %s or above");
+		// Natal treasures (NatalTreasures, 2026-11-13)
+		t.add(ModLang.NATAL_TREASURE, "your natal treasure");
+		t.add(ModLang.MSG_NATAL_TOO_LOW, "Only from Core Formation can a treasure be bound to your core.");
+		t.add(ModLang.MSG_NATAL_NOT_FORGED, "Only a blade you forged yourself can be bound to your core.");
+		t.add(ModLang.MSG_NATAL_OTHERS, "%s is bound to another's core.");
+		t.add(ModLang.MSG_NATAL_BOUND, "%s is bound to your core: your natal treasure.");
+		t.add(ModLang.MSG_NATAL_UNBIND_ASK, "Unbinding %s will wound your soul. Do it again to unbind it.");
+		t.add(ModLang.MSG_NATAL_UNBOUND, "%s is unbound, and your soul is wounded.");
+		t.add(ModLang.MSG_NATAL_SEVER_ASK, "Another treasure is bound to your core: binding %s severs that bond and wounds your soul. Do it again to go ahead.");
+		t.add(ModLang.MSG_NATAL_BROKEN, "%s breaks, and your soul is wounded.");
+		t.add(ModLang.MSG_NATAL_RECALLED, "%s flies to your hand.");
+		t.add(ModLang.MSG_NATAL_NOT_FOUND, "Your natal treasure is nowhere in this world's loaded land.");
+		t.add(ModLang.MSG_NATAL_IN_HAND, "Your natal treasure is in your hand already.");
+		t.add(ModLang.MSG_NATAL_RECALL_QI, "Calling your natal treasure takes %s qi.");
+		t.add(ModLang.MSG_NATAL_RECALL_WAIT, "You can call your natal treasure again in %s s.");
+		t.add(ModLang.MSG_NATAL_ONLY_OWNER, "Only the one whose core %s is bound to can raise it.");
+		t.add(ModLang.TOOLTIP_NATAL_OF, "Natal treasure of %s");
+		t.add(ModLang.TOOLTIP_NATAL_MIGHT, "+%s%% to all its owner's blows, by their realm");
+		t.add(ModLang.TOOLTIP_FORGED_BY, "Forged by %s");
 		// The weapons made of their element (ElementalWeaponItem)
 		t.add(ModLang.ELEMENTAL_SHARE, "Each blow adds %s%% of your strike as %s qi, which passes armour");
 		t.add(ModLang.FLAME_BLADE_PERK, "Made of living flame: sets what it strikes burning for %s seconds");
@@ -1379,7 +1413,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MISSION_HAVE, "You carry %s of %s");
 		t.add(ModLang.MISSION_YEARS, "Each at least %s years old");
 		t.add(ModLang.MISSION_CORE_REALM, "Each of %s or above");
-		t.add(ModLang.MISSION_TIME_DAYS, "%s days %s hours");
+		t.add(ModLang.MISSION_TIME_DAYS, "%s %s");
+		t.add(ModLang.MISSION_TIME_DAY, "1 day");
+		t.add(ModLang.MISSION_TIME_N_DAYS, "%s days");
+		t.add(ModLang.MISSION_TIME_HOUR, "1 hour");
 		t.add(ModLang.MISSION_TIME_HOURS, "%s hours");
 		t.add(ModLang.MISSION_TIME_SOON, "less than an hour");
 		t.add(ModLang.MISSION_SAID_DONE, "%s %s");
@@ -1462,6 +1499,85 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SECT_TAB_CONTRIBUTION, "Contribution: %s (earned %s) - missions: %s of %s");
 		t.add(ModLang.talkTopic("deliver"), "I carry a sealed letter for your sect.");
 		t.add(ModLang.talkTopic("basics"), "I have no method. Will you teach me the basics?");
+		// A personal disciple (PersonalDisciples, 2026-11-13)
+		t.add(ModLang.talkTopic("take_disciple"), "Will you be my disciple?");
+		t.add(ModLang.talkTopic("disciple"), "Disciple, hear me.");
+		t.add(ModLang.DISCIPLE_HAVE_ONE, "You have a disciple already.");
+		t.add(ModLang.DISCIPLE_MOURNING, "You still mourn your last disciple: %s more days.");
+		t.add(ModLang.DISCIPLE_TAKEN, "%s is someone's disciple already.");
+		t.add(ModLang.DISCIPLE_TOO_STRONG, "%s is no weaker than you.");
+		t.add(ModLang.DISCIPLE_ELDER, "%s is an elder of its sect, no one's disciple.");
+		t.add(ModLang.DISCIPLE_OTHER_SECT, "%s's sect won't give one of its own to you.");
+		t.add(ModLang.DISCIPLE_OWN_ROAD, "%s has a road of its own.");
+		t.add(ModLang.DISCIPLE_NOT_ADMIRED, "%s doesn't think enough of you to follow you.");
+		t.add(ModLang.DISCIPLE_TAKEN_SAY, "I will follow you, Master %s, and learn all you would teach me.");
+		t.add(ModLang.DISCIPLE_TAKEN_MSG, "%s is your disciple now.");
+		t.add(ModLang.DISCIPLE_NOT_YOURS, "You are not my master.");
+		t.add(ModLang.DISCIPLE_ORDER_FOLLOW, "Follow me.");
+		t.add(ModLang.DISCIPLE_ORDER_STAY, "Stay here.");
+		t.add(ModLang.DISCIPLE_ORDER_GUARD, "Guard this place.");
+		t.add(ModLang.DISCIPLE_ORDER_RELEASE, "Go your own way.");
+		t.add(ModLang.DISCIPLE_METHOD, "Cultivate the %s.");
+		t.add(ModLang.DISCIPLE_METHOD_CURRENT, "Its method now");
+		t.add(ModLang.DISCIPLE_TEACH, "Learn %s from me.");
+		t.add(ModLang.DISCIPLE_TEACH_KNOWN, "Learned already");
+		t.add(ModLang.DISCIPLE_TEACH_LOW, "Needs %s");
+		t.add(ModLang.DISCIPLE_SAY_FOLLOW, "I follow, Master.");
+		t.add(ModLang.DISCIPLE_SAY_STAY, "I will wait here, Master.");
+		t.add(ModLang.DISCIPLE_SAY_GUARD, "Nothing will pass here, Master.");
+		t.add(ModLang.DISCIPLE_SAY_RELEASED, "Then I go my own way. I won't forget what you taught me.");
+		t.add(ModLang.DISCIPLE_RELEASED_MSG, "You let %s go its own way.");
+		t.add(ModLang.DISCIPLE_SAY_METHOD, "I will cultivate the %s, Master.");
+		t.add(ModLang.DISCIPLE_SAY_TAUGHT, "I have it, Master: %s.");
+		t.add(ModLang.DISCIPLE_SAY_PUZZLED, "Master?");
+		t.add(ModLang.DISCIPLE_ASKS_PILL, "%s: \"Master, I stand at the gate of %s. A %s would steady me.\" (Give it as a gift.)");
+		t.add(ModLang.DISCIPLE_PILL_TAKEN, "%s takes the pill and breaks through into %s.");
+		t.add(ModLang.DISCIPLE_DISMAYED, "%s looks away from you, troubled by what you did.");
+		t.add(ModLang.DISCIPLE_LEAVES, "%s will not follow one who does such things, and leaves you.");
+		t.add(ModLang.DISCIPLE_DIED, "Your disciple %s has fallen. A week must pass before you take another.");
+		// Sending one's sect's people out (SectErrands, 2026-11-13).
+		t.add(ModLang.errandTask("hunt"), "Hunt");
+		t.add(ModLang.errandTask("gather"), "Herbs");
+		t.add(ModLang.errandTask("realm"), "Secret Realm");
+		t.add(ModLang.errandTask("letter"), "Letter");
+		t.add(ModLang.errandState("home"), "At the sect");
+		t.add(ModLang.errandState("out"), "Out (%1$s): back in %2$s");
+		t.add(ModLang.errandState("returning"), "On the way back");
+		t.add(ModLang.errandState("resting"), "Resting from wounds: %s");
+		t.add(ModLang.errandState("personal"), "A personal disciple: keeps to their master");
+		t.add(ModLang.errandAbout("hunt"), "Hunt a demon beast of %1$s, %2$s to %3$s blocks out. About %4$s. They bring back its demon core, its hide and meat.");
+		t.add(ModLang.errandAbout("gather"), "Gather spirit herbs %1$s to %2$s blocks out. About %3$s. The stronger they are, the older and rarer the herbs.");
+		t.add(ModLang.errandAbout("realm"), "Go into the %1$s while it stands open. About %2$s. They bring back spirit stones, and now and then a rarity.");
+		t.add(ModLang.errandAbout("letter"), "Carry a letter to the %1$s: they will think better of you for it. About %2$s.");
+		t.add(ModLang.ERRAND_NOT_FOUNDER, "Only your sect's founder may send its people out.");
+		t.add(ModLang.ERRAND_NO_ONE, "Nobody there to send. Look at the board again.");
+		t.add(ModLang.ERRAND_AWAY, "%s is not at the sect to be sent.");
+		t.add(ModLang.ERRAND_RESTING, "%s is still resting from their wounds.");
+		t.add(ModLang.ERRAND_PERSONAL, "%s is a personal disciple, and keeps to their master's side.");
+		t.add(ModLang.ERRAND_TOO_MANY, "At most %s of your sect's people may be out at once.");
+		t.add(ModLang.ERRAND_NO_REALM, "No secret realm of this world stands open now.");
+		t.add(ModLang.ERRAND_NO_SECT, "There is no other sect in this world to write to.");
+		t.add(ModLang.ERRAND_HUNT_OF, "a hunt for a demon beast of %s");
+		t.add(ModLang.ERRAND_GATHER, "gathering spirit herbs");
+		t.add(ModLang.ERRAND_REALM_OF, "into the %s");
+		t.add(ModLang.ERRAND_LETTER_TO, "a letter to the %s");
+		t.add(ModLang.ERRAND_SENT, "%1$s sets out: %2$s. Back in about %3$s.");
+		t.add(ModLang.ERRAND_A_DAY, "a day");
+		t.add(ModLang.ERRAND_DAYS, "%s days");
+		t.add(ModLang.ERRAND_BACK_DONE, "%1$s is back from their errand (%2$s). The spoils wait at your Formation Core.");
+		t.add(ModLang.ERRAND_BACK_WOUNDED, "%1$s came back from their errand (%2$s) wounded. Half the spoils wait at your Formation Core; they must rest a few days.");
+		t.add(ModLang.ERRAND_BACK_BREAKTHROUGH, "%1$s is back from their errand (%2$s), and broke through on the road! The spoils wait at your Formation Core.");
+		t.add(ModLang.ERRAND_BACK_LOST, "%1$s never came back from their errand (%2$s). Your sect mourns them.");
+		t.add(ModLang.ERRAND_TAB, "Send Out");
+		t.add(ModLang.ERRAND_OUT_OF, "Out: %s of %s");
+		t.add(ModLang.ERRAND_NOBODY, "Your sect has nobody to send yet.");
+		t.add(ModLang.ERRAND_SEND_TO, "Send them to:");
+		t.add(ModLang.ERRAND_ABOVE, "This is above them: they may come back wounded, or not at all.");
+		t.add(ModLang.ERRAND_SEND, "Send");
+		t.add(ModLang.ERRAND_SPOILS_WAITING, "Spoils waiting at your Formation Core: %s");
+		t.add(ModLang.ERRAND_RANK, "Realm: %s");
+		t.add(ModLang.ERRAND_NO_REALM_OPEN, "No secret realm of this world stands open now.");
+		t.add(ModLang.ERRAND_NO_LETTER, "There is no other sect in this world to write to.");
 		t.add(ModLang.TALK_TEACH_BASICS, "Everyone begins somewhere. This is the %s, the first volume of Qi Circulation within it. Breathe with %s qi, and keep at it.");
 		t.add(ModLang.TALK_TEACH_NO_VOLUME, "Your %s, then... I can settle what you hold, but no guidance carries you where your method has no volume.");
 		t.add(ModLang.talkLine("deliver", "righteous"), "A letter from %s? You have our thanks, courier. I will see it reaches the elders.");
@@ -1494,6 +1610,25 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			case GRANDMASTER -> "Grandmaster";
 			case SAINT -> "Saint";
 		});
+		// JEI's pages for the crafts (client/compat/jei)
+		t.add(ModLang.JEI_BREW_TIME, "%s s over a fire");
+		t.add(ModLang.JEI_NEVER_FAILS, "Never fails");
+		t.add(ModLang.JEI_SURE_FROM, "Never fails from %s");
+		t.add(ModLang.JEI_AGED, "Its years set the pill's grade");
+		t.add(ModLang.JEI_RARE_HERB, "A rarer herb counts as twice its years");
+		t.add(ModLang.JEI_CAULDRON_HOW, "Fill the cauldron with water and light a fire beneath it, then add the ingredients one at a time: the brew begins as soon as they make a recipe.");
+		t.add(ModLang.JEI_FORGE_TIME, "%s: %s s over a fire");
+		t.add(ModLang.JEI_FORGE_QI, "Draws %s qi a second");
+		t.add(ModLang.JEI_FORGE_HOW, "Put the materials in one at a time, then use the forge with an empty hand to begin. It needs a fire beneath it, and draws qi from you while you stay by it.");
+		t.add(ModLang.JEI_CORE, "Any demon core of %s or above");
+		t.add(ModLang.JEI_ELEMENT_CORE, "A %s demon core of %s or above");
+		t.add(ModLang.JEI_TOKEN, "An element's token: it gives the banner its element");
+		t.add(ModLang.JEI_REFINING, "Natal refining: %s");
+		t.add(ModLang.JEI_NATAL_IN, "Only your own natal treasure can be refined");
+		t.add(ModLang.JEI_NATAL_OUT, "The same treasure, risen a grade");
+		t.add(ModLang.JEI_TALISMAN_QI, "Takes %s%% of your qi");
+		t.add(ModLang.JEI_TALISMAN_HOW, "Hold the Inscription Brush in one hand and Talisman Paper in the other. Use the brush to choose this pattern, then use it again and hold to draw. The redstone is its cinnabar.");
+		t.add(ModLang.JEI_BRUSH, "Held in your other hand: each drawing wears it a little");
 		t.add(ModLang.MSG_CRAFT_RANK, "Your %s has reached %s.");
 		t.add(ModLang.CAULDRON_FAILED, "The brew turns to ash: the %s is ruined.");
 		t.add(ModLang.BTN_STAT_CRAFTS, "Crafts");
@@ -1526,6 +1661,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TALISMAN_ESCAPE_NO_GROUND, "No safe ground lies that way: the talisman won't carry you.");
 		t.add(ModLang.MSG_TALISMAN_CONCEALED, "You fade from notice.");
 		t.add(ModLang.MSG_TALISMAN_REVEALED, "You strike, and are noticed again.");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_NONE, "You have no Formation Core of your own in this world: the talisman has nowhere to take you.");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_START, "The talisman burns: stand still and unhurt for %s seconds.");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_LEFT, "Homeward in %s...");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_MOVED, "You stir, and the Homeward Talisman burns out.");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_HURT, "You are struck, and the Homeward Talisman burns out.");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_GONE, "Your Formation Core is gone, or there is no room beside it: the talisman burns out.");
+		t.add(ModLang.MSG_TALISMAN_HOMEWARD_HOME, "The talisman carries you home.");
+		t.add(ModLang.MSG_TALISMAN_UNSEALED, "%s stands too far above the talisman to be sealed.");
+		t.add(ModLang.MSG_TALISMAN_SEALED, "A talisman seals your qi: no spell and no flight for %s seconds.");
+		t.add(ModLang.MSG_QI_SEALED_CAST, "Your qi is sealed: you can't cast.");
+		t.add(ModLang.MSG_TALISMAN_REVEALING, "Your eyes see through concealment for %s seconds.");
 		t.add(ModLang.TOOLTIP_TALISMAN_THROW, "Throw it");
 		t.add(ModLang.TOOLTIP_TALISMAN_BURN, "Burn it (use)");
 		t.add(ModLang.TOOLTIP_TALISMAN_DRAWN, "Drawn by %s at %s");
@@ -1541,6 +1687,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.talismanTooltip("divine_speed"), "Swift feet for a minute");
 		t.add(ModLang.talismanTooltip("thousand_li_escape"), "Flashes you far the way you face, onto safe ground");
 		t.add(ModLang.talismanTooltip("concealment"), "Beasts and cultivators don't notice you for a minute, until you strike");
+		t.add(ModLang.talismanTooltip("homeward"), "Stand still and unhurt five seconds: it takes you to your nearest Formation Core in this world");
+		t.add(ModLang.talismanTooltip("qi_sealing"), "Whoever it strikes can't cast or fly for a few seconds, the fewer the stronger they are");
+		t.add(ModLang.talismanTooltip("revealing"), "For half a minute you see through Concealment barriers, and the hidden are outlined");
 		t.add(ModItems.TALISMAN_PAPER, "Talisman Paper");
 		t.add(ModItems.FIRE_TALISMAN, "Fire Talisman");
 		t.add(ModItems.FIVE_THUNDER_TALISMAN, "Five Thunder Talisman");
@@ -1550,10 +1699,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModItems.DIVINE_SPEED_TALISMAN, "Divine Speed Talisman");
 		t.add(ModItems.THOUSAND_LI_ESCAPE_TALISMAN, "Thousand-Li Escape Talisman");
 		t.add(ModItems.CONCEALMENT_TALISMAN, "Concealment Talisman");
+		t.add(ModItems.HOMEWARD_TALISMAN, "Homeward Talisman");
+		t.add(ModItems.QI_SEALING_TALISMAN, "Qi-Sealing Talisman");
+		t.add(ModItems.REVEALING_TALISMAN, "Revealing Talisman");
 		t.add(ModEntities.TALISMAN, "Talisman");
 		t.add(ModEffects.BOUND, "Bound");
 		t.add(ModEffects.GOLDEN_LIGHT, "Golden Light");
 		t.add(ModEffects.CONCEALED, "Concealed");
+		t.add(ModEffects.QI_SEALED, "Qi Sealed");
+		t.add(ModEffects.REVEALING, "Revealing");
+		t.add(ModEffects.SOUL_WOUND, "Soul Wound");
 		for (CodexMap.World world : CodexMap.World.values()) {
 			t.add(world.nameKey(), world.english());
 			t.add(world.wayKey(), world.wayEnglish());
@@ -1588,6 +1743,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.codexBeastMoves("flying"), "In the air");
 		t.add(ModLang.codexBeastMoves("swimming"), "In the water");
 		t.add(ModLang.KEY_QUICK_ABILITY, "Use Selected Ability");
+		t.add(ModLang.KEY_SADDLE_STRIKE, "Saddle Strike (Your Beast Strikes)");
 		for (int slot = 1; slot <= PlayerCultivation.WHEEL_SLOTS; slot++) t.add(ModLang.KEY_ABILITY_SLOT_PREFIX + slot, "Ability Wheel Slot " + slot);
 		t.add(ModLang.MSG_QUICK_ABILITY_STATE, "%s: %s");
 		t.add(ModLang.MSG_QUICK_ABILITY_EMPTY, "Slot %s of your ability wheel is empty (arrange it on the Abilities tab).");
@@ -1732,7 +1888,6 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_HEAVEN_OPENS, "Layer %s opens at %s");
 		t.add(ModLang.METHODS_HEAVEN_OPENS_SHORT, "Layer %s: %s");
 		t.add(ModLang.METHODS_HEAVEN_SHARE, "%s qi here: %s%% of all (x%s)");
-		t.add(ModLang.METHODS_HEAVEN_REACH, "Your method, Qi Circulation: its volumes reach %s.");
 		t.add(ModLang.METHODS_HEAVEN_UNKNOWN, "%s of the %s %s scriptures unknown. Their Dao Steles stand where their qi runs thick; the deepest are "
 				+ "seldom carved below the Jade Firmament, the deepest of all in the Great Void.");
 		t.add(ModLang.METHODS_HEAVEN_PASSIVE, "%s: %s");
@@ -3129,6 +3284,21 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_POSSESS_FREED, "Your body is your own again.");
 		t.add(ModLang.MSG_POSSESS_LET_GO, "You leave the body.");
 		t.add(ModLang.MSG_POSSESS_BODY_DIED, "The body you were in has died: your soul is thrown out.");
+		t.add(ModLang.MSG_CORPSE_RISE, "You rise in the body of %s.");
+		t.add(ModLang.MSG_CORPSE_FELL, "The body falls where it stands, and you are thrown out of it.");
+		t.add(ModLang.MSG_CORPSE_LEFT, "You leave the body. It lies down again.");
+		t.add(ModLang.MSG_CORPSE_NO_GHOST_QI, "Your ghostly qi runs dry: the body falls, and you are a ghost again.");
+		t.add(ModLang.MSG_CORPSE_ROTS, "The body of %s begins to rot.");
+		t.add(ModLang.MSG_CORPSE_BARE, "The body of %s is bare bones now.");
+		t.add(ModLang.MSG_CORPSE_SECT_TURNS, "The %s sees its dead walk, and turns on you.");
+		t.add(ModLang.MSG_CORPSE_NO_FOOD, "The dead eat nothing.");
+		t.add(ModLang.MSG_CORPSE_YIN_NONE, "Meditating in the dead refines only Corpse Yin Refining, and your ghost path doesn't practise it.");
+		t.add(ModLang.MSG_CORPSE_YIN_OWED, "Corpse yin refined: %s%% of a stage, yours when you leave this body.");
+		t.add(ModLang.MSG_GHOST_POSSESS_NONE, "No body before you: look at one within %s blocks, one of the dead lying there, or a living player or cultivator.");
+		t.add(ModLang.MSG_GHOST_POSSESS_DRY, "Your ghostly qi runs dry: you slip out of the body, a ghost again.");
+		t.add(ModLang.MSG_GHOST_POSSESS_INHABIT, "You are in %s's body: everything they carry, their strength and their cultivation are yours to use. "
+				+ "Ghostly Possession (on your ability wheel) leaves it.");
+		t.add(ModLang.MSG_GHOST_POSSESS_TAKEN, "%s's ghost has taken your body. You can only watch through its eyes until it lets go.");
 		t.add(ModLang.MSG_POSSESS_OWNER_LEFT, "The body's owner is gone, and their body with them: your soul is thrown out.");
 		t.add(ModLang.MSG_POSSESS_LOST, "The body slips from your hold: your soul is thrown out.");
 		t.add(ModLang.MSG_POSSESS_OWNER_AWAY, "%s has left the world; their body is still yours.");
@@ -3333,6 +3503,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.RANKING_YOU_OFF, "You aren't among the hundred on the %s.");
 		t.add(ModLang.RANKING_ROW, "%s. %s");
 		t.add(ModLang.RANKING_HINT, "Strongest first. Beat one above you to take their place.");
+		t.add(ModLang.rumour("sect_ranking"), "Have you heard? The %1$s has passed the %2$s, and is number %3$s of the sects on the %4$s now.");
+		t.add(ModLang.rumour("lost"), "They say %1$s of the %2$s was sent out (%3$s) and never came back.");
+		t.add(ModLang.RANKING_MODE_PEOPLE, "Cultivators");
+		t.add(ModLang.RANKING_MODE_SECTS, "Sects");
+		t.add(ModLang.RANKING_SECT_YOU, "Your sect stands number %s of the sects on the %s.");
+		t.add(ModLang.RANKING_SECT_YOU_OFF, "Your sect isn't among the ten sects on the %s.");
+		t.add(ModLang.RANKING_SECT_EMPTY, "No sect stands on this list yet.");
+		t.add(ModLang.RANKING_SECT_SCORE, "%s");
+		t.add(ModLang.RANKING_SECT_PEOPLE, "%s people, the strongest at %s");
+		t.add(ModLang.RANKING_SECT_PLAYERS, "Founded by a player");
 		t.add(ModLang.BTN_JOURNAL_RUMOURS, "Rumours");
 		t.add(ModLang.BTN_JOURNAL_RANKINGS, "The Lists");
 		t.add(ModLang.TOOLTIP_RANKING_STELE, "Right-click to read the hundred strongest of every world");
@@ -3356,7 +3536,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// Sects founded by players (PlayerSects, 2026-11-10): founding at a Formation Core, aspirants, invitations, tribute, disbanding.
 		t.add(ModLang.MSG_PSECT_NOT_OWNER, "Only this core's owner may found a sect on it.");
-		t.add(ModLang.MSG_PSECT_DEAD, "Only the living, in their own bodies, found sects.");
+		t.add(ModLang.MSG_PSECT_DEAD, "The dead found no sects.");
 		t.add(ModLang.MSG_PSECT_IN_SECT, "You are of the %s already: one belongs to a single sect.");
 		t.add(ModLang.MSG_PSECT_WEAK, "Only one of Nascent Soul or above may found a sect.");
 		t.add(ModLang.MSG_PSECT_NO_SECTS, "No sects stand in this world: no aspirant would ever come.");
@@ -3384,6 +3564,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_PSECT_JOIN_OTHER, "You are of the %s: leave it before you join another.");
 		t.add(ModLang.MSG_PSECT_TRIBUTE, "You take %s Low spirit stones' worth of tribute from the %s.");
 		t.add(ModLang.MSG_PSECT_NO_TRIBUTE, "No tribute is waiting yet.");
+		t.add(ModLang.MSG_PSECT_SPOILS, "You take the %s stacks of spoils your people brought back to the %s.");
 		t.add(ModLang.MSG_PSECT_DISBANDED, "The %s is disbanded. Its people go their own ways.");
 		t.add(ModLang.MSG_PSECT_CORE_LOST, "The %s's Formation Core is gone, and the sect breaks up. Its people go their own ways.");
 		t.add(ModLang.MSG_PSECT_FOUNDER_STAYS, "You founded the %s: if you would end it, disband it at its Formation Core.");
@@ -3399,6 +3580,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CORE_SECT_GROUNDS, "Gates (Sect Plaques): %s. Altar of Heaven: %s.");
 		t.add(ModLang.CORE_SECT_NO_GATE, "Hang a Sect Plaque by your gate: aspirants come in there, and guards keep it.");
 		t.add(ModLang.CORE_SECT_TRIBUTE, "Tribute waiting: %s Low stones' worth (%s a day)");
+		t.add(ModLang.CORE_SECT_SPOILS, "Spoils from errands waiting: %s stacks (Collect takes them too)");
 		t.add(ModLang.CORE_SECT_NEXT, "The next aspirant comes in about %s.");
 		t.add(ModLang.CORE_SECT_FULL, "Every place is filled: lay more mats for more.");
 		t.add(ModLang.CORE_SECT_RENAME, "Rename");
@@ -3844,6 +4026,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BOND_DIED_LOST, "Your bound beast, %s, has died, and the realm's progress it carried goes with it: you fall back to %s.");
 		t.add(ModLang.MSG_MOUNT_TOO_SMALL, "%s is too small to carry you yet: it must grow larger first.");
 		t.add(ModLang.MSG_MOUNT_CANT, "%s can't carry you now.");
+		t.add(ModLang.MSG_SADDLE_RESTING, "%s isn't ready to strike again (%s s).");
+		t.add(ModLang.MSG_SADDLE_NOTHING, "%s has nothing to strike where you look.");
 		// Court of the Dead (CourtOfTheDead)
 		t.add(ModLang.MSG_COURT_CLAIMED, "You take the empty throne: the palace is yours, and its %s retainers your subjects.");
 		t.add(ModLang.MSG_COURT_LOST, "No longer a Ghost King, you give your palace's throne up.");

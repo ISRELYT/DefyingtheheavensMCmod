@@ -26,6 +26,9 @@ mod's) gets that one instead, as Fabric picks the newest. It comes from GeckoLib
 repositories); its version is `geckolib_version` in `gradle.properties`. Added 2026-10-23, ready for models to come: nothing
 uses it yet.
 
+**Jade** and **JEI** are compiled against but never required (see "JEI and the other mods of a modpack" near the end): Jade from
+Modrinth's maven, JEI from its jar in `libs/` (`jei_version`), the one the user's instance runs.
+
 ## Creative tab
 
 Everything the mod adds has its own creative tab, **Defying The Heavens** (`ModCreativeTab`, shown with a Cultivation
@@ -557,6 +560,36 @@ the grade's). The grade's two spirit stones go in too, and the element's own mat
 /give @s defying-the-heavens:immortal_golden_light_sword
 ```
 
+### Natal treasures (2026-11-13)
+
+The user's "Build as designed" (`NatalTreasures`). Every blade forged since stamps its forger on it (`ArtifactForger`,
+`ArtifactForgerName`: `ArtifactForgeBlockEntity#finish`, a tooltip line). From Core Formation (`TwoPaths#higherRank`, heaven or
+Demon Path), sneak + use the forge (not working) holding a blade one forged oneself: bound as one's natal treasure (`NatalId`,
+`NatalOwner`, `NatalOwnerName` on it; `PlayerCultivation#natalTreasure` saved, and synced for the ability), one at a time.
+Sneaking with it again asks, and a second time within 5 s unbinds it (a soul wound); binding another while one is bound asks
+too, then severs the old bond (the same wound; this is the way out when one's treasure is lost for good).
+- **Might:** while its owner holds it, `NatalRank` (their rank, kept each second by `ArtifactWeaponItem#inventoryTick` ->
+  `NatalTreasures#held`; removed in anyone else's pack) gives `ArtifactWeaponItem#getAttributeModifiers` a MULTIPLY_TOTAL attack
+  modifier of 0.1 for each realm from Core Formation (CF 0.1, NS 0.2, ...). A blade whose bond is gone (`natalTreasure` no longer
+  its id) is loosened back into a plain blade when its owner next holds it.
+- **Raising its grade** (the one refining there is: the 10-28 "no refining" stands for every other piece): the natal blade in
+  the forge with exactly the next grade's materials of its kind (`ArtifactRecipes#refining`/`#nextFor`; the `Tally`'s blades
+  apart; a blade fits only as one natal treasure and the next grade's materials) is that grade's working (time, qi, odds); only
+  its owner may begin it. Done: `NatalTreasures#raised`, the next grade's item with its tag (work, forger, bond) and no wear;
+  failed: the materials burnt, a core given back, the blade given back unharmed.
+- **Natal Recall** (`Ability#NATAL_RECALL`, an act; `CultivationManager#toggleAbility`): 10% of the qi pool, once in 10 s; it
+  looks in the owner's pack, on the ground (`EntityType.ITEM`), other players' packs, any entity's equipment, item frames and
+  container entities, then every block container in the world's loaded chunks (`mixin/ChunkMapAccessor`); to the main hand
+  (what was held into a free slot; no room: the pack, or the feet), a streak of light from where it was. Nothing found: nothing
+  spent. Not across worlds, and not out of a forge it is being worked in.
+- **Breaking** (`ArtifactWeaponItem#wear` for blows and blocks, the sword's own wear with its break told): the bond gone and the
+  owner's soul wounded (`NatalTreasures#wound`): `PlayerCultivation#soulWoundUntil` (saved) 20 minutes on, `ModEffects#SOUL_WOUND`
+  (attack x0.7) given back each second if milk or death took it early, and `PlayerCultivation#maxQi` x0.5 through
+  `NatalTreasures#poolFactor` (the server's flag each second; the client's own from the effect). Broken in another's hands with
+  its owner away: wounded when they come back (`#login`, not across a restart). On the ground it never despawns and nothing
+  harms it (`mixin/NatalItemEntityMixin`).
+- Codex "Natal Treasure"; icon `tools/beast-art` `natalrecall`; tests `NatalTreasureGameTests`.
+
 ### Legendary weapons (phase 3a)
 
 Weapons never forged, one of each in the whole world (2026-10-28, the user's ask "some famous weapons ... unique immortal weapons
@@ -692,6 +725,29 @@ The fourth craft (the user's "Build as designed"): `Talismans`, `TalismanPattern
   quarters and the Cave Abode's library (`Talismans#found`); sold by outer disciples (paper), inner disciples and elders (their own
   drawing, `#drawnBy`). Advancements "Ink and Cinnabar", "Saint of Talismans". Codex "Talismans". Tests `TalismanGameTests`.
 
+### Three more talismans (2026-11-13)
+
+The user's "Build as designed" (2026-11-13), appended to `TalismanPattern` after the rest (a brush keeps its pattern by its place):
+- **Homeward** (burnt; 1, 12%, 30 s): `Talismans#homeward` finds the burner's own nearest Formation Core in this world
+  (`#nearestCore`: `FormationData`, kind CORE, owner theirs); none, or space sealed (as the Escape's `#sealed`): not spent. Else
+  the burning starts (`HOMEWARD`, by UUID): stand within `HOMEWARD_STIR` 0.4 blocks of where they burnt it and unhurt for
+  `HOMEWARD_TICKS` 100 (`Talismans#tick`, a countdown on the action bar), then `#goHome` loads the core's chunk, checks the core
+  still stands (`FormationCoreBlockEntity`) and sets them on the ground beside it (`#beside`, rings 1-3). A step, a blow that
+  landed (`Talismans#hurt` from `SoulLivingEntityMixin`'s hurt RETURN), death, another world, a logout: it burns out for nothing.
+- **Qi-Sealing** (thrown; 1, 12%, 10 s): `Talismans#seal`, `QI_SEALED` for `SEAL_SECONDS` 5, a second less for each two stages
+  the sealed stands above the talisman, none on one a realm or more above it. Sealed: `Spells#cast` refuses (message) and
+  `Spells#castBy` too; a player is weighed down (`QiFlight#weighDown`), a cultivator brought down and kept down
+  (`CultivatorNpc#setQiFlying` refuses).
+- **Revealing** (burnt; 1, 10%, 30 s): `REVEALING` 30 s, amplifier = the talisman's rank. `Concealments#weigh` sees through any
+  veil of rank < amplifier + `SEES_THROUGH` 8 (`Talismans#reveals`; the veils re-weighed each second already). Each second
+  `Talismans#tick` sends the burner (S2C `revealed`) the ids of those within 32 hidden from it as far (a Concealment Talisman's
+  `CONCEALED`, a cultivator behind its own barrier, `CultivatorNpc#isConcealed`, and anyone inside a raised veil the talisman alone
+  lets them see into, `Concealments#revealedTo`); the client (`ClientRevealed`, kept 1.5 s)
+  outlines them in fire-gold through walls (`ConsciousnessRenderer#isHighlighted`/`#outlineColor`, the domain's outline hooks).
+- Items, sprites, effect icons `qi_sealed`/`revealing`; elders and grand elders may sell the three (`CultivatorTrades`). Codex
+  "Talismans" lines. Tests `TalismanGameTests#qiSealingStopsSpellsAndFlight`, `#homewardCarriesYouToYourOwnCore`,
+  `#revealingSeesThroughConcealment`.
+
 ## The Earth and Heaven Lists (2026-11-10)
 
 `Rankings` (SavedData `_rankings`): one list a world (`Board`: EARTH lower realms + astral, HEAVEN Jade Firmament, VOID Great Void,
@@ -709,11 +765,28 @@ IMMORTAL Immortal Realm + small worlds, NETHERWORLD; passages, secret realms and
   second page (`RankingView`, `RankingScreen`, `ClientRankings`; packets `RANKINGS`, `RANKINGS_REQUEST`). Codex "The Lists".
   Tests `RankingsGameTests` (own batch, lists emptied first).
 
+### The Sect List (2026-11-13)
+
+The user's "Build as designed" (`SectList`): each world's `TOP` 10 sects (`Rankings.Board.of(sect.dimension)`, the extinct left
+out), reckoned at most once a second (`#top`, cached). Score (`#standing`): the `STRONGEST` 10 ranks of its people summed, each
+rank + 1 (cultivators by `Sect.Member#rank`; its players, disciples and a player sect's founder, by their own record online,
+else their Lists entry: `#playerRank`), plus `#placeWorth` for each of its people on that world's cultivators' list (20 x
+(101 - place) / 100: 20 for the first, 0.2 for the hundredth). Player sects stand on it as any.
+- `CultivatorNpc#regard` + `TOP_REGARD` 5 for a player whose sect (`#sectOf`: a live disciple's, or a founder's) is among the ten
+  of the cultivator's world.
+- `#tick` each minute compares each list's top three with its last look (in memory; the first look after a start only notes);
+  a sect risen into a place, taking it from another, is a `RANKING` rumour with the id `sectlist:<board>:<place>` (told round
+  the world 3 days, its own words `talk.rumour.sect_ranking`).
+- S2C `RANKINGS` carries, after the cultivators' lists, the player's own sect's world and place and each world's ten (name, score,
+  people, strongest rank, path, a player's or not, theirs or not); `RankingView` has a second row of tabs, Cultivators | Sects,
+  on the Ranking Stele and the Journal's Lists page alike. Codex "The Lists". Tests `SectListGameTests`.
+
 ## Sects founded by players (2026-11-10)
 
 `PlayerSects`: a `Sect` with a `founder` (`Sect#isPlayers`), bound to its founder's own core (`FormationCoreBlockEntity#foundPlayersSect`,
 `playersSect`: the owner keeps it, its trusted and concealment; its barrier draws on its veins as any player's; unbound again on disband).
-- Founding (the core screen's Sect page, packets `PLAYER_SECT` / `PLAYER_SECT_ACT`): owner, alive in their own body, of no sect,
+- Founding (the core screen's Sect page, packets `PLAYER_SECT` / `PLAYER_SECT_ACT`): owner, alive (not a ghost, nor walking in a body of
+  the dead; since 2026-11-13 in their clone or another's living body too: "Founding from a clone or another's body", below), of no sect,
   `TwoPaths#weighedRank` >= Nascent Soul Early, a sect world (Overworld, Jade Firmament, Great Void, Immortal Realm), not on another
   sect's land (`#landOf`: its territory, or its core within this barrier + margin), barrier raised, `MIN_MATS` 3 mats inside. Alignment
   the founder's; a demon founds a clan (its race); body only (mortal in qi, on the Body Path) a body sect. A claimed fallen sect's core
@@ -731,6 +804,70 @@ IMMORTAL Immortal Realm + small worlds, NETHERWORLD; passages, secret realms and
   refuse others ("join.founder_only"); players come by `#invite`, then Accept on their Sect tab (SECT_ACT 2) or `/sectaccept`.
 - `#disband` (or `#coreLost`, the core broken: `SectManager#onCoreDestroyed`): members `SectManager#banish`ed, disciples dropped,
   `extinct`. Codex "A Sect of Your Own". Tests `PlayerSectGameTests` (own batch; nearby sects set aside while they run).
+
+### A personal disciple (2026-11-13)
+
+The user's "Build as designed" (`PersonalDisciples`). One at a time: `PlayerCultivation#personalDisciple` (saved, its own record's),
+`CultivatorNpc#master` (with `discipleOrder`, `discipleSpot`, `taughtMethod`, the pill's gate and time, saved under `Npc.Disciple`).
+- Taking (talk topic `TAKE_DISCIPLE`, appended; shown to the living who aren't one's own, greyed with `#refusal`): none taken,
+  not mourning, not another's, weaker than one (`TwoPaths#wieldedRank`), no elder; of one's sect (`SectMembership#areFellows`, or
+  the sect one founded), or a ROGUE (no settler, no keeper of a post) whose regard is at least `ADMIRE` (Regard.WARM 60).
+  Taken: persistent, its activity ended, a bow.
+- Instructions (topic `DISCIPLE`; replies `ACTIONS` 300 on, before the wishes' 200): Follow, Stay (its spot now), Guard (the
+  master's spot now), each of the master's known heaven methods (`HeavenState#known`, sorted: `CultivatorNpc#heavenMethod` returns
+  it), Sword Intent / Blood Battle (theirs, the disciple's realm at the art's: `WarArts#landed` gives a cultivator that knows them
+  its second cut and its healing, as its own blows), Let go (`#unbind`, no wait).
+- `FollowGoal` (priority 1 with Flee, under Beg; idle while it has a target, a talk or isn't its own): FOLLOW within `FOLLOW` 5,
+  at once from past `CATCH_UP` 32 (same world only); its master away, it meditates where it is; STAY meditates at its spot (back
+  within 1.5); GUARD keeps within `GUARD_REACH` 10. `DefendGoal` (target 0): the master's attacker or target within 32; guarding,
+  any `Enemy` near the spot. `CultivatorNpc#isAlly`: its master and their owned beasts. No departure at Heavenly Being for a sect
+  member, no rogue course (`decideRogueCourse`).
+- Cultivation (`CultivatorNpc#secondTick`): within `NEAR` 32 of its master, meditating or not, x`FASTER` 1.5 the mat's rate.
+- Gates (`CultivatorNpc#advanceUnchecked`): at a realm's last stage, full, it holds (`#holdsAtGate`) and asks its master (chat, if
+  online) for `#pillFor` (PillItem#breakthroughPillFor, else a Cultivation Pill), a day (`PILL_WAIT`) at most; given it as a Gift
+  (`TalkSystem#gift` -> `#givePill`) it breaks through at once (`advance(0)`).
+- Deeds (`#witnessed`: `CultivatorNpc#die`'s alignment shift down for its killer, `Corpses` bleeding, `Physiques` devouring): a
+  RIGHTEOUS disciple within 32 loses `WITNESSED` 20 regard; below `LEAVES_BELOW` 20 it leaves (`#unbind`).
+- Death (`CultivatorNpc#die` -> `#died`): the master's record cleared, `discipleMournUntil` a week on (`MOURN_TICKS`); a sect member's
+  fellows mourn it as any (NpcLife). Codex "A Disciple of Your Own". Tests `PersonalDiscipleGameTests`.
+
+### Sending your disciples out (2026-11-13)
+
+The user's "Build as designed" (`SectErrands`). A player's sect lays its mission board too (`SectMissions#layBoards`, gate or none; no
+Ranking Stele on a player's grounds): its disciples see its missions and exchange as at any sect's, and its founder a third tab, Send Out
+(`MissionBoardScreen`; `SectMissions#send` appends `SectErrands#writePage`; acts `SEND` 5.. one per task, the id the roll index
+<< 20 | the hunt's realm << 16 | the row's mark `#check`, so a roll changed since the page came sends nobody by mistake).
+- Tasks (`Task`, in order): HUNT a beast of a realm picked QR..CF (`HUNT_FROM` 400 to `HUNT_TO` 900 blocks out, any way; 2 days),
+  GATHER (250..600 out; 1 day), REALM (a secret realm of the sect's world while its gate is open, `#openRealm`: to its seal; 3 days),
+  LETTER (the nearest other living sect of the world, `#letterTarget`: to its core; 1 day). Refused (`#send`): not the founder, out,
+  on the way back, resting, someone's personal disciple (`#personal`: loaded with a master, or an online player's), more out than
+  `#mostOut` (a third of its members, one at least), no realm open / no other sect. The page warns when the task's rank (`#taskRank`:
+  the quarry's realm Mid, QR Mid, the realm's `meantFor` Mid, 0) stands above theirs.
+- Travel (`ErrandGoal`, priority 2: above seclusion, journeys and the sect's day, below flight, fights and talk): flies (or walks) to
+  the task's place and lingers within `THERE` 12; once its time is up, home (settled within 12 of the core). Flying, it keeps 14 to 40
+  over the land under it; over nothing at all (an island world's sky), and within `APPROACH` 96 of where it is bound, at least 4 over
+  that place's height, so it comes in over a sect on a floating island (it came in under one in a check); it lands only on land, never
+  over water or the void. `CultivatorNpc#isLeashed`
+  is off while out (it fights back on the road). Out of sight (`#second`: nobody within `NpcTravel#reach` + SLACK; the tick: loaded in
+  land that doesn't tick) it is taken out of the world (`#takeOut`: its body's NBT kept on the `Errand`, `travelling` set so its sect
+  isn't left), and goes on unseen at `NpcTravel#SPEED` (`Errand#at`, the leg from where it was taken out); a player near where it has
+  got to, the land ticking, it is back there (`#bringBack`: cruising if it flies, on the ground if not). Its land unloading under it
+  at once (its player teleported or logged out, so it never stood in land that doesn't tick), it goes on unseen from there too
+  (`#unloaded` from `CultivatorNpc#onUnload`; `goneOnTheRoad` keeps it from being saved with the land, `CultivatorNpc#shouldBeSaved`).
+  One gone in at a secret realm's seal is taken out even if seen, and stays inside till its time is up. Back home unseen, it is set
+  down on its own mat (`Sect#dwelling`), the land woken a moment (`NpcLedger#wake`) if nobody is there. A copy loaded while its body
+  is out is discarded.
+- Coming back (`#tick` every 5 s; `#comeBack`): `#outcome` by the stages between them and the task: LOST (a letter 0.5 in a hundred,
+  herbs 0.2..20, else 0.5..50 in a hundred, 2 a stage under), WOUNDED (3..50, 3 a stage), else DONE, 1 in 20 a BREAKTHROUGH (a stage up
+  on the roll and the body). Spoils (`#spoils`: a hunt the quarry's demon core, leather, beef; herbs aged by their realm; a realm's
+  stones and a Spring of the Ancients 1 in 4; a letter 5 Low stones) at the core (`Sect#spoils`, `SPOILS_KEPT` 54 stacks), half if
+  wounded (and `REST_DAYS` 3 resting, `Sect#resting`); a letter `LETTER_STANDING` 10 with the sect it went to. The founder is told.
+  LOST (`#gone`): off the roll, mourned at the core (`NpcLife#mournAway`), rumour `LOST` (local, a few days); its body gone; one in
+  the world goes on and is gone once out of sight; one stood where its land unloaded is gone the moment it loads (its land woken,
+  `LOOKS` 10 times at most; `CultivatorNpc#onLoad` and `#secondTick` don't dismiss it as one let go).
+- Off the roll while out (killed on the road, cast out): the errand dropped. The sect disbanded: all of them.
+- `PlayerSects#collect` takes the spoils with the tribute; the core's Sect page counts them. Codex "Sending Your Disciples Out".
+  Tests `SectErrandsGameTests`.
 
 ## The lag and save-size sweep (2026-11-10)
 
@@ -806,6 +943,129 @@ the abyss, nothing beneath it down to the bottom of the world: vanilla's spring 
 Netherworld's springs were meant to be; those that would have run over the land are no longer made. Looked over again, 245 fresh chunks
 of the Fields and 245 of the Springs washed none. Land made before keeps the springs it has. Tests: `NetherworldSpringsGameTests` (the
 rule at a chasm's edge; fresh Fields land, no plant washed away and no spring running over the land).
+
+2026-11-13, the user's "Fix that rare leak" (the fresh-land test failed about one run in three, one "spring over the land" each time,
+mud a block or two under its way out, never a plant washed): the leak was the test's. It took any still water source set in rock above
+and below with one open side for a spring; at the edge of a lake (its mud lining under it) or of a Yellow Springs pool (its water line at
+Y 79) under an overhang, that open side is more standing water. A spring's way out is open, or carries its falling water, so a "way out"
+holding a still source is no longer counted. Checked in the test copy with the springs as they are and the test so corrected, 400 fresh
+chunks of the Fields a run: five runs, 2,000 chunks, no spring over the land and no plant washed (the old count would have failed two of
+them, on lake edges). The springs themselves are unchanged.
+
+## The gate pavilions' windows, a line said twice, and Qi Circulation's manual undone (2026-11-13)
+
+- **Windows mirrored about the door** (the user's screenshot of the Jade Capital's gate pavilion: "the fences not being in the correct
+  spot, its not symmetrical"). The pavilion on a city gate and a shop's upper storey laid their windows (the palette's fence posts) every
+  four blocks (three, a shop's) from one end of the wall, not by its pillars: on the capital's 31-wide gate one stood in a door pillar,
+  one in the doorway's top corner and one beside the far pillar, nothing mirroring them. Now `SectPiece#bayWindows` sets them in the
+  middle of each bay between the pillars `walls` raises (`pillarSpots`, mirrored), two side by side where a bay's plaster is an even
+  number of blocks, and none in the doorway's bay. Gates and shops already generated keep theirs. Tests: `WallWindowsGameTests`.
+- **The Methods tab said each path's method's reach twice**: a top line ("Your method, Qi Circulation: its volumes reach ...", and the
+  ghost page's for Netherworld Breathing) and the methods' list just under it ("Your volumes reach ... (it has ... to ...)"). The heaven
+  page's top line is gone (the list is always under it there); the ghost page's shows only while no ghost path is begun (the list
+  hidden). The "gathers nothing in this realm" warnings stay.
+- **Qi Circulation's own manual, undone** (the user: "revert the qi circulation being a method of its own change"). For a day (the
+  builds of 2026-11-12/13) Qi Circulation was a Method Manual of its own and the scriptures taught only their arts. That is gone again:
+  the scriptures (Jade Slips, Dao Steles, a teacher's) carry Qi Circulation's volumes up to their realm, as the heaven methods below
+  tell. A Qi Circulation manual left from those builds reads as a blank Method Manual that does nothing; a save made with them loads
+  as before, Circulation's reach coming from the scriptures known (the manual's stored reach is ignored).
+
+## The gap's storms that matter, and pressure one out-heals (2026-11-13)
+
+The user, on how hard the first ascension is: free flight had made the Spatial Gap's storms easy to fly round, and "people who can out
+heal the spatial pressure currently still have the damage tick happen which is annoying". Of my proposal they took the storms; the
+pressure, its layers and the realm's mending stay as they were.
+
+- **Pressure one out-heals isn't felt.** Each second's pressure (`SpatialTrialHandler#press`) is skipped entirely, no hurt and no flinch,
+  for one whose body mends at least as fast as it presses as fed as it is now (`CultivationStats#mendingNow`: vanilla's natural
+  regeneration, quick with food full and some saturation, all of it with Qi Sustenance, slow with food 18 or more, times the realm's
+  `mendFactor`, plus Regeneration's). The gap's (a Heavenly Being Grand Perfection mends 4.6 a second against the stormy layers' 8.2,
+  so it still feels them; from Four Axis Grand Perfection, fed, nothing), a Void Breach's and the Immortal Gate's climb alike. Hungry,
+  the mending slows and the pressure comes back.
+- **A bolt strikes a flat 12** (`SpatialStorms#BOLT_DAMAGE`), whatever the realm, armour and its enchantments no help (new damage type
+  `spatial_storm`: bypasses armour and enchantments, no impact; Resistance and wards still turn some; "struck down by a spatial storm").
+  Worn Rings of Transcendence still halve it; the dead take their share of it as the Netherworld's tribulation's yin. Before, it hit as
+  one strike of one's own last tribulation, some ten at Heavenly Being once armour had turned it. A storm in reach of someone still
+  strikes every 15-30 ticks, most bolts at them.
+- **Its winds drag and carry.** Under a storm in force or inside it (`SpatialStorms#inReach`, `#inForce`: the lightning's reach, 100
+  below the cloud's base, up through the cloud), any flight goes at half speed (`SpatialStorms#DRAG`, `QiFlight#dragged`: Qi Flight, a
+  sword, Cloud-Treading, the dead's and a Ghost King's form alike; a halved speed is still known as one of ours, `QiFlight#isOurs`), and
+  the winds carry one along with the storm's drift (client `GapSinkMixin`, from `ClientSpatialStorms#windAt`: 0.09 of the drift a tick,
+  so one comes to drift with it at its pace, 3-6 blocks a second). The server's move check allows for the drift (`QiFlight#moveAllowanceSq`).
+- **The upper layers' storms close in.** A storm whose base is in the upper layers turns toward the nearest climber nearing its layer
+  (`SpatialStorms#closeIn`, `#steer`: within 700 to the side, from 60 below its lightning's reach up through its cloud; at most 0.03
+  radians a tick, its speed kept) while no one is under it; once someone is, it holds its course, so one caught can fly out of it.
+  The storms' drift is sent to clients every second, as before.
+
+Codex: The Spatial Gap. Tests: `GapStormsGameTests`.
+
+## Walking in the dead, and founding from a clone or another's body (2026-11-13)
+
+The user: "You can't found a sect when you're a clone currently (or possessing someone). Also, can you posses dead bodies? If so you
+should be able to, and they become a walking skeleton as they rot and you roam with them. Ask me lots of questions about this feature."
+Built by their answers to 21 questions.
+
+**Founding** (`PlayerSects#refusal`, `#found`): in one's clone (`Clones`), weighed by one's own whole strength (`founderRank` of one's own
+record); with one's soul in another's living body (Possession), the sect one's own (founder, name, places by one's own strength), its
+alignment and race the body's (and a body sect if it is a body cultivator's). The dead found none: a ghost, or one walking in a body of
+the dead ("The dead found no sects.", which replaced "Only the living, in their own bodies, found sects.").
+
+**Ghostly Possession, the dead's own** (`GhostPossession`, `Ability#GHOST_POSSESSION`; the user: "if a ghost possesses a corpse, their
+shouldnt be a tether", "ghosts should have their own unique ability to posses that doesnt rely on a nascent soul. no tether"; their picks:
+the living and the dead, every ghost; "a nascent soul possessing a corpse should still have a tether"):
+- Every ghost has it, from the lowest realm, a mortal's ghost too (`Ability#isUnlocked`); no Nascent Soul, no soul sent out.
+- Used looking at a body within 5 blocks: a body of the dead lying there (as above), or a living player or cultivator, at least a realm
+  below the ghost's highest path, weighed as any possession is (`SoulProjection#refusal`: PvP for players, nobody in a body themselves).
+- It costs 10% of the ghostly qi pool to go in, and a flat 3 ghostly qi a second to stay (`GhostPossession#UPKEEP`: a soul's at its body,
+  x1.5), the same however far it goes: nothing tethers it, nothing pulls it out.
+- In the body it is the body (Possession, the tenancy marked a ghost's): no ghost to the world (seen by all: `GhostSystem#broadcast`,
+  the tracker asked again), the ability on the body's wheel as its way out (`Possession#leaveBy`; its client told by GHOST_TENANT, so the
+  wheel shows it open: `Possession#clientGhostBorrowed`), Soul Projection not.
+- Out by the ability again, its ghostly qi dry, logging out, or the body's death: a living body dies as its owner's own death
+  (`GhostPossession#bodyDying`, `Possession#kill`), a body of the dead falls down where it stands; the ghost a ghost again there.
+- The icon: a pale ghost sinking into a body's head, no cord behind it (tools/beast-art `Icons#ghostPossession`,
+  `java BeastArt <assets> ghostpossession`).
+
+**Walking in the dead** (`CorpseWalk`, Possession's third kind of body, `Possession#enterCorpse`):
+- **Who**: a projected soul (Nascent Soul and up, the living's or the dead's), right-clicking a body (`SoulProjection#tryPossessCorpse`,
+  10% of its pool, its upkeep and its tether as in a person's body: past the tether's end it is pulled out, the user's word); or one of
+  the dead as it is, by its own Ghostly Possession (below: no soul sent out, so no tether; right-clicking a body does it too). Any
+  player's or cultivator's body, fresh, rotting or bones, the secret realms' ancient bones too; at least a realm below the
+  walker's highest path, by the dead's realm (`CorpseWalk#refusal`); one's own whatever its realm (one's ghost walks in it, dead still).
+- **What it is**: what the dead was. A body keeps the dead's record as they died (`CorpseBlockEntity#record`, `CorpseWalk#snapshot`: a
+  player's own record, a cultivator's as possession would have it; the ancient dead and bodies laid before today a bare record of their
+  rank), and the walker plays it (`CorpseWalk#recordOf`, never a ghost's): the whole strength of the dead's realm whatever its rot, their
+  spells and techniques on the qi they died with, which the yin about it refills (`CorpseWalk#feed`: the realm's pace x the ghostly qi's
+  density / a Soul Sand Valley's, at most x2; its own yin left out). It flies by no means (QiFlight), eats nothing ("The dead eat
+  nothing."; its belly kept full, so no starving), mends of itself only by yin (half a living body's pace where it is a Soul Sand Valley's
+  or thicker; FoodDataMixin mends nothing), and is undead (`CorpseUndeadMixin`: Smite, healing potions harm it, harming ones heal it, no
+  Regeneration or poison). Sunlight is nothing to it. What it holds is the walker's (its armour on it: `CorpseWalk#bodyOf`).
+- **Its rot** goes on in the walker's keeping, x(1 + realm/2) slower by the walker's highest path (`CorpseWalk#rotSlowed`: Nascent Soul
+  2.5, Heavenly Being 3, True Immortal 6), told as it turns; fresh it is drawn paler, rotting grey-green with flies about it (a demon's
+  beast's head and tail rotting with it: BeastLayer), bones a skeleton in its shape wearing its armour (client `ClientBodies` corpse look,
+  BODY_LOOK kind 3; `CorpseBonesRenderer`; the hand in first person too). Bones last until destroyed or left.
+- **A demon's bones** (the user: "demon race skeletons should probably look different to other races' skeletons"), walking or lying
+  (`CorpseBonesRenderer`, `CorpseRenderer#drawBones`): its race's bare skull in place of a man's, its own head's shape (snout, jaw, fangs, a
+  dragon's antlers) as ivory bone with dark sockets, nostrils and mouth, the soft parts gone (ears, eyelids, tongue, whiskers, beard, mane:
+  hidden, `BeastHeadModels#SOFT`); and its tail as vertebrae along the living tail's own pieces, so it sways as it did (a fox's, each of its
+  tails; a dragon's with a spine off each). Art: `textures/entity/bloodline/<race>_bones_beast.png` (the head on its living layout, the
+  vertebrae packed after it) and `geo/beast/<race>_tail_bones.geo.json`, written by tools/beast-art (`java BeastArt <assets> bones
+  <check folder>`: `Beasts#writeBones`, the `BONES` colouring through each race's own head builder; the head's layout written to the check
+  folder came out identical to the living head's).
+- **A demon's tail on a body lying** (flesh or bones; fixed while checking these in game): laid out straight from the small of the back
+  toward its feet, a fox's fanned out as many as it had (`BeastHeadModels.Model#lie`). Before, its standing curl went over with the body
+  and stood it up into the sky, and every one of a fox's nine tails showed, one over another.
+- **Leaving it** (Soul Projection, qi dry, the tether, logging out, a crash on the next join, its health spent): it lies down again where
+  the walker stands, as rotten as it came to be, holding what it carries (`CorpseWalk#layBack`; `Possession#leave`).
+- **The world**: righteous cultivators who see it within 24 fall on it (their hatred the body's own: `CorpseBlockEntity#id`), mortals
+  within 16 run, the devilish and the rest let it be; its own sect (a player's sect is kept with their body now too), seeing its dead walk
+  within 32, turns on the walker for good (`Sect#standing`). It gives off its yin as it walks (`Corpses#yinAt`). Taking a body draws the
+  walker 5 toward the devilish path, as bleeding one does.
+- **Meditating in it** refines Corpse Yin Refining for the walker's own ghost path (`CorpseWalk#meditate`: the body's drain share,
+  `CorpseYin#share` by its rot, every 120 s), owed and paid into the walker's own record as it leaves (kept with the possession, so a
+  crash pays it too). Nothing for one whose ghost path doesn't practise it.
+
+Codex: Possession, The Bodies of the Dead. Tests: `CorpseWalkGameTests`, `PlayerSectGameTests#aCloneOrASoulInAnothersBodyFoundsToo`.
 
 ## Bloodlines: the demon races
 
@@ -1835,6 +2095,23 @@ Tests: `MethodsPhaseTwoGameTests`.
   a carrying way, a secret realm one doesn't fly freely in); a flier's wings hold it up (`setNoGravity`) so dedicated servers don't
   kick its rider for floating. The rider sits on `DemonBeast#seat` by build; one teleported more than `TORN_AWAY` 16 off is let go
   rather than dragged back (`positionRider`). The rider's jump is read through `mixin/LivingEntityAccessor`.
+  **Fighting from the saddle** (2026-11-13, the user's "Build as designed"; `SaddleStrikes`): the Saddle Strike key (B,
+  `ModKeybinds#SADDLE_STRIKE`; the client sends C2S `saddle_strike` only while it rides a beast whose rider it is and no strike is
+  carrying it) has the owner's ridden beast strike what they look at (`#lookedAt`: their sight from `directionFromRotation(xRot, yRot)`
+  short of the first collider, `AIM_SLACK` 0.6 wide, the nearest within the move's reach, never the rider, a fellow passenger, anyone
+  `HeavenSpells#spared` by the rider, a spectator, invulnerable, a soul or one of the dead). Its move by signature (`#moveOf`): CHARGE /
+  SPARK_CHARGE / STUN_CHARGE a charge (reach 14, pace 0.55 + 0.03/rank to 1.2, 40 ticks: x1.6, knockback 1.6, the spark's and the
+  stun's effects), POUNCE a leap (9 x grown; the wild leap: x1.7, Slowness), ICE_SLAM / POUND a slam (the wild radius round it; held 14,
+  down at 12: x1.3, frost or the heave, on all it may strike), BREATH 30 ticks of fire (6 x grown; x0.6 every 6, alight 3 s, a cone at
+  the target), COIL (2; held 60: slowed, kept before its jaws, x0.7 every 12), SWOOP / DIVE a dive (24 x grown; pace flight pace x1.6
+  in 0.8..2.0, 40 ticks: x1.4 / x1.8 and the roc's gust), THROW / WATER_JET a shot (16 / 20; `BeastShot#fromSaddle` may strike another
+  beast, never its own or its rider), the rest (PACK, VENOM, DRAG, SHELL) a lunging bite (2.5, 8 ticks at 0.45: `doHurtTarget`, its
+  venom or drag in it). Strength `DemonBeastGoals#attack`; spent at once for `DemonBeastGoals#restAfter` (the wild rests, now one table
+  both use; a bite 20), refused with the time left. The server keeps the strike (`DemonBeast#saddleStrike`, ticked in `aiStep`, judging
+  contact with the target from the client-reported position) and tells the rider's client (S2C `saddle_lunge`, 0 ticks: over) to carry
+  the beast (`DemonBeast#lunge`/`#carried` in `travel`: the charge's and bite's rush, the pounce's leap, the dive at the target, never
+  climbing where it can't fly with its rider; the rest held still), its rider's keys set aside meanwhile. Ridden it still takes up no
+  fight of its own. Codex "Spirit Beast Bond". Tests `MountGameTests`.
 - **Court of the Dead** (`CourtOfTheDead`; `GhostPalaces#claim`/`#heldBy`/`#kingOf`): a player Ghost King practising it stands within
   4 of an empty throne for 5 s: claimed; the palace's retainers are its allies (`GhostCultivatorNpc#isAlly`), their grudge dropped.
   Every 60 s within its palace, each living retainer pays max(0.0025, 0.02 x 2^(its realm - the king's)). No longer a king: the
@@ -2223,7 +2500,7 @@ With no scripture, or none with Circulation's volume of your realm, nothing (Met
 the bar as it is, whatever the scripture, but only while there is a volume. The layers settle in by the same factor, each
 scripture by its own element. While the realm is suppressed (Four Axis in the lower realms), nothing gains. Choose which
 scripture Circulation follows on the Methods tab's **Heaven Path** page (the Ghost Path and Heaven Path buttons at its top switch
-pages): how far your Circulation volumes reach (and that your realm gathers nothing, if it doesn't), each scripture's layer, its
+pages): your methods, Qi Circulation's reach among them (and that your realm gathers nothing, if it doesn't), each scripture's layer, its
 realms as pips, its next layer settling (how far, and how long here) or the stage it opens at, the element's share here, and a
 **Practise** button.
 
@@ -3231,9 +3508,10 @@ for an island). Now nothing waits on new land:
   Arriving reads only loaded land: if the Overworld's ground isn't loaded by then, you come down from its sky instead,
   the landing protected.
 
-**Storms spread through the gap.** The physical storms (their lightning a tribulation strike) now gather all round everyone in
-the gap: everyone in it has four round them in the shallows and ten in the upper layers they must rise through (or the
-lower ones they must sink through), most of them gathering in the stormy layer nearer them (doubled 2026-10-17; at most 32 in
+**Storms spread through the gap.** The physical storms (their lightning a tribulation strike; a flat 12 since 2026-11-13, their
+winds dragging and carrying fliers and the upper layers' closing in on climbers: "The gap's storms that matter", above) now gather
+all round everyone in the gap: everyone in it has four round them in the shallows and ten in the upper layers they must rise through
+(or the lower ones they must sink through), most of them gathering in the stormy layer nearer them (doubled 2026-10-17; at most 32 in
 the gap at once).
 
 **Floating meditation.** From **Core Formation**, the living float as they meditate, as the dead always have: rising gently
@@ -6143,6 +6421,44 @@ highest settings). Iris is never required: everything below is looked up by name
 - **A ghost's own hand** in first person is drawn as a flat cyan glow (the pack discards the soul shader's draw in its hand
   pass); ghosts and souls in the world are drawn as ever.
 - Planet surfaces in the Astral Realm keep the pack's own sky, day and night.
+
+## JEI and the other mods of a modpack (2026-11-13)
+
+Checked against the user's CurseForge instance "Xiao 2" (JEI 15.56, Jade 11.13, Iris 1.7.6, Sodium 0.5.13, Entity Culling 1.11.3,
+Mouse Tweaks 2.26, Essential, AppleSkin, Controlling, Searchables, Terralith). None is required: each is used only when installed.
+
+- **JEI beside the mod's screens.** The Heaven Altar's, a storage formation's and a seized body's screens are laid out in the Hall's
+  frame (`HallFrame`: the mockups' size at every GUI scale), and JEI draws its list from Fabric's after-render event, which came after
+  the frame was left: laid out in the frame's pixels and drawn in the GUI's, it landed over the screen or not at all, and hovering,
+  clicking and R/U missed. Now a framed screen's before- and after-render events are wrapped in the frame (event phases,
+  `HallFrame#frameEvents`), the mouse they are told of is the frame's (`HallFrameGameRendererMixin`: the first GUI size the game's
+  render reads), and so is JEI's own reading of it (`compat/jei/mixin/JeiMouseUtilMixin`, its own optional mixin config
+  `defying-the-heavens.jei.mixins.json`, applied only with JEI). Another mod's words over a framed screen keep their shadow
+  (`HallFrame#flat`). The altar's screen, 300 of the frame's 427 across on a 16:9 window, left JEI room for two columns centred: with
+  a recipe viewer installed it steps left (never nearer the edge than 8) until the list has five, as a storage formation's has; a wider
+  window keeps it centred (`HeavenAltarScreen#init`). JEI's two bookmark buttons, laid out from the altar's left edge alone at their
+  own size, then sit over the altar's empty bottom-left corner (three columns would leave them room).
+- **JEI's pages for the crafts** (`client/compat/jei/DthJeiPlugin`, the `jei_mod_plugin` entrypoint). JEI finds the 43 crafting-table
+  recipes by itself; the plugin adds what it can't:
+  - **Alchemy Cauldron**: every brew, its ingredients and how many, the rarer herbs that stand in (Purple Lingzhi, Ochre Huangjing),
+    the time over the fire and the rank of Alchemy from which it never fails; an aged ingredient says its years set the pill's grade.
+  - **Artifact Forge**: all 55 workings with the demon core (the grade's realm or above; a weapon of an element, that element's) or
+    the element's token they want, the time, the qi drawn each second and the rank of Forging; and the 31 refinings of a natal
+    treasure (the blade and the next grade's materials of its kind).
+  - **Talismans**: the 13 patterns, the brush, paper, cinnabar and the pattern's extras, the share of one's qi and the rank.
+  - Over each page's arrow, how its station is worked. The cauldron, the forge, the brush and the paper are each page's stations.
+  - The clothing's two special recipes (dyeing, raising a grade: `ClothingRecipes`) by example in JEI's crafting pages, 76 of them,
+    where JEI's button lays them in the grid (`ClothingRecipes#dyeIngredients`, `#upgradeIngredients`: one list for the grid's
+    matching and the examples).
+- **The bauble panel** beside the inventory is kept clear of JEI's bookmarks (`BaublePanel#shownArea`).
+- **Entity Culling** skips drawing an entity whose box it can't see, and stops its ticking on the client. A spell's missile reaches
+  far past its box (a meteor's trail, a falling mountain): it is never culled now (`noCulling`, which Entity Culling reads), as the
+  spell fields, constructs, blocks and the spatial tear already were; a qi-ink seal's lines and a legend stone's sword are drawn
+  whatever their own block (`shouldRenderOffScreen`). The colossus, the primordial beasts, the vestiges and the tribulation clouds
+  already give it their whole size.
+- **Mouse Tweaks** doesn't clash: the storage formation's grid is drawn, not made of slots, so the wheel only scrolls it; in the
+  framed screens it gets the frame's mouse like everything else.
+- **Building**: JEI's jar is in `libs/` (`modCompileOnly files(...)`, `jei_version` in gradle.properties), so no download is needed.
 
 ## License
 

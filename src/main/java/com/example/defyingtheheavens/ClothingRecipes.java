@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
 import net.minecraft.world.level.Level;
@@ -37,16 +38,32 @@ public final class ClothingRecipes {
 	public static final RecipeSerializer<UpgradeRecipe> UPGRADE = Registry.register(BuiltInRegistries.RECIPE_SERIALIZER,
 			DefyingTheHeavens.id("clothing_upgrade"), new SimpleCraftingRecipeSerializer<>(UpgradeRecipe::new));
 
-	/** What raising a piece from {@code tier} to the next grade takes, besides the piece. */
-	public static List<Predicate<ItemStack>> upgradeMaterials(ClothingTier tier) {
-		Predicate<ItemStack> dew = stack -> stack.is(ModItems.SPIRIT_DEW);
-		Predicate<ItemStack> vein = stack -> stack.is(ModTags.QI_VEINS);
+	/**
+	 * What raising a piece from {@code tier} to the next grade takes, besides the piece: one ingredient for each thing that goes in (JEI's
+	 * examples of it show these too: client/compat/jei). Made anew each time, as an ingredient reads a tag's items when first asked.
+	 */
+	public static List<Ingredient> upgradeIngredients(ClothingTier tier) {
+		Ingredient dew = Ingredient.of(ModItems.SPIRIT_DEW), vein = Ingredient.of(ModTags.QI_VEINS);
 		return switch (tier) {
-			case MORTAL -> List.of(dew, dew, stack -> stack.is(Items.GOLD_INGOT));
-			case SPIRIT -> List.of(vein, stack -> stack.is(Items.DIAMOND));
-			case EARTH -> List.of(vein, vein, stack -> stack.is(Items.NETHERITE_SCRAP));
-			case HEAVEN -> List.of(vein, vein, stack -> stack.is(Items.NETHERITE_INGOT), stack -> stack.is(ModItems.SPIRIT_GINSENG));
+			case MORTAL -> List.of(dew, dew, Ingredient.of(Items.GOLD_INGOT));
+			case SPIRIT -> List.of(vein, Ingredient.of(Items.DIAMOND));
+			case EARTH -> List.of(vein, vein, Ingredient.of(Items.NETHERITE_SCRAP));
+			case HEAVEN -> List.of(vein, vein, Ingredient.of(Items.NETHERITE_INGOT), Ingredient.of(ModItems.SPIRIT_GINSENG));
 			case IMMORTAL -> List.of();
+		};
+	}
+
+	/** The same, as tests of what lies in the grid. */
+	public static List<Predicate<ItemStack>> upgradeMaterials(ClothingTier tier) {
+		return upgradeIngredients(tier).stream().map(ingredient -> (Predicate<ItemStack>) ingredient::test).toList();
+	}
+
+	/** The dyes that make {@code style}, one ingredient for each: white; blue or light blue; red and black. */
+	public static List<Ingredient> dyeIngredients(ClothingStyle style) {
+		return switch (style) {
+			case RIGHTEOUS -> List.of(Ingredient.of(Items.WHITE_DYE));
+			case NEUTRAL -> List.of(Ingredient.of(Items.BLUE_DYE, Items.LIGHT_BLUE_DYE));
+			case DEVILISH -> List.of(Ingredient.of(Items.RED_DYE), Ingredient.of(Items.BLACK_DYE));
 		};
 	}
 
@@ -86,9 +103,9 @@ public final class ClothingRecipes {
 
 	/** The style the dyes in {@code dyes} make, or null if they make none. */
 	static ClothingStyle styleOfDyes(List<ItemStack> dyes) {
-		if (dyes.size() == 1 && dyes.get(0).is(Items.WHITE_DYE)) return ClothingStyle.RIGHTEOUS;
-		if (dyes.size() == 1 && (dyes.get(0).is(Items.BLUE_DYE) || dyes.get(0).is(Items.LIGHT_BLUE_DYE))) return ClothingStyle.NEUTRAL;
-		if (exactly(dyes, List.of(stack -> stack.is(Items.RED_DYE), stack -> stack.is(Items.BLACK_DYE)))) return ClothingStyle.DEVILISH;
+		for (ClothingStyle style : ClothingStyle.values()) {
+			if (exactly(dyes, dyeIngredients(style).stream().map(ingredient -> (Predicate<ItemStack>) ingredient::test).toList())) return style;
+		}
 		return null;
 	}
 

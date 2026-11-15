@@ -33,7 +33,14 @@ public enum TalismanPattern {
 	/** The Yang Fire Talisman (YangFireTalismanItem), drawn as it is painted at a crafting table: blaze powder and a gold nugget in it too. */
 	YANG_FIRE("yang_fire", Use.OWN, QiElement.FIRE, 0, 0.05, 0, () -> ModItems.YANG_FIRE_TALISMAN, 1, () -> Items.BLAZE_POWDER, () -> Items.GOLD_NUGGET),
 	/** The Ghost-Quelling Talisman (GhostQuellingTalismanItem): Yin Jade in it too, two to a drawing as at the crafting table. */
-	GHOST_QUELLING("ghost_quelling", Use.OWN, QiElement.YIN, 1, 0.08, 0, () -> ModItems.GHOST_QUELLING_TALISMAN, 2, () -> ModItems.YIN_JADE);
+	GHOST_QUELLING("ghost_quelling", Use.OWN, QiElement.YIN, 1, 0.08, 0, () -> ModItems.GHOST_QUELLING_TALISMAN, 2, () -> ModItems.YIN_JADE),
+	// The three of 2026-11-13 (the user's "Build as designed"), after the rest: a brush keeps its pattern by its place in this list.
+	/** Burnt: standing still and unhurt a few seconds, one is taken to one's own nearest Formation Core in this world (Talismans#homeward). */
+	HOMEWARD("homeward", Use.BURNT, null, 1, 0.12, 600, () -> ModItems.HOMEWARD_TALISMAN, 1),
+	/** Thrown: the one it strikes can't cast a spell or fly for a few seconds, the fewer the stronger it is (Talismans#seal). */
+	QI_SEALING("qi_sealing", Use.THROWN, QiElement.EARTH, 1, 0.12, 200, () -> ModItems.QI_SEALING_TALISMAN, 1),
+	/** Burnt: for half a minute one sees through Concealment barriers, and those hidden by Concealment Talismans show to one (Talismans#reveal). */
+	REVEALING("revealing", Use.BURNT, QiElement.FIRE, 1, 0.10, 600, () -> ModItems.REVEALING_TALISMAN, 1);
 
 	/** How it is used: thrown (TalismanEntity), burnt on oneself (TalismanItem#use), or the older talismans' own ways. */
 	public enum Use { THROWN, BURNT, OWN }

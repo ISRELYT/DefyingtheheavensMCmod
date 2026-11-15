@@ -3012,11 +3012,13 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			}
 			rateLines = font.split(rate, width);
 		}
-		// Its method, Netherworld Breathing: the deepest realm its volumes reach (GhostMethods#hasVolume), and whether the path's realm gathers.
+		// Its method, Netherworld Breathing: the deepest realm its volumes reach (GhostMethods#hasVolume), said here only while the methods
+		// below aren't listed (no ghost path begun: once they are, they say it, and this was the same line twice, 2026-11-13); and whether the
+		// path's realm gathers.
 		List<FormattedCharSequence> floorLines = new ArrayList<>();
 		Realm reach = GhostMethods.foundationReach(s);
 		if (reach != null && !sealed) {
-			floorLines = new ArrayList<>(font.split(Component.translatable(ModLang.METHODS_GHOST_REACH, FourAxis.volumeReach(reach).getDisplayName()), width));
+			if (GhostMethods.ghostRank(s) < 0) floorLines.addAll(font.split(Component.translatable(ModLang.METHODS_GHOST_REACH, FourAxis.volumeReach(reach).getDisplayName()), width));
 			Realm here = GhostMethods.ghostRealm(s);
 			if (here != null && !GhostMethods.canGain(c)) {
 				floorLines.addAll(font.split(here == Realm.FOUR_AXIS ? Component.translatable(ModLang.MSG_AXES_ARE_THE_METHOD)
@@ -3170,8 +3172,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		} else if (c.isMortal()) {
 			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SEALED), 0x9E9E9E);
 		} else {
-			// Its method, Qi Circulation: the deepest realm its volumes reach (HeavenMethods#hasVolume), and whether this realm gathers.
-			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_REACH, FourAxis.volumeReach(HeavenMethods.deepestRealm(h)).getDisplayName()), 0xC8B88A);
+			// Whether this realm gathers. Its method, Qi Circulation, is listed in the methods below with how far its volumes reach (the
+			// scriptures known carry them): the line that said the reach here as well was the same line twice (2026-11-13).
 			if (!HeavenMethods.canGain(c)) {
 				addTop.accept(c.getRealm() == Realm.FOUR_AXIS ? Component.translatable(ModLang.MSG_AXES_ARE_THE_METHOD)
 						: Component.translatable(ModLang.MSG_HEAVEN_NO_VOLUME, c.getRealm().getDisplayName()), 0xFFC107);

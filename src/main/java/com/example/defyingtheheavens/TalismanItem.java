@@ -16,8 +16,9 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * A talisman drawn with the Inscription Brush (Talismans, TalismanPattern): used, thrown (Fire, Five Thunder, Frost, Binding: TalismanEntity) or
- * burnt on oneself (Golden Light, Divine Speed, Thousand-Li Escape, Concealment), and spent; then its pattern's own short wait (the hotbar's).
+ * A talisman drawn with the Inscription Brush (Talismans, TalismanPattern): used, thrown (Fire, Five Thunder, Frost, Binding, Qi-Sealing:
+ * TalismanEntity) or burnt on oneself (Golden Light, Divine Speed, Thousand-Li Escape, Concealment, Homeward, Revealing), and spent; then its
+ * pattern's own short wait (the hotbar's).
  * Its strength is its drawer's realm (written on it), at most a realm above whoever uses it; a Fine or Perfect drawing's a tenth or a quarter more.
  */
 public class TalismanItem extends Item {

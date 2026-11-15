@@ -69,12 +69,16 @@ public final class ClientSoul {
 	private static int host = -1;
 	private static Vec3 velocity = Vec3.ZERO;
 	private static final Map<Integer, Seen> SEEN = new HashMap<>();
+	/** Whether the local player, one of the dead, is in a body by its own possession (GHOST_TENANT: GhostPossession); no soul out for it. */
+	static boolean ghostTenant;
 
 	public static void register() {
 		SoulProjection.clientSoul = ClientSoul::isSoul;
 		SoulProjection.clientChanneling = player -> player == Minecraft.getInstance().player && state == SoulProjection.State.PROJECTING;
 		// In another's body (Possession), the synced record is the body's: Soul Projection is open on it, to leave by.
 		com.example.defyingtheheavens.Possession.clientBorrowed = c -> state == SoulProjection.State.INHABITING && c == ClientCultivationData.get();
+		// One of the dead in it by its own possession: that possession, the way out (Ability#GHOST_POSSESSION).
+		com.example.defyingtheheavens.Possession.clientGhostBorrowed = c -> ghostTenant && c == ClientCultivationData.get();
 		com.example.defyingtheheavens.Possession.clientSoulTears = c -> soulTears && state == SoulProjection.State.INHABITING && c == ClientCultivationData.get();
 		ClientPreAttackCallback.EVENT.register(ClientSoul::onPreAttack);
 	}
@@ -312,6 +316,7 @@ public final class ClientSoul {
 	/** Disconnect: nothing carries over to the next world. */
 	public static void clear() {
 		state = SoulProjection.State.NONE;
+		ghostTenant = false;
 		ticksLeft = 0;
 		body = Vec3.ZERO;
 		radius = 0;

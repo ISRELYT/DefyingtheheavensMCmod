@@ -96,6 +96,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		BaublePanel.register();
 		MethodTooltips.register(); // an offering's element and realm, a herb's realm, while their methods are practised
 		TooltipWrap.register(); // the mod's long tooltip lines kept on the screen
+		// What other mods draw over a framed screen (JEI's item list beside the altar's) is drawn in its frame too.
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> HallFrame.frameEvents(screen));
 		ClientPacketHandlers.register();
 		VitalsHud.register(); // the name, realm, health and qi in the top-left corner (vanilla's hearts held to ten: GuiHeartsMixin)
 		QiHud.register();
@@ -160,6 +162,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		LegendsClient.register(); // the legendary weapons: the spear's bolt, the sword spirits, the swords in their stones
 		net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
 			if (renderer.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>) registerAuraLayer(renderer, helper, context);
+			// A body of the dead gone to bones, walked in (CorpseWalk), is drawn by its own renderer: made anew with the players'.
+			if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer) CorpseBonesRenderer.build(context);
 		});
 		com.example.defyingtheheavens.SpellAuras.clientView = ClientSpellAuras::has;
 		// The masteries as this client was told them (water's bears its own player up: HeavenPassives#masters).
@@ -228,6 +232,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			SwordFlightClient.clear();
 			MeteorFlightClient.clear();
 			ClientSoul.clear();
+			ClientRevealed.clear();
 			ClientBodies.clear();
 			ClientBloodlines.clear();
 			ClientGestures.clear();
@@ -263,6 +268,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpellFx.tick();
 			ClientSpellSounds.tick();
 			BlockMasses.tick(client);
+			// A wounded soul's half pool (NatalTreasures#poolFactor), as the server reckons it, by the wound's own effect on the player.
+			if (client.player != null) ClientCultivationData.get().setSoulWounded(client.player.hasEffect(com.example.defyingtheheavens.ModEffects.SOUL_WOUND));
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());
@@ -292,6 +299,13 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			}
 			while (ModKeybinds.CAST_SPELL.consumeClick()) {
 				if (client.player != null && client.screen == null && ClientMethods.anyKnown()) ClientMethods.cast(null);
+			}
+			// Riding one's bound beast: it strikes what one looks at (SaddleStrikes; the server judges); off its back the key does nothing.
+			while (ModKeybinds.SADDLE_STRIKE.consumeClick()) {
+				if (client.player != null && client.screen == null && client.player.getVehicle() instanceof com.example.defyingtheheavens.DemonBeast beast
+						&& beast.rider() == client.player && !beast.lunging()) {
+					ClientPlayNetworking.send(ModPackets.SADDLE_STRIKE, PacketByteBufs.create());
+				}
 			}
 			while (ModKeybinds.MEDITATE.consumeClick()) {
 				if (client.player != null && client.screen == null) {

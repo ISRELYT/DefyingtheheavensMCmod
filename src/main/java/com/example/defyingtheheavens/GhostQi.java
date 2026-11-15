@@ -90,8 +90,8 @@ public final class GhostQi {
 		return yin <= 0 ? place : Math.max(place, Math.min(NETHERWORLD, place + yin));
 	}
 
-	/** The place's own density at a position in a level. */
-	private static double placeDensity(ServerLevel level, BlockPos pos) {
+	/** The place's own density at a position in a level (CorpseWalk reckons a walking body's yin apart from it). */
+	static double placeDensity(ServerLevel level, BlockPos pos) {
 		ResourceKey<Level> dimension = level.dimension();
 		if (dimension == Level.OVERWORLD) return OVERWORLD; // the same everywhere in it: no biome to look up
 		if (ModDimensions.isSecretRealm(dimension)) {

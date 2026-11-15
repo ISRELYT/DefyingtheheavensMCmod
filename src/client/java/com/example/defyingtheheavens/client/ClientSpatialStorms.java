@@ -146,6 +146,24 @@ public final class ClientSpatialStorms {
 		if (thunderCooldown > 0) thunderCooldown--;
 	}
 
+	/**
+	 * The drift (blocks a tick) of the storm whose winds hold one at ({@code x}, {@code y}, {@code z}): of those in force with the point in
+	 * reach (SpatialStorms#inForce, #inReach), the one whose heart is nearest; null where none does (GapSinkMixin carries one along with it).
+	 */
+	public static Vec3 windAt(double x, double y, double z) {
+		Storm held = null;
+		double best = Double.MAX_VALUE;
+		for (Storm s : STORMS.values()) {
+			if (!SpatialStorms.inForce(s.age, s.life) || !SpatialStorms.inReach(s.x, s.z, s.baseY, s.radius, x, y, z)) continue;
+			double d = Mth.square(x - s.x) + Mth.square(z - s.z);
+			if (d < best) {
+				best = d;
+				held = s;
+			}
+		}
+		return held == null ? null : new Vec3(held.vx, 0, held.vz);
+	}
+
 	public static void clear() {
 		STORMS.clear();
 		BOLTS.clear();

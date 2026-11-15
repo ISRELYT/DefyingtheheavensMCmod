@@ -109,6 +109,10 @@ public final class Spells {
 			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_SPELL_NOT_HERE));
 			return;
 		}
+		if (Talismans.qiSealed(p)) { // struck by a Qi-Sealing Talisman (Talismans#seal): no spell while it lasts
+			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_QI_SEALED_CAST));
+			return;
+		}
 		if ((spell == Spell.SOUL_DASH || spell == Spell.NINE_NETHER_STEP) && p.hasEffect(ModEffects.QUELLED)) { // bound where it stands (QuelledEffect)
 			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_QUELLED_HELD));
 			return;
@@ -160,6 +164,7 @@ public final class Spells {
 	 */
 	public static boolean castBy(CultivatorNpc npc, Spell spell) {
 		if (spell == null || !npc.isAlive() || npc.isRemoved() || ModDimensions.isPassage(npc.level().dimension())) return false;
+		if (Talismans.qiSealed(npc)) return false; // struck by a Qi-Sealing Talisman (Talismans#seal)
 		PlayerCultivation c = npc.cultivation();
 		long now = npc.level().getGameTime();
 		if (now < cooldowns(npc).getOrDefault(spell, 0L)) return false;

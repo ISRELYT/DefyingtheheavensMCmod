@@ -185,7 +185,18 @@ public enum Ability {
 	/** Myriad Fists (the Chaos-Tempered Body): an act, "on" while its flurry runs. */
 	MYRIAD_FISTS("myriad_fists", false, c -> BodyTechniques.has(c, Realm.PROFOUND_SOVEREIGN)),
 	/** Dharma Body of Heaven and Earth (the Body of Heaven and Earth): an act, "on" while the body towers. */
-	DHARMA_BODY("dharma_body", false, c -> BodyTechniques.has(c, Realm.HEAVENLY_LORD));
+	DHARMA_BODY("dharma_body", false, c -> BodyTechniques.has(c, Realm.HEAVENLY_LORD)),
+	/**
+	 * Ghostly Possession, the dead's own (GhostPossession; the user, 2026-11-13: "ghosts should have their own unique ability to posses that
+	 * doesnt rely on a nascent soul. no tether"): every ghost's, a mortal's ghost too ({@link #isUnlocked}), into the body it looks at, the
+	 * dead's or the living's, for ghostly qi, untethered. An act, "on" while it is in a body; in one, the way out of it (Possession#leaveBy).
+	 */
+	GHOST_POSSESSION("ghost_possession", false, true, c -> c.netherworld().ghost()),
+	/**
+	 * Natal Recall (NatalTreasures; the user's "Build as designed", 2026-11-13): one whose core a natal treasure is bound to calls it to its hand
+	 * from anywhere in the world it is in. An act.
+	 */
+	NATAL_RECALL("natal_recall", false, c -> c.natalTreasure() != null);
 
 	private final String id;
 	private final boolean onByDefault;
@@ -215,8 +226,10 @@ public enum Ability {
 	 */
 	public boolean isUnlocked(PlayerCultivation c) {
 		if (this == QI_SENSE && c.hasPhysique(Physique.BLESSED_MERIDIANS)) return true; // open from a mortal's first day (Physique)
+		// One of the dead in a body by its own possession (GhostPossession) keeps its way out of it; and every ghost has it, a mortal's too.
+		if (this == GHOST_POSSESSION) return Possession.isGhostBorrowed(c) || unlocked.test(c);
 		// A soul in another's body (Possession), a mortal's too, keeps the way out of it, and its own tear if the body has none.
-		if (this == SOUL_PROJECTION && Possession.isBorrowed(c) || this == SPATIAL_TEAR && Possession.soulTears(c)) return true;
+		if (this == SOUL_PROJECTION && Possession.isBorrowed(c) && !Possession.isGhostBorrowed(c) || this == SPATIAL_TEAR && Possession.soulTears(c)) return true;
 		// A clone (Clones) keeps the way back to its main body, whatever its own realm.
 		if (this == CLONE && Clones.isCloneRecord(c)) return true;
 		// The Body Path's techniques are the flesh's, not the meridians': a mortal tempered on it wields them too (BodyTechniques).
@@ -228,8 +241,10 @@ public enum Ability {
 
 	/** What the ability does, with this cultivator's numbers filled in (as the ghost path's, if that path awakened it: {@link #awakenedBy}). */
 	public Component getDescription(PlayerCultivation c) {
-		// In another's body (Possession), Soul Projection is the way out of it.
-		if (this == SOUL_PROJECTION && Possession.isBorrowed(c)) return Component.translatable(ModLang.abilityKey(id) + ".description.leave");
+		// In another's body (Possession), Soul Projection is the way out of it; one of the dead's, its own possession (GhostPossession).
+		if (this == SOUL_PROJECTION && Possession.isBorrowed(c) || this == GHOST_POSSESSION && Possession.isGhostBorrowed(c)) {
+			return Component.translatable(ModLang.abilityKey(id) + ".description.leave");
+		}
 		String key = ModLang.abilityKey(id) + ".description" + (awakenedBy(c) == TwoPaths.Path.GHOST && hasGhostWording() ? ".ghost" : "");
 		return switch (this) {
 			case QI_FLIGHT -> Component.translatable(key, Math.round(c.qiFlightCostPerSecond()));
@@ -249,6 +264,11 @@ public enum Ability {
 						left == Math.floor(left) ? String.valueOf((long) left) : String.valueOf(left), c.soulHearts()));
 			}
 			case GHOST_EYE -> Component.translatable(key, GhostMethods.GHOST_EYE_COST);
+			// What a call costs of the qi pool, and how long till the next.
+			case NATAL_RECALL -> Component.translatable(key, Math.round(NatalTreasures.RECALL_QI * 100), NatalTreasures.RECALL_WAIT / 20);
+			// Its reach, what going in costs, and what staying costs a second (the same anywhere: nothing tethers it).
+			case GHOST_POSSESSION -> Component.translatable(key, Math.round(GhostPossession.REACH), Math.round(SoulProjection.POSSESS_QI_FRACTION * 100),
+					String.format(java.util.Locale.ROOT, "%.1f", GhostPossession.UPKEEP));
 			case NETHERWORLD_VEIL -> Component.translatable(key, Math.round(GhostMethods.VEIL_COST));
 			case YIN_WIND_STEPS -> Component.translatable(key, Math.round(GhostMethods.YIN_WIND_SPEED * 100), Math.round(GhostMethods.YIN_WIND_COST));
 			case GHOST_FLIGHT -> Component.translatable(key, Math.round(GhostMethods.GHOST_FLIGHT_COST));

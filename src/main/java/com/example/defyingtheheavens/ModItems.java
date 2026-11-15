@@ -171,6 +171,11 @@ public final class ModItems {
 			new TalismanItem(TalismanPattern.THOUSAND_LI_ESCAPE, new Item.Properties().stacksTo(16)));
 	public static final Item CONCEALMENT_TALISMAN = register("concealment_talisman",
 			new TalismanItem(TalismanPattern.CONCEALMENT, new Item.Properties().stacksTo(16)));
+	/** The three of 2026-11-13: home to one's own Formation Core, a foe's qi sealed, concealment seen through (Talismans). */
+	public static final Item HOMEWARD_TALISMAN = register("homeward_talisman", new TalismanItem(TalismanPattern.HOMEWARD, new Item.Properties().stacksTo(16)));
+	public static final Item QI_SEALING_TALISMAN = register("qi_sealing_talisman",
+			new TalismanItem(TalismanPattern.QI_SEALING, new Item.Properties().stacksTo(16)));
+	public static final Item REVEALING_TALISMAN = register("revealing_talisman", new TalismanItem(TalismanPattern.REVEALING, new Item.Properties().stacksTo(16)));
 	/** Holds a ghost method; read, it teaches it, and isn't used up (see GhostJadeSlipItem). */
 	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
 	/** Holds a heaven method; read, it teaches it, and isn't used up (see JadeSlipItem). */

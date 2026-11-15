@@ -52,7 +52,9 @@ public final class Rumours extends SavedData {
 	 */
 	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE, LEGEND, REALM,
 		/** A top-ten place on a world's list won (Rankings#won), and a sect founded by a player (PlayerSects): talked of round their world a few days. */
-		RANKING, FOUNDING }
+		RANKING, FOUNDING,
+		/** One of a player's sect sent out on an errand who never came back (SectErrands): talked of near the sect a few days. */
+		LOST }
 
 	/** A place won on a list, and a sect's founding, are talked of this long (ticks: three days). */
 	public static final long TALE_REMEMBERED = 3 * 24_000L;
@@ -95,7 +97,7 @@ public final class Rumours extends SavedData {
 				case KILLING -> now - since < KILLING_REMEMBERED;
 				case CAVE, CORE, STELE, LEGEND -> true;
 				case REALM -> id.endsWith(":stirs") ? now - since < STIRRING_REMEMBERED : !id.contains(":fallen:") || now - since < FALLEN_REMEMBERED;
-				case RANKING, FOUNDING -> now - since < TALE_REMEMBERED;
+				case RANKING, FOUNDING, LOST -> now - since < TALE_REMEMBERED;
 			};
 		}
 
@@ -247,6 +249,19 @@ public final class Rumours extends SavedData {
 		PENDING.add(new Rumour("ranking:" + board.getId() + ":" + place, Kind.RANKING, board.home(), BlockPos.ZERO, winner, place, now, loser));
 	}
 
+	/**
+	 * The sect {@code winner} took the {@code place}th place on {@code board}'s Sect List from {@code loser} (SectList: a top-three place changing
+	 * hands): told of round that list's world, as a place won on the list is (kind RANKING, its id {@code sectlist:<board>:<place>}).
+	 */
+	public static void noteSectRanking(Rankings.Board board, int place, String winner, String loser, long now) {
+		PENDING.add(new Rumour("sectlist:" + board.getId() + ":" + place, Kind.RANKING, board.home(), BlockPos.ZERO, winner, place, now, loser));
+	}
+
+	/** {@code name} of {@code sect}, sent on {@code task} (SectErrands), never came back: told of near the sect (its core) a few days. */
+	public static void noteLost(Sect sect, String name, SectErrands.Task task, long now) {
+		PENDING.add(new Rumour("lost:" + sect.id + ":" + name, Kind.LOST, sect.dimension, sect.core, name, task.ordinal(), now, sect.name));
+	}
+
 	/** {@code founder} founded {@code sect} (PlayerSects): told of round its world. */
 	public static void noteFounding(Sect sect, String founder, long now) {
 		PENDING.add(new Rumour("founding:" + sect.id, Kind.FOUNDING, sect.dimension, sect.core, sect.name, 0, now, founder));
@@ -269,7 +284,7 @@ public final class Rumours extends SavedData {
 		}
 		long now = server.overworld().getGameTime();
 		data.rumours.values().removeIf(r -> r.kind == Kind.KILLING && now - r.since >= KILLING_REMEMBERED
-				|| (r.kind == Kind.RANKING || r.kind == Kind.FOUNDING) && now - r.since >= TALE_REMEMBERED);
+				|| (r.kind == Kind.RANKING || r.kind == Kind.FOUNDING || r.kind == Kind.LOST) && now - r.since >= TALE_REMEMBERED);
 		data.setDirty();
 	}
 
@@ -371,13 +386,19 @@ public final class Rumours extends SavedData {
 				yield Component.translatable(ModLang.rumour("realm.fallen"), rumour.detail, name);
 			}
 			case RANKING -> {
-				// "ranking:<board>:<place>": who won it, from whom, and which list.
+				// "ranking:<board>:<place>": who won it, from whom, and which list; "sectlist:<board>:<place>": a sect's (SectList).
 				String[] parts = rumour.id.split(":");
 				Rankings.Board board = Rankings.Board.EARTH;
 				for (Rankings.Board b : Rankings.Board.values()) if (parts.length > 1 && b.getId().equals(parts[1])) board = b;
-				yield Component.translatable(ModLang.rumour("ranking"), rumour.subject, rumour.detail, rumour.initialYears, board.getDisplayName());
+				String words = rumour.id.startsWith("sectlist:") ? "sect_ranking" : "ranking";
+				yield Component.translatable(ModLang.rumour(words), rumour.subject, rumour.detail, rumour.initialYears, board.getDisplayName());
 			}
 			case FOUNDING -> Component.translatable(ModLang.rumour("founding"), rumour.subject, rumour.detail, direction, country, rough);
+			// "lost:<sect>:<name>": who never came back, of which sect, from what errand.
+			case LOST -> {
+				SectErrands.Task task = SectErrands.Task.byIndex(rumour.initialYears);
+				yield Component.translatable(ModLang.rumour("lost"), rumour.subject, rumour.detail, task == null ? Component.empty() : task.getDisplayName());
+			}
 		};
 	}
 

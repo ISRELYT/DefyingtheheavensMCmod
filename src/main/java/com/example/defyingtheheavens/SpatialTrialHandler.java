@@ -594,8 +594,8 @@ public final class SpatialTrialHandler {
 		}
 		if (++t.ticks % 20 == 0) {
 			loadAhead(server, p);
-			// Twice as heavy for each one carried in one's sleeve (Sleeves).
-			p.hurt(ModDamageTypes.spatialPressure(gap), pressureAt(p.getY()) * Sleeves.pressureFactor(p));
+			// Twice as heavy for each one carried in one's sleeve (Sleeves); nothing to one who out-heals it (press).
+			press(p, ModDamageTypes.spatialPressure(gap), pressureAt(p.getY()) * Sleeves.pressureFactor(p));
 			if (!p.isAlive()) return;
 			long x = Math.round(p.getX() * GAP_SCALE), z = Math.round(p.getZ() * GAP_SCALE);
 			if (inLowerLayers(p.getY())) {
@@ -619,6 +619,23 @@ public final class SpatialTrialHandler {
 	/** In the gap's lower layers ({@link #LOWER_LAYERS_Y}), still above its floor. */
 	public static boolean inLowerLayers(double y) {
 		return y < LOWER_LAYERS_Y && y >= FLOOR_Y;
+	}
+
+	/**
+	 * A second's spatial pressure of {@code perSecond} on {@code p}, as {@code source}: none at all, no hurt and no flinch, for one whose body
+	 * mends at least as fast as it presses ({@link #outHeals}; the user's ask, 2026-11-13: "people who would out heal it completely just
+	 * don't get damaged by it anymore"). The gap's, a Void Breach's (VoidBreach) and the Immortal Gate's climb (ImmortalGate) alike.
+	 * @return whether it pressed
+	 */
+	public static boolean press(ServerPlayer p, net.minecraft.world.damagesource.DamageSource source, float perSecond) {
+		if (perSecond <= 0 || outHeals(p, perSecond)) return false;
+		p.hurt(source, perSecond);
+		return true;
+	}
+
+	/** Whether {@code p}'s body mends as fast as {@code perSecond} presses, or faster, as fed as it is now (CultivationStats#mendingNow). */
+	public static boolean outHeals(ServerPlayer p, float perSecond) {
+		return CultivationStats.mendingNow(p) >= perSecond;
 	}
 
 	/** The pressure a second on one in the gap at height {@code y}: {@link #LAYER_PRESSURE} in the stormy layers, less in the shallows. */

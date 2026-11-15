@@ -811,6 +811,20 @@ public final class NpcLife {
 		}
 	}
 
+	/**
+	 * One of {@code sect}'s, {@code name}, lost far off on an errand (SectErrands): mourned at home, by its core, as if it had fallen there; those
+	 * near the core cry out.
+	 */
+	public static void mournAway(ServerLevel level, Sect sect, String name, long now) {
+		if (sect == null || sect.extinct) return;
+		SECTS.computeIfAbsent(sect.id, id -> new SectDay()).fallen.add(new Fallen(sect.core, name, now + MOURNING));
+		int cries = 0;
+		for (CultivatorNpc other : CultivatorNpc.loadedMembers(level, sect.id)) {
+			if (other.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(sect.core)) > 48 * 48 || now < other.speakingUntil()) continue;
+			if (NpcSpeech.say(other, NpcLines.line("grief", other, name)) && ++cries >= 2) break;
+		}
+	}
+
 	private static void mourning(ServerLevel level, Sect sect, SectDay day, List<CultivatorNpc> members, Phase phase, long now) {
 		day.fallen.removeIf(f -> f.until() <= now);
 		if (day.fallen.isEmpty() || phase == Phase.NIGHT || phase == Phase.LECTURE) return;

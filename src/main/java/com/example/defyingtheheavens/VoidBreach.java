@@ -308,8 +308,9 @@ public final class VoidBreach {
 		}
 		long now = climb.getGameTime();
 		if (++c.ticks % 20 == 0) {
-			// Twice as heavy for each one carried in one's sleeve (Sleeves); its shards and its Vestiges as ever.
-			p.hurt(ModDamageTypes.spatialPressure(climb), PRESSURE * Sleeves.pressureFactor(p));
+			// Twice as heavy for each one carried in one's sleeve (Sleeves), nothing to one who out-heals it (SpatialTrialHandler#press); its
+			// shards and its Vestiges as ever.
+			SpatialTrialHandler.press(p, ModDamageTypes.spatialPressure(climb), PRESSURE * Sleeves.pressureFactor(p));
 			if (!p.isAlive()) return;
 			p.displayClientMessage(Component.translatable(ModLang.MSG_BREACH_CLIMB, Math.max(0, EXIT_Y - Mth.floor(p.getY()))), true);
 		}

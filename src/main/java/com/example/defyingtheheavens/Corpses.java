@@ -202,6 +202,7 @@ public final class Corpses {
 		c.setAlignment(c.getAlignment() - BLEED_SHIFT);
 		CultivationManager.markDirty(player.server);
 		CultivationManager.sync(player);
+		PersonalDisciples.witnessed(player, -BLEED_SHIFT); // a righteous disciple near sees it
 		player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.BOTTLE_FILL, SoundSource.PLAYERS, 1.0f, 0.6f);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_CORPSE_BLED, body.name()).withStyle(ChatFormatting.DARK_RED), true);
 		return InteractionResult.SUCCESS;
@@ -222,10 +223,19 @@ public final class Corpses {
 
 	/** The yin the bodies round {@code pos} give off together (GhostQi#densityAt adds it, never past the Netherworld's). */
 	public static double yinAt(ServerLevel level, BlockPos pos) {
+		return yinAt(level, pos, null);
+	}
+
+	/**
+	 * {@link #yinAt}: the bodies lying round {@code pos}, and those walking (CorpseWalk#yinAt, since 2026-11-13: a body gives off its yin
+	 * as it walks), but the one {@code except} walks in (its own yin feeds it nothing).
+	 */
+	static double yinAt(ServerLevel level, BlockPos pos, UUID except) {
+		double walking = CorpseWalk.yinAt(level, pos, except);
 		Long2ObjectMap<Map<BlockPos, Integer>> chunks = LYING.get(level.dimension());
-		if (chunks == null || chunks.isEmpty()) return 0;
+		if (chunks == null || chunks.isEmpty()) return walking;
 		int reach = (MAX_REACH >> 4) + 1, cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
-		double yin = 0;
+		double yin = walking;
 		for (int dx = -reach; dx <= reach; dx++) {
 			for (int dz = -reach; dz <= reach; dz++) {
 				Map<BlockPos, Integer> here = chunks.get(ChunkPos.asLong(cx + dx, cz + dz));

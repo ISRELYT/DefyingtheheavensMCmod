@@ -12,14 +12,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * While a framed screen draws (HallFrame), the graphics' size is the frame's (tooltips keep to it), and a scissor's rectangle, given in
  * the frame's pixels, is turned into the window's by the frame's scale, not the GUI's. Its words lie flat, as the mockups' do: no drop
  * shadow under them (the user's pick, 2026-10-31, the other tabs to look as the Cultivation tab does; tooltips and item counts, drawn
- * by the font itself, keep theirs).
+ * by the font itself, keep theirs; and so do another mod's words drawn over the screen in the frame, JEI's: HallFrame#flat).
  */
 @Mixin(GuiGraphics.class)
 public abstract class HallFrameGraphicsMixin {
 	@ModifyVariable(method = {"drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)I",
 			"drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/util/FormattedCharSequence;IIIZ)I"}, at = @At("HEAD"), argsOnly = true, ordinal = 0)
 	private boolean dth$flatInTheFrame(boolean dropShadow) {
-		return dropShadow && !HallFrame.rendering;
+		return dropShadow && !HallFrame.flat;
 	}
 
 	@Redirect(method = "guiWidth", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getGuiScaledWidth()I"))

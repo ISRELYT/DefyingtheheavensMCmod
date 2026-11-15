@@ -96,14 +96,18 @@ public final class PlayerSects {
 
 	// --- Founding ---
 
-	/** Why {@code player} can't found a sect on {@code core} now (a line to show them), or null if they can. */
+	/**
+	 * Why {@code player} can't found a sect on {@code core} now (a line to show them), or null if they can. The dead found none (a ghost,
+	 * or a soul walking in a corpse: Possession#inCorpse). In their clone, or with their soul in another's living body, they may (the user's
+	 * picks, 2026-11-13; before, only in their own body): weighed by their own strength ({@link #founderRank} of their own record).
+	 */
 	public static Component refusal(ServerPlayer player, FormationCoreBlockEntity core) {
 		if (!player.getUUID().equals(core.getOwner())) return Component.translatable(ModLang.MSG_PSECT_NOT_OWNER);
-		if (GhostSystem.isGhost(player) || Possession.inhabits(player.getUUID())) return Component.translatable(ModLang.MSG_PSECT_DEAD);
+		if (GhostSystem.isGhost(player) || Possession.inCorpse(player.getUUID())) return Component.translatable(ModLang.MSG_PSECT_DEAD);
 		// (A sect fallen with them on its rolls holds nobody: SectMembership#liveSectOf.)
 		Sect own = SectMembership.liveSectOf(player.server, player.getUUID());
 		if (own != null) return Component.translatable(ModLang.MSG_PSECT_IN_SECT, own.name);
-		if (founderRank(CultivationManager.get(player)) < FOUNDER_RANK) return Component.translatable(ModLang.MSG_PSECT_WEAK);
+		if (founderRank(CultivationManager.own(player)) < FOUNDER_RANK) return Component.translatable(ModLang.MSG_PSECT_WEAK);
 		ServerLevel level = player.serverLevel();
 		if (!sectWorld(level.dimension())) return Component.translatable(ModLang.MSG_PSECT_NO_SECTS);
 		Sect land = landOf(level, core.getBlockPos(), core.getRadius());
@@ -168,8 +172,10 @@ public final class PlayerSects {
 		}
 		sect.dimension = level.dimension();
 		sect.core = core.getBlockPos().immutable();
+		// The body's alignment and race, and a body sect if it is a body cultivator's (c: the record of the body their soul is in, if it is
+		// in another's; the user's pick, 2026-11-13: the sect takes after the body, its strength after its founder, #founderRank).
 		sect.alignment = Alignment.clamp(c.getAlignment());
-		sect.race = DemonPath.isDemon(c) ? DemonPath.bloodline(c) : Bloodline.HUMAN;
+		sect.race = Possession.bodyEntity(founder) instanceof CultivatorNpc npc ? npc.getBloodline() : DemonPath.isDemon(c) ? DemonPath.bloodline(c) : Bloodline.HUMAN;
 		sect.body = !sect.isClan() && c.isMortal() && BodyPath.rank(c) >= 0;
 		sect.founder = founder.getUUID();
 		sect.founderName = founder.getGameProfile().getName();
@@ -535,11 +541,13 @@ public final class PlayerSects {
 		SectManager.dirty(server);
 	}
 
-	/** Its founder takes the tribute waiting, as spirit stones (the fewest that make it up). */
+	/** Its founder takes the tribute waiting, as spirit stones (the fewest that make it up), and the spoils its people brought back (SectErrands). */
 	public static void collect(ServerPlayer founder, Sect sect) {
 		reckonTribute(founder.server, sect, founder.level().getGameTime());
+		int spoils = SectErrands.collect(founder, sect);
+		if (spoils > 0) founder.sendSystemMessage(Component.translatable(ModLang.MSG_PSECT_SPOILS, spoils, sect.name).withStyle(ChatFormatting.GOLD));
 		if (sect.tribute <= 0) {
-			founder.displayClientMessage(Component.translatable(ModLang.MSG_PSECT_NO_TRIBUTE).withStyle(ChatFormatting.GRAY), true);
+			if (spoils == 0) founder.displayClientMessage(Component.translatable(ModLang.MSG_PSECT_NO_TRIBUTE).withStyle(ChatFormatting.GRAY), true);
 			return;
 		}
 		int value = (int) Math.min(Integer.MAX_VALUE, sect.tribute);
@@ -652,6 +660,7 @@ public final class PlayerSects {
 			buf.writeBoolean(sect.isHoly());
 			buf.writeBoolean(sect.isImmortal());
 			buf.writeBoolean(sect.body);
+			buf.writeVarInt(sect.spoils.size());
 			List<Sect.Member> members = new ArrayList<>(sect.members.values());
 			members.sort(Sect.SENIORITY);
 			List<Sect.Disciple> players = sect.disciples.values().stream().filter(d -> !d.id.equals(sect.founder)).toList();
@@ -676,7 +685,7 @@ public final class PlayerSects {
 			buf.writeBoolean(why == null);
 			buf.writeComponent(why == null ? Component.empty() : why);
 			buf.writeVarInt(grounds.mats().size());
-			buf.writeVarInt(cap(founderRank(CultivationManager.get(player))));
+			buf.writeVarInt(cap(founderRank(CultivationManager.own(player))));
 			Sect fallen = fallen(level, core);
 			buf.writeUtf(fallen == null ? "" : fallen.name);
 		}

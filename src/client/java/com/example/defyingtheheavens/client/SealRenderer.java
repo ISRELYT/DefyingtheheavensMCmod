@@ -142,4 +142,10 @@ public class SealRenderer implements BlockEntityRenderer<SealBlockEntity> {
 	public int getViewDistance() {
 		return 64;
 	}
+
+	/** Its lines run off to the seals, veins and cores it touches: drawn while its own block is out of sight (and so not hidden by Entity Culling, which reads this). */
+	@Override
+	public boolean shouldRenderOffScreen(SealBlockEntity seal) {
+		return true;
+	}
 }

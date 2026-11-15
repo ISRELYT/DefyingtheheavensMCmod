@@ -20,7 +20,12 @@ import java.util.List;
  * Storms spread through the gap all round every cultivator in it ({@link #targetAround} of them near each): anywhere round
  * them, few in the shallows and crowding the upper layers they must rise through to cross (SpatialTrialHandler#UPPER_LAYERS_Y)
  * and the lower ones they must sink through to fall out (LOWER_LAYERS_Y). They are huge (radius 100-180) and drift at 3-6
- * blocks/s, while a climber steers sideways at only ~4-5 blocks/s: seeing one coming early is the way past it. (The old trial
+ * blocks/s: seeing one coming early is the way past it.
+ * <p>
+ * <b>Storms that matter</b> (the user's pick of 2026-11-13: free flight had made them easy to fly round). A bolt strikes a flat
+ * {@link #BOLT_DAMAGE}, armour and its enchantments no help (ModDamageTypes#SPATIAL_STORM). Under or inside one ({@link #inReach}), its
+ * winds drag at any flight, half as fast ({@link #DRAG}: QiFlight), and carry one along with its drift (client GapSinkMixin). And a
+ * storm of the upper layers closes in on the nearest climber nearing its layer ({@link #steer}), until one is under it. (The old trial
  * carried its climbers through an endless sky, looping them back down a {@link #PERIOD} at a time, and storms gathered ahead
  * along its way; it is gone, and the gap's heights are its own: the loop count sent to clients is always 0.)
  * <p>
@@ -42,7 +47,17 @@ public final class SpatialStorms {
 	 * How far below its base a storm's lightning reaches: a cultivator climbing at ~36 blocks/s spends ~4 s in reach of a
 	 * storm they pass beneath (this plus the cloud's own thickness).
 	 */
-	private static final double STRIKE_REACH = 100.0;
+	public static final double STRIKE_REACH = 100.0;
+	/** What a storm's bolt strikes for, whatever the realm (2026-11-13; before, a strike of the cultivator's own last tribulation). */
+	public static final float BOLT_DAMAGE = 12.0f;
+	/** In a storm's reach, any flight is this share of its speed (QiFlight#dragged): exactly a half, so a halved speed is still known as one. */
+	public static final float DRAG = 0.5f;
+	/** The fastest a storm drifts, blocks a tick (spawnNear: 0.15-0.3): the most its winds carry one in a tick (QiFlight#moveAllowanceSq). */
+	public static final double MAX_DRIFT = 0.3;
+	/** A storm of the upper layers turns toward a climber this much a tick at most (radians: some 34 degrees a second)... */
+	static final double TURN_PER_TICK = 0.03;
+	/** ...one at most this far off to the side, and below its lightning's reach by no more than this (nearing its layer). */
+	static final double CLOSE_IN_RANGE = 700.0, CLOSE_IN_BELOW = 60.0;
 	/**
 	 * While anyone is in reach, the storm turns on them: it strikes every 15-30 ticks instead of 20-50, and this many
 	 * strikes go for a player in reach rather than lashing the empty void. Passing under a storm means 2-3 strikes at you
@@ -68,8 +83,9 @@ public final class SpatialStorms {
 		double z;
 		/** The cloud's base, in true height. */
 		final double baseY;
-		final double vx;
-		final double vz;
+		/** Its drift, blocks a tick: a storm of the upper layers turns it toward a climber ({@link #closeIn}). */
+		double vx;
+		double vz;
 		final float radius;
 		final int life;
 		int age;
@@ -92,6 +108,8 @@ public final class SpatialStorms {
 	private static final List<Storm> STORMS = new ArrayList<>();
 	private static final RandomSource RANDOM = RandomSource.create();
 	private static int nextId;
+	/** The players a storm's winds hold this tick ({@link #inReach} of one in force): QiFlight halves their flight ({@link #drags}). */
+	private static final java.util.Set<java.util.UUID> DRAGGED = new java.util.HashSet<>();
 
 	/** How high the player is in the gap (once their height plus what the old trial's loop had taken off it). */
 	public static double trueY(ServerPlayer p) {
@@ -102,6 +120,7 @@ public final class SpatialStorms {
 		ServerLevel gap = server.getLevel(ModDimensions.SPATIAL_GAP);
 		if (gap == null) return;
 		List<ServerPlayer> players = gap.players();
+		DRAGGED.clear();
 		if (players.isEmpty()) {
 			STORMS.clear();
 			return;
@@ -109,6 +128,7 @@ public final class SpatialStorms {
 
 		for (Iterator<Storm> it = STORMS.iterator(); it.hasNext(); ) {
 			Storm s = it.next();
+			closeIn(s, players);
 			s.x += s.vx;
 			s.z += s.vz;
 			if (++s.age >= s.life || !stillAhead(s, players)) {
@@ -116,6 +136,10 @@ public final class SpatialStorms {
 				continue;
 			}
 			if (--s.nextStrike <= 0) strike(gap, players, s);
+			if (!inForce(s.age, s.life)) continue;
+			for (ServerPlayer p : players) {
+				if (p.isAlive() && !p.isSpectator() && !SpatialTrialHandler.isHeld(p.getUUID()) && inReach(s, p)) DRAGGED.add(p.getUUID());
+			}
 		}
 
 		if (server.getTickCount() % 20 == 0) {
@@ -133,6 +157,94 @@ public final class SpatialStorms {
 	/** Server stop: storms belong to the running server. */
 	public static void clear() {
 		STORMS.clear();
+		DRAGGED.clear();
+	}
+
+	/** A storm set down (game tests): at ({@code x}, {@code baseY}, {@code z}), drifting ({@code vx}, {@code vz}) a tick, in force at once. @return its id */
+	static int place(double x, double baseY, double z, double vx, double vz, float radius) {
+		Storm s = new Storm(nextId++, x, baseY, z, vx, vz, radius, 2400);
+		s.age = FORM_TICKS;
+		STORMS.add(s);
+		return s.id;
+	}
+
+	/** Storm {@code id}'s drift (game tests), or null if it is gone. */
+	static double[] drift(int id) {
+		for (Storm s : STORMS) if (s.id == id) return new double[] {s.vx, s.vz};
+		return null;
+	}
+
+	/** Takes storm {@code id} away (game tests). */
+	static void remove(int id) {
+		STORMS.removeIf(s -> s.id == id);
+	}
+
+	/** Whether a storm's winds hold {@code p} this tick: under one in force or inside it, in the gap (QiFlight halves its flight: {@link #DRAG}). */
+	public static boolean drags(ServerPlayer p) {
+		return DRAGGED.contains(p.getUUID()) && ModDimensions.isSpatialGap(p.level().dimension());
+	}
+
+	/** A storm {@code age} ticks into its {@code life} is in force (it strikes, and its winds drag): formed, and not yet dying away. */
+	public static boolean inForce(int age, int life) {
+		return age >= FORM_TICKS && life - age >= FADE_TICKS;
+	}
+
+	/**
+	 * Whether ({@code x}, {@code y}, {@code z}) is in reach of a storm at ({@code stormX}, {@code stormZ}) whose cloud's base is at
+	 * {@code baseY}, {@code radius} across: beneath it within its lightning's reach, or inside the cloud (the client's winds too).
+	 */
+	public static boolean inReach(double stormX, double stormZ, double baseY, double radius, double x, double y, double z) {
+		if (Mth.square(x - stormX) + Mth.square(z - stormZ) > radius * radius) return false;
+		double h = y - (baseY - STRIKE_REACH);
+		return h >= 0 && h <= STRIKE_REACH + CLOUD_TOP;
+	}
+
+	/**
+	 * A storm of the upper layers closing in (2026-11-13): it turns toward the nearest climber near its layer (to the side within
+	 * {@link #CLOSE_IN_RANGE}; in its reach, or below it by no more than {@link #CLOSE_IN_BELOW}) while none is under it yet; once
+	 * someone is, it holds its course, so one caught can still fly out of it.
+	 */
+	private static void closeIn(Storm s, List<ServerPlayer> players) {
+		if (s.baseY < SpatialTrialHandler.UPPER_LAYERS_Y) return;
+		List<net.minecraft.world.phys.Vec3> climbers = new ArrayList<>();
+		for (ServerPlayer p : players) {
+			// Nor a creative one (as the bolts pass them by: #strike).
+			if (!p.isAlive() || p.isSpectator() || p.isCreative() || SpatialTrialHandler.isHeld(p.getUUID())) continue;
+			climbers.add(new net.minecraft.world.phys.Vec3(p.getX(), trueY(p), p.getZ()));
+		}
+		double[] v = closeIn(s.x, s.z, s.baseY, s.radius, s.vx, s.vz, climbers);
+		s.vx = v[0];
+		s.vz = v[1];
+	}
+
+	/**
+	 * {@link #closeIn} worked out: the drift ({@code vx}, {@code vz}) of a storm at ({@code x}, {@code z}), its base at {@code baseY},
+	 * {@code radius} across, turned toward the nearest of {@code climbers} near its layer; kept while any of them is under it, or none is near.
+	 */
+	static double[] closeIn(double x, double z, double baseY, double radius, double vx, double vz, List<net.minecraft.world.phys.Vec3> climbers) {
+		net.minecraft.world.phys.Vec3 nearest = null;
+		double best = CLOSE_IN_RANGE;
+		for (net.minecraft.world.phys.Vec3 climber : climbers) {
+			double h = climber.y - (baseY - STRIKE_REACH);
+			if (h < -CLOSE_IN_BELOW || h > STRIKE_REACH + CLOUD_TOP) continue;
+			double side = Math.sqrt(Mth.square(climber.x - x) + Mth.square(climber.z - z));
+			if (side <= radius) return new double[] {vx, vz}; // someone is under it: it holds its course
+			if (side < best) {
+				best = side;
+				nearest = climber;
+			}
+		}
+		return nearest == null ? new double[] {vx, vz} : steer(vx, vz, nearest.x - x, nearest.z - z, TURN_PER_TICK);
+	}
+
+	/** A drift of ({@code vx}, {@code vz}) turned toward ({@code dx}, {@code dz}) by at most {@code maxTurn} radians, its speed kept. */
+	static double[] steer(double vx, double vz, double dx, double dz, double maxTurn) {
+		double speed = Math.sqrt(vx * vx + vz * vz);
+		if (speed == 0 || dx == 0 && dz == 0) return new double[] {vx, vz};
+		double heading = Math.atan2(vz, vx), want = Math.atan2(dz, dx);
+		double turn = Mth.wrapDegrees(Math.toDegrees(want - heading));
+		heading += Math.toRadians(Mth.clamp(turn, -Math.toDegrees(maxTurn), Math.toDegrees(maxTurn)));
+		return new double[] {Math.cos(heading) * speed, Math.sin(heading) * speed};
 	}
 
 	private static double sideways(Storm s, ServerPlayer p) {
@@ -190,9 +302,7 @@ public final class SpatialStorms {
 
 	/** Beneath the cloud (within its lightning's reach) or inside it, at the player's true height. */
 	private static boolean inReach(Storm s, ServerPlayer p) {
-		if (sideways(s, p) > s.radius) return false;
-		double h = trueY(p) - (s.baseY - STRIKE_REACH);
-		return h >= 0 && h <= STRIKE_REACH + CLOUD_TOP;
+		return inReach(s.x, s.z, s.baseY, s.radius, p.getX(), trueY(p), p.getZ());
 	}
 
 	private static void strike(ServerLevel gap, List<ServerPlayer> players, Storm s) {
@@ -230,42 +340,24 @@ public final class SpatialStorms {
 	}
 
 	/**
-	 * A storm bolt hits as hard as one strike of the Heavenly Tribulation that brought the player to their realm and stage, on the
-	 * higher of their paths (Qi Refining, which none did, takes the first: Foundation Building's), worn Rings of Transcendence halving
-	 * it as they do there. Ascension and descension are meant to be punishing: on top of the pressure, one unprotected hit is often
-	 * the end. The dead (a Ghost King: only it rises into the gap) are struck too, as the Netherworld's tribulation strikes them: the
-	 * same share of their hearts as the living's (GhostSystem#livingShare), the bolt turned by their armour (a ruled ghost's at least a
-	 * ghostly form's). The user's pick, 2026-10-24: the storms passed through the dead before, as the heavens' lightning does.
+	 * A storm bolt strikes a flat {@link #BOLT_DAMAGE}, whatever the realm, armour and its enchantments no help (ModDamageTypes#SPATIAL_STORM;
+	 * the user's pick of 2026-11-13: before, it hit as one strike of the cultivator's own last tribulation, some ten at Heavenly Being once
+	 * armour had turned it), worn Rings of Transcendence halving it as they halve the heavens' lightning ({@link #boltDamage}). Ascension and
+	 * descension are meant to be punishing. The dead (a Ghost King: only it rises into the gap) are struck too (the user's pick, 2026-10-24),
+	 * the same share of their hearts as the living's (GhostSystem#livingShare), as the yin of the Netherworld's tribulation.
 	 */
-	private static void hurt(ServerLevel gap, ServerPlayer target) {
-		PlayerCultivation c = CultivationManager.get(target);
-		int rank = Math.max(0, TwoPaths.higherRank(c, false)), stages = Stage.values().length;
-		TribulationManager.Strikes strike = TribulationManager.strikes(Realm.byIndex(Math.min(Realm.values().length - 1, rank / stages)), Stage.byIndex(rank % stages));
-		if (strike.count() == 0) strike = TribulationManager.strikes(Realm.FOUNDATION_BUILDING, Stage.EARLY);
-		float multiplier = RingOfTranscendenceItem.damageMultiplier(target);
-		boolean dead = GhostSystem.isGhost(target);
-		float share = dead ? (float) GhostSystem.livingShare(target) : 1.0f;
-
-		// Both parts land in the same tick, magic first, like a tribulation's. The hurt cooldown is cleared around them so
-		// neither part, nor the next second's pressure, is swallowed by the one before it.
+	static void hurt(ServerLevel gap, ServerPlayer target) {
+		// The hurt cooldown is cleared round it, so neither it nor the next second's pressure is swallowed by the one before.
 		target.invulnerableTime = 0;
-		if (strike.magic() > 0) {
-			target.hurt(dead ? ModDamageTypes.yinTribulation(gap) : gap.damageSources().magic(), strike.magic() * multiplier * share);
-			target.invulnerableTime = 0;
-		}
-		if (target.isAlive()) {
-			float bolt = strike.bolt() * multiplier;
-			if (dead) {
-				float armour = Incorporeal.isRuledGhost(target) ? Math.max(target.getArmorValue(), TribulationManager.GHOST_FORM_ARMOR) : target.getArmorValue();
-				bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(bolt, armour,
-						(float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS)) * share;
-				target.hurt(ModDamageTypes.yinTribulation(gap), bolt);
-			} else {
-				target.hurt(gap.damageSources().lightningBolt(), bolt);
-			}
-		}
+		target.hurt(GhostSystem.isGhost(target) ? ModDamageTypes.yinTribulation(gap) : ModDamageTypes.spatialStorm(gap), boltDamage(target));
 		target.invulnerableTime = 0;
 		RiftWalking.struck(target); // borne, Rift Walking's gain
+	}
+
+	/** What a storm's bolt strikes {@code target} for: {@link #BOLT_DAMAGE}, halved by each worn Ring of Transcendence; the dead their share of it. */
+	static float boltDamage(ServerPlayer target) {
+		float share = GhostSystem.isGhost(target) ? (float) GhostSystem.livingShare(target) : 1.0f;
+		return BOLT_DAMAGE * RingOfTranscendenceItem.damageMultiplier(target) * share;
 	}
 
 	/** To every player within range of the bolt. */

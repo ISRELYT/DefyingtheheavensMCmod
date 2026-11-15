@@ -34,6 +34,9 @@ public class BeastLayer<T extends LivingEntity, M extends HumanoidModel<T>> exte
 			beast.render(pose, buffers.getBuffer(RenderType.entityTranslucent(beast.texture())), light, overlay, shadow[0], shadow[1], shadow[2], shadow[3]);
 			return;
 		}
-		beast.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(beast.texture())), light, overlay, 1.0f, 1.0f, 1.0f, 1.0f);
+		// A body of the dead walked in (CorpseWalk), fresh or rotting: its beast's head and tail rot with it, in its hue (ClientBodies#tint).
+		float[] tint = entity instanceof net.minecraft.world.entity.player.Player player ? ClientBodies.tint(player) : null;
+		float r = tint == null ? 1.0f : tint[0], g = tint == null ? 1.0f : tint[1], b = tint == null ? 1.0f : tint[2];
+		beast.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(beast.texture())), light, overlay, r, g, b, 1.0f);
 	}
 }

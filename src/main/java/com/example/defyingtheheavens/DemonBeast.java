@@ -96,8 +96,12 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 
 	private final BeastKind kind;
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-	/** Game time until which its signature move is spent (DemonBeastGoals). */
+	/** Game time until which its signature move is spent (DemonBeastGoals; from the saddle too: SaddleStrikes). */
 	long signatureReady;
+	/** A strike from the saddle under way (SaddleStrikes), the server's; or null. */
+	SaddleStrikes.Strike saddleStrike;
+	/** That strike's carrying on its rider's client, which moves it while they ride ({@link #lunge}, {@link #carried}); or null. */
+	private Lunge lunge;
 	/** The pool an elder guards (null: none, a wild beast's). */
 	private BlockPos guards;
 	/** How fully it is in each act (by its flag's bit), last tick and now: eased in and out over {@link #ACT_EASE} ticks, the client's, for its look. */
@@ -520,6 +524,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 			}
 		}
 		if (!level().isClientSide) tendRidden();
+		if (!level().isClientSide && saddleStrike != null) SaddleStrikes.tick(this);
 		if (level().isClientSide || tickCount % 40 != 0) return;
 		AttributeInstance speed = getAttribute(Attributes.MOVEMENT_SPEED);
 		if (speed == null) return;
@@ -599,6 +604,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 		// swimmer in the water keeps to its top with its rider above it; on the ground, as a horse goes (the rest of travel).
 		Player rider = rider();
 		if (rider != null && isControlledByLocalInstance()) {
+			if (lunge != null && carried()) return; // a strike from the saddle carries it, not its rider's keys
 			boolean climbing = ((com.example.defyingtheheavens.mixin.LivingEntityAccessor) rider).dth$isJumping();
 			if (fliesWithItsRider() && (!onGround() || climbing)) {
 				flyRidden(rider, climbing);
@@ -652,6 +658,94 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, 
 		setDeltaMovement(getDeltaMovement().multiply(0.9, 0.5, 0.9));
 		resetFallDistance();
 		calculateEntityAnimation(false);
+	}
+
+	// --- Striking from the saddle (SaddleStrikes), carried by its rider's client ---
+
+	/** A strike from the saddle's carrying: its move, what it strikes, its way (a charge's, a bite's; a pounce's leap), its pace, until when. */
+	private static final class Lunge {
+		final SaddleStrikes.Move move;
+		final int targetId;
+		final Vec3 way;
+		final double pace;
+		final int until;
+		boolean leapt;
+
+		Lunge(SaddleStrikes.Move move, int targetId, Vec3 way, double pace, int until) {
+			this.move = move;
+			this.targetId = targetId;
+			this.way = way;
+			this.pace = pace;
+			this.until = until;
+		}
+	}
+
+	/**
+	 * Its rider's client told to carry it in a strike from the saddle (S2C SADDLE_LUNGE: SaddleStrikes#begin) for {@code ticks}, or that the
+	 * strike is over ({@code ticks} 0: it landed, or it missed).
+	 */
+	public void lunge(SaddleStrikes.Move move, int targetId, Vec3 way, double pace, int ticks) {
+		lunge = ticks <= 0 ? null : new Lunge(move, targetId, way, pace, tickCount + ticks);
+	}
+
+	/** Whether a strike from the saddle carries it now (its rider's client's: SaddleStrikes). */
+	public boolean lunging() {
+		return lunge != null;
+	}
+
+	/**
+	 * A tick of a strike from the saddle carrying it, its rider's keys set aside: a charge's or a bite's rush across the land, a pounce's leap,
+	 * a dive at what it strikes (no climbing where it can't fly with its rider), the rest held still. Whether it was carried (else the strike's
+	 * carrying is over, and its rider has it again).
+	 */
+	private boolean carried() {
+		Lunge l = lunge;
+		if (tickCount >= l.until) {
+			lunge = null;
+			return false;
+		}
+		switch (l.move) {
+			case CHARGE, BITE -> {
+				double fall = onGround() ? 0 : getDeltaMovement().y - 0.08;
+				setDeltaMovement(l.way.x * l.pace, fall, l.way.z * l.pace);
+				move(MoverType.SELF, getDeltaMovement());
+				calculateEntityAnimation(false);
+				if (horizontalCollision) lunge = null;
+			}
+			case POUNCE -> {
+				if (!l.leapt) {
+					l.leapt = true;
+					setDeltaMovement(l.way);
+					setOnGround(false);
+				} else if (onGround()) {
+					lunge = null;
+				}
+				super.travel(Vec3.ZERO);
+			}
+			case DIVE -> {
+				Entity target = level().getEntity(l.targetId);
+				if (target == null) {
+					lunge = null;
+					return false;
+				}
+				Vec3 to = target.position().add(0, target.getBbHeight() * 0.5, 0).subtract(position().add(0, getBbHeight() * 0.5, 0));
+				if (to.lengthSqr() < 0.36) {
+					lunge = null;
+					return false;
+				}
+				Vec3 v = to.normalize().scale(l.pace);
+				if (!fliesWithItsRider() && v.y > 0) v = new Vec3(v.x, onGround() ? 0 : getDeltaMovement().y - 0.08, v.z);
+				setDeltaMovement(v);
+				move(MoverType.SELF, v);
+				resetFallDistance();
+				calculateEntityAnimation(true);
+			}
+			default -> { // held still: a coil, a slam's wind-up, the breath
+				setDeltaMovement(0, getDeltaMovement().y, 0);
+				super.travel(Vec3.ZERO);
+			}
+		}
+		return true;
 	}
 
 	@Override public boolean canBreatheUnderwater() { return kind().moves == BeastKind.Moves.AMPHIBIOUS || kind().moves == BeastKind.Moves.SWIMMING; }

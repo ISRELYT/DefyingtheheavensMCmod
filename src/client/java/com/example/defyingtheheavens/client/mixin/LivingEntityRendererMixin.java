@@ -39,6 +39,7 @@ public abstract class LivingEntityRendererMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"))
 	private void dth$beastHeadOn(LivingEntity entity, float yaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light,
 								 CallbackInfo ci) {
+		// (The bones a demon's body of the dead comes to too: CorpseBonesRenderer draws its race's skull in place of the man's.)
 		dth$headOff = model instanceof HumanoidModel<?> humanoid && ClientBloodlines.look(entity) != null && humanoid.head.visible;
 		if (dth$headOff) {
 			HumanoidModel<?> humanoid = (HumanoidModel<?>) model;
@@ -57,6 +58,18 @@ public abstract class LivingEntityRendererMixin {
 		HumanoidModel<?> humanoid = (HumanoidModel<?>) model;
 		humanoid.head.visible = true;
 		humanoid.hat.visible = true;
+	}
+
+	/** A player walking in a body of the dead (CorpseWalk) is drawn in its hue: paler fresh, grey-green rotting (ClientBodies#tint). */
+	@com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(
+			method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"))
+	private void dth$theDeadsHue(EntityModel<?> drawn, PoseStack pose, com.mojang.blaze3d.vertex.VertexConsumer consumer, int light, int overlay,
+								 float r, float g, float b, float a, com.llamalad7.mixinextras.injector.wrapoperation.Operation<Void> original,
+								 @com.llamalad7.mixinextras.sugar.Local(argsOnly = true) LivingEntity entity) {
+		float[] tint = entity instanceof net.minecraft.world.entity.player.Player player ? com.example.defyingtheheavens.client.ClientBodies.tint(player) : null;
+		if (tint == null) original.call(drawn, pose, consumer, light, overlay, r, g, b, a);
+		else original.call(drawn, pose, consumer, light, overlay, r * tint[0], g * tint[1], b * tint[2], a);
 	}
 
 	@Inject(method = "setupRotations", at = @At("TAIL"))

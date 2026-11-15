@@ -1,8 +1,14 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.BodyPath;
+import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.ModPackets;
+import com.example.defyingtheheavens.PlayerCultivation;
+import com.example.defyingtheheavens.Realm;
+import com.example.defyingtheheavens.SectErrands;
 import com.example.defyingtheheavens.SectMissions;
+import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
@@ -26,12 +32,17 @@ import java.util.List;
  * Contribution, and two halves. The missions: those they hold, then the day's postings, each a row with its thing and its grade and pay; the
  * one chosen in full beside them, with what may be done with it now (take it; hand it in, a new slip, abandon it). The exchange (SectExchange):
  * its wares, each with its price and what is left of it today (those their title doesn't open, dimmed); the one chosen beside them, with its
- * own description. What is done is sent (C2S mission_act), and the page comes back with what came of it at its foot.
+ * own description. At a player's sect's board its founder has a third half, Send Out (SectErrands): its people, each with how they stand; the
+ * one chosen beside them, the four errands to send them on (a hunt's quarry picked by its realm), what each is, a warning if it stands above
+ * them, and Send. What is done is sent (C2S mission_act), and the page comes back with what came of it at its foot.
  */
 public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 	private static final int W = 400, H = 230, HEADER = 20, TABS_Y = 25, BODY_TOP = 42, BODY_BOTTOM = H - 22, LIST_X = 8, LIST_W = 170,
 			PANE_X = 186, PANE_W = W - PANE_X - 8, ROW_H = 20, LABEL_H = 12, LINE_H = 10, BUTTON_H = 14, ROLLER_W = 4, SCROLL_STEP = 12;
 	private static final int EASY = 0x8FD88F, HARD = 0xE0806A;
+	private static final int MISSIONS = 0, EXCHANGE = 1, SEND = 2;
+	/** The arrows either side of a hunt's quarry, as acts of their own (never sent). */
+	private static final int LOWER = -1, HIGHER = -2;
 
 	/** One mission on the page: its id, whether they hold it, its kind and grade, its pay, its heading and lines, its thing, what may be done with it. */
 	record Posting(int id, boolean taken, int kind, int grade, int reward, Component title, List<Component> lines, ItemStack icon, int actions) {}
@@ -39,13 +50,22 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 	/** One ware: its place in the exchange's list, the thing, its price, how many left today of how many, whether it is open to them (else why). */
 	record Ware(int index, ItemStack item, int price, int left, int perDay, boolean open, Component locked) {}
 
+	/** One of a player's sect's people on its founder's page: its mark (SectErrands#check), name, rank, how it stands, its errand (-1) and the ticks left. */
+	record Person(int check, String name, int rank, int state, int task, long left) {}
+
+	/**
+	 * Its founder's page (SectErrands#writePage): how many are out of how many may be, whether it is a body sect, the secret realm open (or
+	 * null) and its strength, the sect a letter would go to ("" none), the spoils waiting at the core, and its people.
+	 */
+	record SendOut(int out, int mostOut, boolean body, @Nullable Component realm, int realmRank, String letterTo, int spoils, List<Person> people) {}
+
 	/** The page as the server sent it: for one of no standing at the board, only why ({@code note}). */
 	record Page(Component heading, boolean disciple, Component note, int contribution, int earned, Component title, int held, int maxHeld,
-			List<Posting> missions, List<Ware> wares, @Nullable Component said) {}
+			List<Posting> missions, List<Ware> wares, @Nullable Component said, @Nullable SendOut sendOut) {}
 
 	public static Page read(FriendlyByteBuf buf) {
 		Component heading = buf.readComponent();
-		if (!buf.readBoolean()) return new Page(heading, false, buf.readComponent(), 0, 0, Component.empty(), 0, 0, List.of(), List.of(), null);
+		if (!buf.readBoolean()) return new Page(heading, false, buf.readComponent(), 0, 0, Component.empty(), 0, 0, List.of(), List.of(), null, null);
 		int contribution = buf.readVarInt(), earned = buf.readVarInt();
 		Component title = buf.readComponent();
 		int held = buf.readVarInt(), maxHeld = buf.readVarInt();
@@ -69,7 +89,29 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 			wares.add(new Ware(index, item, price, left, perDay, open, buf.readComponent()));
 		}
 		Component said = buf.readBoolean() ? buf.readComponent() : null;
-		return new Page(heading, true, Component.empty(), contribution, earned, title, held, maxHeld, missions, wares, said);
+		SendOut sendOut = buf.readBoolean() ? readSendOut(buf) : null;
+		return new Page(heading, true, Component.empty(), contribution, earned, title, held, maxHeld, missions, wares, said, sendOut);
+	}
+
+	private static SendOut readSendOut(FriendlyByteBuf buf) {
+		int out = buf.readVarInt(), mostOut = buf.readVarInt();
+		boolean body = buf.readBoolean();
+		Component realm = null;
+		int realmRank = 0;
+		if (buf.readBoolean()) {
+			realm = buf.readComponent();
+			realmRank = buf.readVarInt();
+		}
+		String letterTo = buf.readUtf();
+		int spoils = buf.readVarInt();
+		List<Person> people = new ArrayList<>();
+		for (int i = buf.readVarInt(); i > 0; i--) {
+			int check = buf.readVarInt();
+			String name = buf.readUtf();
+			int rank = buf.readVarInt(), state = buf.readVarInt(), task = buf.readVarInt();
+			people.add(new Person(check, name, rank, state, task, buf.readVarLong()));
+		}
+		return new SendOut(out, mostOut, body, realm, realmRank, letterTo, spoils, people);
 	}
 
 	/** The page come (S2C mission_board): onto the board's screen if it is open, else in a new one. */
@@ -80,8 +122,10 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 	}
 
 	private Page page;
-	private boolean exchange;
-	private int chosenMission = -1, chosenWare = -1;
+	private int tab = MISSIONS;
+	private int chosenMission = -1, chosenWare = -1, chosenPerson = -1;
+	/** On the Send Out page: the errand picked (SectErrands.Task's order) and a hunt's quarry's realm. */
+	private int sendTask = SectErrands.Task.HUNT.ordinal(), huntRealm = SectErrands.HUNT_LEAST.ordinal();
 	private int left, top, listScroll, listMax, paneScroll, paneMax;
 
 	private MissionBoardScreen(Page page) {
@@ -95,13 +139,20 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		choose();
 	}
 
-	/** Keeps what was chosen if it is still there, else the first of the list. */
+	/** Keeps what was chosen if it is still there, else the first of the list; a page with no Send Out half off it. */
 	private void choose() {
 		if (page.missions().stream().noneMatch(m -> m.id() == chosenMission)) {
 			chosenMission = page.missions().isEmpty() ? -1 : page.missions().get(0).id();
 			paneScroll = 0;
 		}
 		if (page.wares().stream().noneMatch(w -> w.index() == chosenWare)) chosenWare = page.wares().isEmpty() ? -1 : page.wares().get(0).index();
+		SendOut sendOut = page.sendOut();
+		if (sendOut == null) {
+			if (tab == SEND) tab = MISSIONS;
+			chosenPerson = -1;
+		} else if (sendOut.people().stream().noneMatch(p -> p.check() == chosenPerson)) {
+			chosenPerson = sendOut.people().isEmpty() ? -1 : sendOut.people().get(0).check();
+		}
 	}
 
 	@Override
@@ -119,41 +170,63 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		return mx >= x && mx < x + w && my >= y && my < y + h;
 	}
 
+	private int tabs() {
+		return page.sendOut() != null ? 3 : 2;
+	}
+
 	// --- What the list holds ---
 
-	/** A row of the list: a label (no mission or ware), a mission, or a ware; and where it starts down the list. */
-	private record Row(@Nullable Component label, @Nullable Posting mission, @Nullable Ware ware, int y, int height) {}
+	/** A row of the list: a label (no mission, ware or person), a mission, a ware or a person; and where it starts down the list. */
+	private record Row(@Nullable Component label, @Nullable Posting mission, @Nullable Ware ware, @Nullable Person person, int y, int height) {}
 
 	private List<Row> rows() {
 		List<Row> rows = new ArrayList<>();
 		int y = 0;
-		if (exchange) {
+		if (tab == SEND) {
+			SendOut sendOut = page.sendOut();
+			if (sendOut == null) return rows;
+			rows.add(new Row(Component.translatable(ModLang.ERRAND_OUT_OF, sendOut.out(), sendOut.mostOut()), null, null, null, y, LABEL_H));
+			y += LABEL_H;
+			if (sendOut.spoils() > 0) {
+				rows.add(new Row(Component.translatable(ModLang.ERRAND_SPOILS_WAITING, sendOut.spoils()), null, null, null, y, LABEL_H * 2));
+				y += LABEL_H * 2;
+			}
+			for (Person person : sendOut.people()) {
+				rows.add(new Row(null, null, null, person, y, ROW_H));
+				y += ROW_H;
+			}
+			if (sendOut.people().isEmpty()) {
+				rows.add(new Row(Component.translatable(ModLang.ERRAND_NOBODY).withStyle(s -> s.withColor(TalkUi.MUTED)), null, null, null, y, LABEL_H * 2));
+			}
+			return rows;
+		}
+		if (tab == EXCHANGE) {
 			for (Ware ware : page.wares()) {
-				rows.add(new Row(null, null, ware, y, ROW_H));
+				rows.add(new Row(null, null, ware, null, y, ROW_H));
 				y += ROW_H;
 			}
 			return rows;
 		}
 		boolean anyTaken = page.missions().stream().anyMatch(Posting::taken);
 		if (anyTaken) {
-			rows.add(new Row(Component.translatable(ModLang.MISSION_HELD, page.held(), page.maxHeld()), null, null, y, LABEL_H));
+			rows.add(new Row(Component.translatable(ModLang.MISSION_HELD, page.held(), page.maxHeld()), null, null, null, y, LABEL_H));
 			y += LABEL_H;
 			for (Posting m : page.missions()) {
 				if (!m.taken()) continue;
-				rows.add(new Row(null, m, null, y, ROW_H));
+				rows.add(new Row(null, m, null, null, y, ROW_H));
 				y += ROW_H;
 			}
 		}
-		rows.add(new Row(Component.translatable(ModLang.MISSION_POSTED), null, null, y, LABEL_H));
+		rows.add(new Row(Component.translatable(ModLang.MISSION_POSTED), null, null, null, y, LABEL_H));
 		y += LABEL_H;
 		boolean any = false;
 		for (Posting m : page.missions()) {
 			if (m.taken()) continue;
-			rows.add(new Row(null, m, null, y, ROW_H));
+			rows.add(new Row(null, m, null, null, y, ROW_H));
 			y += ROW_H;
 			any = true;
 		}
-		if (!any) rows.add(new Row(Component.translatable(ModLang.MISSION_NOTHING).withStyle(s -> s.withColor(TalkUi.MUTED)), null, null, y, LABEL_H * 2));
+		if (!any) rows.add(new Row(Component.translatable(ModLang.MISSION_NOTHING).withStyle(s -> s.withColor(TalkUi.MUTED)), null, null, null, y, LABEL_H * 2));
 		return rows;
 	}
 
@@ -167,21 +240,90 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		return null;
 	}
 
+	private @Nullable Person chosenPerson() {
+		SendOut sendOut = page.sendOut();
+		if (sendOut == null) return null;
+		for (Person p : sendOut.people()) if (p.check() == chosenPerson) return p;
+		return null;
+	}
+
+	// --- The Send Out page's reckoning ---
+
+	/** How strong a task stands (SectErrands#taskRank, as the page knows it). */
+	private int taskRank(SendOut sendOut, SectErrands.Task task) {
+		return switch (task) {
+			case HUNT -> PlayerCultivation.rank(SectErrands.huntRealm(huntRealm), Stage.MID);
+			case GATHER -> PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID);
+			case REALM -> sendOut.realmRank();
+			case LETTER -> 0;
+		};
+	}
+
+	/** Whether {@code task} can be had now: a secret realm only while one stands open, a letter only with another sect in the world. */
+	private static boolean available(SendOut sendOut, SectErrands.Task task) {
+		return switch (task) {
+			case REALM -> sendOut.realm() != null;
+			case LETTER -> !sendOut.letterTo().isEmpty();
+			default -> true;
+		};
+	}
+
+	private static Component days(int days) {
+		return days == 1 ? Component.translatable(ModLang.ERRAND_A_DAY) : Component.translatable(ModLang.ERRAND_DAYS, days);
+	}
+
+	/** What {@code task} is, as the page tells it. */
+	private Component about(SendOut sendOut, SectErrands.Task task) {
+		return switch (task) {
+			case HUNT -> Component.translatable(ModLang.errandAbout("hunt"), SectErrands.huntRealm(huntRealm).getDisplayName(), SectErrands.HUNT_FROM,
+					SectErrands.HUNT_TO, days(task.days));
+			case GATHER -> Component.translatable(ModLang.errandAbout("gather"), SectErrands.GATHER_FROM, SectErrands.GATHER_TO, days(task.days));
+			case REALM -> sendOut.realm() == null ? Component.translatable(ModLang.ERRAND_NO_REALM_OPEN)
+					: Component.translatable(ModLang.errandAbout("realm"), sendOut.realm(), days(task.days));
+			case LETTER -> sendOut.letterTo().isEmpty() ? Component.translatable(ModLang.ERRAND_NO_LETTER)
+					: Component.translatable(ModLang.errandAbout("letter"), sendOut.letterTo(), days(task.days));
+		};
+	}
+
+	/** How {@code p} stands, in words. */
+	private static Component state(Person p) {
+		SectErrands.State state = SectErrands.State.values()[Mth.clamp(p.state(), 0, SectErrands.State.values().length - 1)];
+		String key = ModLang.errandState(state.name().toLowerCase(java.util.Locale.ROOT));
+		return switch (state) {
+			case OUT -> {
+				SectErrands.Task task = SectErrands.Task.byIndex(p.task());
+				yield Component.translatable(key, task == null ? Component.empty() : task.getDisplayName(), SectMissions.clock(p.left()));
+			}
+			case RESTING -> Component.translatable(key, SectMissions.clock(p.left()));
+			default -> Component.translatable(key);
+		};
+	}
+
+	private static int stateColour(Person p) {
+		return p.state() == SectErrands.State.HOME.ordinal() ? EASY : p.state() == SectErrands.State.RESTING.ordinal() ? HARD
+				: p.state() == SectErrands.State.PERSONAL.ordinal() ? TalkUi.MUTED : TalkUi.GOLD_TEXT;
+	}
+
+	private static Component rankName(SendOut sendOut, int rank) {
+		return sendOut.body() ? BodyPath.rankName(rank) : PlayerCultivation.rankName(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
+	}
+
 	// --- Its buttons ---
 
-	/** A button in the pane: the act it sends (and on what), its word, whether it may be pressed, where it stands. */
-	private record Button(int act, int id, Component label, boolean enabled, int x, int y, int w) {}
+	/** A button in the pane: the act it sends (and on what), its word, whether it may be pressed, where it stands; {@code on}: a task picked. */
+	private record Button(int act, int id, Component label, boolean enabled, int x, int y, int w, boolean on) {}
 
 	private List<Button> buttons() {
 		List<Button> buttons = new ArrayList<>();
 		int y = top + BODY_BOTTOM - BUTTON_H;
 		int x = left + PANE_X;
-		if (exchange) {
+		if (tab == SEND) return sendButtons();
+		if (tab == EXCHANGE) {
 			Ware ware = chosenWare();
 			if (ware == null) return buttons;
 			Component label = Component.translatable(ModLang.EXCHANGE_BUY);
 			buttons.add(new Button(SectMissions.BUY, ware.index(), label, ware.open() && ware.left() > 0 && page.contribution() >= ware.price(), x, y,
-					font.width(label) + 12));
+					font.width(label) + 12, false));
 			return buttons;
 		}
 		Posting m = chosenMission();
@@ -198,8 +340,49 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		for (Object[] want : wanted) {
 			Component label = Component.translatable((String) want[1]);
 			int w = font.width(label) + 12;
-			buttons.add(new Button((int) want[0], m.id(), label, (boolean) want[2], x, y, w));
+			buttons.add(new Button((int) want[0], m.id(), label, (boolean) want[2], x, y, w, false));
 			x += w + 4;
+		}
+		return buttons;
+	}
+
+	/** The row where the tasks are picked, on the Send Out page. */
+	private int taskRowY() {
+		return top + BODY_BOTTOM - BUTTON_H * 2 - 4;
+	}
+
+	/**
+	 * The Send Out page's buttons: the four tasks to pick from (those that can't be had now, unpressable), and below them Send (only for one at
+	 * home with room for another out), and beside it, for a hunt, its quarry's realm between two arrows.
+	 */
+	private List<Button> sendButtons() {
+		List<Button> buttons = new ArrayList<>();
+		SendOut sendOut = page.sendOut();
+		Person p = chosenPerson();
+		if (sendOut == null || p == null) return buttons;
+		boolean home = p.state() == SectErrands.State.HOME.ordinal();
+		int x = left + PANE_X, y = taskRowY();
+		for (SectErrands.Task task : SectErrands.Task.values()) {
+			Component label = task.getDisplayName();
+			int w = font.width(label) + 8;
+			buttons.add(new Button(-10 - task.ordinal(), 0, label, home && available(sendOut, task), x, y, w, task.ordinal() == sendTask));
+			x += w + 3;
+		}
+		SectErrands.Task task = SectErrands.Task.byIndex(sendTask);
+		y = top + BODY_BOTTOM - BUTTON_H;
+		x = left + PANE_X;
+		Component send = Component.translatable(ModLang.ERRAND_SEND);
+		int sendW = font.width(send) + 12;
+		int index = sendOut.people().indexOf(p);
+		int id = index << SectMissions.SEND_INDEX | (huntRealm & 0xF) << SectMissions.SEND_REALM | p.check() & 0xFFFF;
+		boolean may = home && task != null && available(sendOut, task) && sendOut.out() < sendOut.mostOut();
+		buttons.add(new Button(SectMissions.SEND + sendTask, id, send, may, x, y, sendW, false));
+		if (task == SectErrands.Task.HUNT) {
+			x += sendW + 8;
+			buttons.add(new Button(LOWER, 0, Component.literal("<"), huntRealm > SectErrands.HUNT_LEAST.ordinal(), x, y, 12, false));
+			Component quarry = SectErrands.huntRealm(huntRealm).getDisplayName();
+			x += 12 + 6 + font.width(quarry) + 6;
+			buttons.add(new Button(HIGHER, 0, Component.literal(">"), huntRealm < SectErrands.HUNT_MOST.ordinal(), x, y, 12, false));
 		}
 		return buttons;
 	}
@@ -212,16 +395,29 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
 	}
 
+	/** A button pressed: a task picked or a quarry's realm turned here, anything else sent. */
+	private void press(Button b) {
+		if (b.act() <= -10) {
+			sendTask = -10 - b.act();
+			paneScroll = 0;
+		} else if (b.act() == LOWER || b.act() == HIGHER) {
+			huntRealm = Mth.clamp(huntRealm + (b.act() == HIGHER ? 1 : -1), SectErrands.HUNT_LEAST.ordinal(), SectErrands.HUNT_MOST.ordinal());
+		} else {
+			send(b.act(), b.id());
+			return;
+		}
+		if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+	}
+
 	// --- Input ---
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (button != 0 || !page.disciple()) return super.mouseClicked(mouseX, mouseY, button);
-		for (int tab = 0; tab < 2; tab++) {
-			if (in(mouseX, mouseY, tabX(tab), top + TABS_Y, tabW(tab), 13)) {
-				boolean pick = tab == 1;
-				if (pick != exchange) {
-					exchange = pick;
+		for (int t = 0; t < tabs(); t++) {
+			if (in(mouseX, mouseY, tabX(t), top + TABS_Y, tabW(t), 13)) {
+				if (t != tab) {
+					tab = t;
 					listScroll = 0;
 					paneScroll = 0;
 					if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
@@ -231,7 +427,7 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		}
 		for (Button b : buttons()) {
 			if (in(mouseX, mouseY, b.x(), b.y(), b.w(), BUTTON_H)) {
-				if (b.enabled()) send(b.act(), b.id());
+				if (b.enabled()) press(b);
 				return true;
 			}
 		}
@@ -245,6 +441,9 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 					paneScroll = 0;
 				} else if (row.ware() != null) {
 					chosenWare = row.ware().index();
+					paneScroll = 0;
+				} else if (row.person() != null && row.person().check() != chosenPerson) {
+					chosenPerson = row.person().check();
 					paneScroll = 0;
 				}
 				return true;
@@ -262,12 +461,18 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 
 	// --- Drawing ---
 
-	private int tabX(int tab) {
-		return tab == 0 ? left + LIST_X : left + LIST_X + tabW(0) + 4;
+	private int tabX(int t) {
+		int x = left + LIST_X;
+		for (int i = 0; i < t; i++) x += tabW(i) + 4;
+		return x;
 	}
 
-	private int tabW(int tab) {
-		return font.width(Component.translatable(tab == 0 ? ModLang.MISSION_TAB_MISSIONS : ModLang.MISSION_TAB_EXCHANGE)) + 12;
+	private Component tabLabel(int t) {
+		return Component.translatable(t == MISSIONS ? ModLang.MISSION_TAB_MISSIONS : t == EXCHANGE ? ModLang.MISSION_TAB_EXCHANGE : ModLang.ERRAND_TAB);
+	}
+
+	private int tabW(int t) {
+		return font.width(tabLabel(t)) + 12;
 	}
 
 	@Override
@@ -292,22 +497,23 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		Component contribution = Component.translatable(ModLang.MISSION_CONTRIBUTION, page.contribution());
 		int contributionX = left + W - 10 - font.width(contribution);
 		g.drawString(font, contribution, contributionX, top + TABS_Y + 3, TalkUi.GOLD_TEXT, false);
-		g.drawString(font, page.title(), contributionX - 10 - font.width(page.title()), top + TABS_Y + 3, TalkUi.MUTED, false);
+		int titleX = contributionX - 10 - font.width(page.title());
+		if (titleX > tabX(tabs() - 1) + tabW(tabs() - 1) + 6) g.drawString(font, page.title(), titleX, top + TABS_Y + 3, TalkUi.MUTED, false);
 		boolean overContribution = in(mouseX, mouseY, contributionX, top + TABS_Y + 1, font.width(contribution), 11);
 		// The tabs.
-		for (int tab = 0; tab < 2; tab++) {
-			boolean on = (tab == 1) == exchange;
-			Component label = Component.translatable(tab == 0 ? ModLang.MISSION_TAB_MISSIONS : ModLang.MISSION_TAB_EXCHANGE);
-			int x = tabX(tab), y = top + TABS_Y;
-			boolean hover = in(mouseX, mouseY, x, y, tabW(tab), 13);
+		for (int t = 0; t < tabs(); t++) {
+			boolean on = t == tab;
+			Component label = tabLabel(t);
+			int x = tabX(t), y = top + TABS_Y;
+			boolean hover = in(mouseX, mouseY, x, y, tabW(t), 13);
 			// The tab open in jade, as the Hall's.
-			HallHud.panel(g, x, y, x + tabW(tab), y + 13, on ? HallHud.FRAME_LIT : hover ? HallHud.FRAME_LIT : HallHud.FRAME,
+			HallHud.panel(g, x, y, x + tabW(t), y + 13, on ? HallHud.FRAME_LIT : hover ? HallHud.FRAME_LIT : HallHud.FRAME,
 					on ? HallHud.ROW_OPEN : hover ? HallHud.ROW_LIT : HallHud.CARD);
 			g.drawString(font, label, x + 6, y + 3, on ? TalkUi.GOLD_TEXT : TalkUi.CREAM, false);
 		}
 		g.fill(left + PANE_X - 5, top + BODY_TOP, left + PANE_X - 4, top + BODY_BOTTOM, TalkUi.GOLD_DIM);
 		ItemStack hoverStack = renderList(g, mouseX, mouseY);
-		ItemStack paneStack = renderPane(g, mouseX, mouseY);
+		ItemStack paneStack = tab == SEND ? renderSendPane(g, mouseX, mouseY) : renderPane(g, mouseX, mouseY);
 		// What came of the last thing done, at the foot.
 		g.fill(left + 6, top + H - 19, left + W - 6, top + H - 18, TalkUi.GOLD_DIM);
 		if (page.said() != null) {
@@ -340,7 +546,9 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 				for (int i = 0; i < lines.size(); i++) g.drawString(font, lines.get(i), x + 2, y + 2 + i * LINE_H, TalkUi.GOLD_TEXT, false);
 				continue;
 			}
-			boolean chosen = row.mission() != null ? row.mission().id() == chosenMission : row.ware() != null && row.ware().index() == chosenWare;
+			boolean chosen = row.mission() != null ? row.mission().id() == chosenMission
+					: row.ware() != null ? row.ware().index() == chosenWare
+					: row.person() != null && row.person().check() == chosenPerson;
 			// The chosen row in jade with a gold edge, as the Codex's icons; a row pointed at, lit.
 			if (chosen) {
 				g.fill(x, y, x + rowW, y + row.height() - 1, HallHud.ROW_OPEN);
@@ -366,6 +574,10 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 				int colour = !ware.open() ? TalkUi.WARNING : page.contribution() >= ware.price() && ware.left() > 0 ? TalkUi.GOLD_TEXT : TalkUi.DISABLED;
 				g.drawString(font, trimmed(under, rowW - 24), x + 21, y + 11, colour, false);
 				if (in(mouseX, mouseY, x + 2, y + 2, 16, 16) && mouseY >= viewTop && mouseY < viewBottom) hovered = ware.item();
+			} else if (row.person() != null) {
+				Person p = row.person();
+				g.drawString(font, trimmed(Component.literal(p.name()), rowW - 8), x + 4, y + 2, chosen || hover ? TalkUi.CREAM_BRIGHT : TalkUi.CREAM, false);
+				g.drawString(font, trimmed(state(p), rowW - 8), x + 4, y + 11, stateColour(p), false);
 			}
 		}
 		g.disableScissor();
@@ -379,7 +591,7 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		ItemStack icon;
 		Component name;
 		List<Component> lines = new ArrayList<>();
-		if (exchange) {
+		if (tab == EXCHANGE) {
 			Ware ware = chosenWare();
 			if (ware == null) return null;
 			icon = ware.item();
@@ -400,7 +612,54 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		g.renderItem(icon, x, y);
 		g.drawString(font, trimmed(name, PANE_W - 22), x + 20, y + 4, TalkUi.GOLD_TEXT, true);
 		g.fill(x, y + 19, x + PANE_W, y + 20, TalkUi.GOLD_DIM);
-		int viewTop = y + 23, viewBottom = top + BODY_BOTTOM - BUTTON_H - 4, textW = PANE_W - ROLLER_W - 6;
+		paneText(g, lines, y + 23, top + BODY_BOTTOM - BUTTON_H - 4);
+		renderButtons(g, mouseX, mouseY);
+		return in(mouseX, mouseY, x, y, 16, 16) && tab == EXCHANGE ? icon : null;
+	}
+
+	/**
+	 * The Send Out pane: the one chosen, their realm and how they stand; then the errand picked, what it is and a warning if it stands above
+	 * them, or why none may go; the tasks to pick from, and Send (with a hunt's quarry beside it). @return nothing to show a tooltip for
+	 */
+	private @Nullable ItemStack renderSendPane(GuiGraphics g, int mouseX, int mouseY) {
+		int x = left + PANE_X, y = top + BODY_TOP;
+		SendOut sendOut = page.sendOut();
+		Person p = chosenPerson();
+		if (sendOut == null || p == null) return null;
+		g.drawString(font, trimmed(Component.literal(p.name()), PANE_W - 2), x, y + 4, TalkUi.GOLD_TEXT, true);
+		g.fill(x, y + 15, x + PANE_W, y + 16, TalkUi.GOLD_DIM);
+		List<Component> lines = new ArrayList<>();
+		lines.add(Component.translatable(ModLang.ERRAND_RANK, rankName(sendOut, p.rank())).withStyle(s -> s.withColor(TalkUi.CREAM)));
+		int colour = stateColour(p);
+		lines.add(state(p).copy().withStyle(s -> s.withColor(colour)));
+		SectErrands.Task task = SectErrands.Task.byIndex(sendTask);
+		if (p.state() == SectErrands.State.HOME.ordinal() && task != null) {
+			lines.add(Component.translatable(ModLang.ERRAND_SEND_TO).withStyle(s -> s.withColor(TalkUi.GOLD_TEXT)));
+			lines.add(about(sendOut, task).copy().withStyle(s -> s.withColor(available(sendOut, task) ? TalkUi.CREAM : TalkUi.MUTED)));
+			if (available(sendOut, task) && SectErrands.above(p.rank(), taskRank(sendOut, task))) {
+				lines.add(Component.translatable(ModLang.ERRAND_ABOVE).withStyle(s -> s.withColor(TalkUi.WARNING)));
+			}
+			if (sendOut.out() >= sendOut.mostOut()) {
+				lines.add(Component.translatable(ModLang.ERRAND_TOO_MANY, sendOut.mostOut()).withStyle(s -> s.withColor(TalkUi.WARNING)));
+			}
+		}
+		paneText(g, lines, y + 19, taskRowY() - 3);
+		renderButtons(g, mouseX, mouseY);
+		// A hunt's quarry: its realm between the arrows.
+		if (task == SectErrands.Task.HUNT) {
+			for (Button b : buttons()) {
+				if (b.act() != LOWER) continue;
+				Component quarry = SectErrands.huntRealm(huntRealm).getDisplayName();
+				boolean able = p.state() == SectErrands.State.HOME.ordinal();
+				g.drawString(font, quarry, b.x() + b.w() + 6, b.y() + 3, able ? TalkUi.GOLD_TEXT : TalkUi.DISABLED, false);
+			}
+		}
+		return null;
+	}
+
+	/** {@code lines} wrapped to the pane, scrolled between {@code viewTop} and {@code viewBottom}, with its roller. */
+	private void paneText(GuiGraphics g, List<Component> lines, int viewTop, int viewBottom) {
+		int x = left + PANE_X, textW = PANE_W - ROLLER_W - 6;
 		List<FormattedCharSequence> wrapped = new ArrayList<>();
 		List<Integer> gaps = new ArrayList<>();
 		for (Component line : lines) {
@@ -420,11 +679,19 @@ public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 		}
 		g.disableScissor();
 		CodexScreen.roller(g, x + PANE_W - ROLLER_W, viewTop, viewBottom, content, paneScroll, paneMax);
+	}
+
+	/** The pane's buttons; a task picked, lit as an open tab is. */
+	private void renderButtons(GuiGraphics g, int mouseX, int mouseY) {
 		for (Button b : buttons()) {
 			boolean hover = b.enabled() && in(mouseX, mouseY, b.x(), b.y(), b.w(), BUTTON_H);
-			HallHud.button(g, font, b.x(), b.y(), b.w(), BUTTON_H, b.label(), b.enabled(), hover);
+			if (b.on()) {
+				HallHud.panel(g, b.x(), b.y(), b.x() + b.w(), b.y() + BUTTON_H, HallHud.FRAME_LIT, HallHud.ROW_OPEN);
+				g.drawString(font, b.label(), b.x() + (b.w() - font.width(b.label())) / 2, b.y() + 3, b.enabled() ? TalkUi.GOLD_TEXT : TalkUi.DISABLED, false);
+			} else {
+				HallHud.button(g, font, b.x(), b.y(), b.w(), BUTTON_H, b.label(), b.enabled(), hover);
+			}
 		}
-		return in(mouseX, mouseY, x, y, 16, 16) && exchange ? icon : null;
 	}
 
 	private Component trimmed(Component text, int width) {

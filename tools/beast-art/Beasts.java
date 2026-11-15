@@ -1,6 +1,8 @@
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The beasts themselves for BeastArt: each race's colourings, its head and tail, their animations; Ox-Head's and Horse-Face's heads.
@@ -34,6 +36,16 @@ public class Beasts {
 			new Palette("crimson", c(0xB42828), c(0x5A0E10), c(0xE05A4A), c(0xE8C060), c(0xF0D040), c(0x3A0808), c(0xE8C060), c(0xE8D8B8), c(0xF0C040), c(0x2A1A1E), c(0xD8A830)),
 	};
 
+	/**
+	 * Bare bone, every race's alike (2026-11-13, the user: "demon race skeletons should probably look different to other races' skeletons"):
+	 * a body of the dead gone to bones (CorpseWalk, CorpseRenderer) keeps its race's skull and tail. Ivory, darker in its hollows: the eyes'
+	 * sockets, the nostrils, the mouth; a dragon's antlers their bony core.
+	 */
+	static final Palette BONES = new Palette("bones", c(0xDCD5C2), c(0x8F8573), c(0xEFEADB), c(0xCFC7B2), c(0x1C1714), c(0x26201B), c(0x3A2F27),
+			c(0xCBBE9F), c(0xDCD5C2), 0, 0);
+
+	static boolean bones(Palette p) { return p == BONES; }
+
 	// --- Painters ---
 
 	/** Fur or scales of {@code base}, with the pattern of {@code kind}: "stripes" (a tiger's), "scales", "plain". */
@@ -43,6 +55,8 @@ public class Beasts {
 
 	static int pattern(Palette p, String kind, BeastArt.Face f, int x, int y, int w, int h, int seed) {
 		int px = x + f.ordinal() * 23, py = y;
+		// Bare bone wears no coat: weathered ivory, flecked darker here and there.
+		if (bones(p)) return BeastArt.hash(px, py, seed + 7) < 0.07 ? BeastArt.mix(p.base, p.dark, 0.45) : BeastArt.fur(p.base, px, py, seed);
 		switch (kind) {
 			case "stripes": {
 				// Bands across the fur, wavering: along a side face's length (x) and the top's (y).
@@ -78,7 +92,7 @@ public class Beasts {
 			if (f == BeastArt.Face.FRONT) {
 				if (y == 3 && (x == 1 || x == 2 || x == 6 || x == 7)) return (x == 2 || x == 6) ? 0xFF0A0A0A : p.eye;
 				if (y == 2 && (x >= 1 && x <= 2 || x >= 6 && x <= 7)) return p.light;
-				if (y == 0 && x >= 2 && x <= 6 || y == 1 && x == 4) return p.dark; // the forehead's mark
+				if (!bones(p) && (y == 0 && x >= 2 && x <= 6 || y == 1 && x == 4)) return p.dark; // the forehead's mark (fur's, not bone's)
 				if (y >= 4) return BeastArt.fur(p.light, x, y, 3);
 			}
 			if ((f == BeastArt.Face.SIDE_A || f == BeastArt.Face.SIDE_B) && y >= 4 && BeastArt.frontness(f, x, y, w, hh) > 0.5) return BeastArt.fur(p.light, x, y, 4);
@@ -88,7 +102,7 @@ public class Beasts {
 		h.cube(-2.5, 0.5, -7.5, 5, 3.5, 3, (f, x, y, w, hh, d) -> {
 			if (f == BeastArt.Face.FRONT && y == 0 && x >= 1 && x <= 3) return p.nose;
 			if (f == BeastArt.Face.FRONT && y == 1 && x == 2) return p.nose;
-			if (f == BeastArt.Face.FRONT && y == 2 && (x == 0 || x == 4)) return p.dark;
+			if (f == BeastArt.Face.FRONT && y == 2 && (x == 0 || x == 4) && !bones(p)) return p.dark;
 			if (f == BeastArt.Face.UP && y < 2) return BeastArt.fur(p.base, x, y, 5);
 			return BeastArt.fur(p.light, x, y, 6);
 		});
@@ -167,7 +181,7 @@ public class Beasts {
 			return pattern(p, "scales", f, x, y, w, hh, 31);
 		});
 		h.cube(-3, 0.5, -9, 6, 3.5, 4, (f, x, y, w, hh, d) -> {
-			if (f == BeastArt.Face.FRONT && y == 0 && (x == 1 || x == 4)) return p.dark; // the nostrils
+			if (f == BeastArt.Face.FRONT && y == 0 && (x == 1 || x == 4)) return bones(p) ? p.nose : p.dark; // the nostrils (bone's, hollows)
 			if (f == BeastArt.Face.DOWN) return BeastArt.fur(p.belly, x, y, 32);
 			return pattern(p, "scales", f, x, y, w, hh, 33);
 		});
@@ -456,6 +470,81 @@ public class Beasts {
 			BeastArt.write(assets.resolve("textures/entity/beast_head/" + id + ".png"), atlas.paint());
 			BeastArt.write(assets.resolve("geo/beast/" + id + "_head.geo.json"), BeastArt.geo(head, atlas));
 			BeastArt.write(assets.resolve("animations/beast/" + id + ".animation.json"), BeastArt.animations(animations(id)));
+		}
+	}
+
+	// --- Bare bones (a body of the dead gone to bones) ---
+
+	/** How long a vertebra is along its tail (pixels): a gap of what is left of its share of the piece between it and the next. */
+	static final double BEAD = 1.2;
+
+	/**
+	 * The tail {@code living} gone to bones, into {@code bones}: its own pieces (each its name, pivot and turn, so it rides and sways as the
+	 * living one does: BeastHeadModels), each a row of vertebrae along where its flesh ran, smaller toward the tip ({@code first} pixels
+	 * across at the root to {@code last} at the end), a gap between each; on a dragon's ({@code spines}) a spine up off each, as its ridge ran.
+	 * Vertebrae of a size share one box on the texture.
+	 */
+	static void boneTail(BeastArt.Model living, BeastArt.Model bones, Palette p, double first, double last, boolean spines) {
+		Map<String, Integer> depth = new HashMap<>();
+		int deepest = 0;
+		for (BeastArt.Bone b : living.bones) {
+			int d = b.parent == null ? 0 : depth.get(b.parent) + 1;
+			depth.put(b.name, d);
+			deepest = Math.max(deepest, d);
+		}
+		Map<Long, BeastArt.Cube> kinds = new HashMap<>();
+		BeastArt.Cube spine = null;
+		for (BeastArt.Bone b : living.bones) {
+			BeastArt.Bone piece = bones.bone(b.name, b.parent, b.pivot[0], b.pivot[1], b.pivot[2], b.rotation[0], b.rotation[1], b.rotation[2]);
+			if (b.cubes.isEmpty()) continue;
+			BeastArt.Cube flesh = b.cubes.get(0); // the piece itself (a dragon's ridge and tuft come after it)
+			double cx = flesh.origin[0] + flesh.size[0] / 2, cy = flesh.origin[1] + flesh.size[1] / 2, z0 = flesh.origin[2], length = flesh.size[2];
+			double s = Math.round((first + (last - first) * depth.get(b.name) / Math.max(1, deepest)) * 10) / 10.0;
+			int n = Math.max(1, (int) Math.round(length / 1.7));
+			double step = length / n;
+			for (int k = 0; k < n; k++) {
+				double z = z0 + k * step + (step - BEAD) / 2;
+				long key = Math.round(s * 10);
+				BeastArt.Cube like = kinds.get(key);
+				if (like == null) kinds.put(key, piece.cube(cx - s / 2, cy - s / 2, z, s, s, BEAD, vertebra(p, 90 + (int) key)));
+				else piece.cubeLike(like, cx - s / 2, cy - s / 2, z);
+				if (!spines) continue;
+				if (spine == null) spine = piece.cube(cx - 0.25, cy + s / 2, z + BEAD / 2 - 0.25, 0.5, 1, 0.5, BeastArt.solid(p.light));
+				else piece.cubeLike(spine, cx - 0.25, cy + s / 2, z + BEAD / 2 - 0.25);
+			}
+		}
+	}
+
+	/** A vertebra: pale bone, its two ends a little darker, so each stands apart from the next. */
+	static BeastArt.Painter vertebra(Palette p, int seed) {
+		return (f, x, y, w, h, d) -> f == BeastArt.Face.FRONT || f == BeastArt.Face.BACK ? BeastArt.mix(p.base, p.dark, 0.35)
+				: BeastArt.fur(p.light, x + f.ordinal() * 7, y, seed);
+	}
+
+	/**
+	 * The races' bones, under {@code assets}: each race's head painted as bare bone on its living head's own layout (its model is the living
+	 * head's, drawn with its ears, lids, tongue, whiskers, beard and mane hidden: BeastHeadModels), and its tail of vertebrae
+	 * ({@link #boneTail}) packed after it on the same texture: textures/entity/bloodline/<race>_bones_beast.png and
+	 * geo/beast/<race>_tail_bones.geo.json; nothing else. The head's model as this layout has it goes to {@code check}, to be compared with the
+	 * living head's (the same UVs, or the bones' texture would not fit it).
+	 */
+	static void writeBones(Path assets, Path check) throws Exception {
+		Object[][] races = {{"tiger", (Build) Beasts::tiger, new double[] {1.4, 1.0}}, {"lizard", (Build) Beasts::lizard, new double[] {1.6, 0.8}},
+				{"fox", (Build) Beasts::fox, new double[] {1.3, 0.9}}, {"dragon", (Build) Beasts::dragon, new double[] {1.8, 1.0}}};
+		for (Object[] race : races) {
+			String id = (String) race[0];
+			Build build = (Build) race[1];
+			double[] size = (double[]) race[2];
+			BeastArt.Model head = new BeastArt.Model(id + "_head"), tail = new BeastArt.Model(id + "_tail"), bones = new BeastArt.Model(id + "_tail_bones");
+			build.build(head, tail, BONES);
+			boneTail(tail, bones, BONES, size[0], size[1], id.equals("dragon"));
+			BeastArt.Atlas atlas = new BeastArt.Atlas(id.equals("dragon") ? 128 : 64, id.equals("dragon") ? 128 : 64);
+			atlas.models.add(head);
+			atlas.models.add(bones);
+			atlas.pack();
+			BeastArt.write(assets.resolve("textures/entity/bloodline/" + id + "_bones_beast.png"), atlas.paint());
+			BeastArt.write(assets.resolve("geo/beast/" + id + "_tail_bones.geo.json"), BeastArt.geo(bones, atlas));
+			BeastArt.write(check.resolve(id + "_head.geo.json"), BeastArt.geo(head, atlas));
 		}
 	}
 }

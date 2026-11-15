@@ -13,6 +13,7 @@ import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -252,6 +253,82 @@ public class PlayerSectGameTests implements FabricGameTest {
 			if (sect != null && !sect.extinct) PlayerSects.disband(server, sect, ModLang.MSG_PSECT_DISBANDED);
 			fallen.extinct = true;
 			older.extinct = true;
+			clear(helper, core);
+			leave(made);
+			restore(aside);
+		}
+	}
+
+	/**
+	 * The user's picks of 2026-11-13: in one's clone one founds a sect as in one's own body, weighed by one's own whole strength (a clone has
+	 * half its maker's stats, not half their realm); with one's soul in another's living body too, the sect taking after the body (its path,
+	 * its race) and its strength after its founder. (Walking in the dead, none: CorpseWalkGameTests.)
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "player_sects", timeoutTicks = 200)
+	public void aCloneOrASoulInAnothersBodyFoundsToo(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		ServerLevel level = helper.getLevel();
+		MinecraftServer server = level.getServer();
+		List<Sect> aside = setAside(level, helper.absolutePos(CORE));
+		FormationCoreBlockEntity core = ground(helper);
+		Sect sect = null;
+		CultivatorNpc npc = null;
+		try {
+			ServerPlayer p = survivor(helper, made, "sect-twofold", Realm.NASCENT_SOUL);
+			PlayerCultivation own = CultivationManager.own(p);
+			own.learnTechnique(Technique.CLONE);
+			own.setQi(own.maxQi());
+			Clones.act(p); // a clone split off
+			Clones.act(p); // and played
+			helper.assertTrue(Clones.inClone(p) && Clones.isCloneRecord(own), "In their clone");
+			core.canControl(p);
+			core.configure(p, Formations.MIN_RADIUS, true);
+			for (BlockPos mat : new BlockPos[] {CORE.offset(2, 0, 2), CORE.offset(-2, 0, 2), CORE.offset(2, 0, -2)}) helper.setBlock(mat, ModBlocks.MEDITATION_MAT);
+			Component why = PlayerSects.refusal(p, core);
+			helper.assertTrue(why == null, "In their clone they may found a sect: " + key(why));
+			sect = PlayerSects.found(p, core, "Twofold Peak Sect");
+			helper.assertTrue(sect != null && p.getUUID().equals(sect.founder) && sect.capacity == 3 && SectMembership.titleOf(sect, p) == NpcTitle.SECT_MASTER,
+					"Founded from the clone, its founder's whole strength weighed: " + (sect == null ? null : sect.capacity));
+			PlayerSects.disband(server, sect, ModLang.MSG_PSECT_DISBANDED);
+			sect = null;
+			Clones.act(p); // back in the main body
+			Clones.dissolve(server, own);
+			own.setClone(null);
+			helper.assertTrue(!Clones.inClone(p) && !Clones.hasClone(p), "Back in the main body, the clone gone");
+
+			// The soul sent out into a devilish fox cultivator's body.
+			CultivationStats.apply(p, own);
+			p.setHealth(p.getMaxHealth());
+			own.setQi(own.maxQi());
+			p.setOnGround(true);
+			long now = level.getGameTime();
+			SoulProjection.toggle(p);
+			for (int i = 0; i < SoulProjection.CHANNEL_TICKS; i++) SoulProjection.tick(p, now);
+			helper.assertTrue(SoulProjection.isSoul(p), "The soul is out");
+			npc = helper.spawnWithNoFreeWill(ModEntities.CULTIVATOR, CORE.offset(2, 0, 1));
+			npc.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE));
+			npc.setRace(Bloodline.FOX, 0);
+			npc.setAlignment(-150);
+			helper.assertTrue(SoulProjection.tryPossess(p, npc) == InteractionResult.SUCCESS, "The soul takes the fox's body");
+			why = PlayerSects.refusal(p, core);
+			helper.assertTrue(why == null, "In another's body they may found one too: " + key(why));
+			sect = PlayerSects.found(p, core, "");
+			helper.assertTrue(sect != null && p.getUUID().equals(sect.founder) && "sect-twofold".equals(sect.founderName) && sect.capacity == 3,
+					"The sect is its founder's, its strength theirs: " + (sect == null ? null : sect.founderName + " " + sect.capacity));
+			helper.assertTrue(Alignment.factionOf(sect.alignment) == Alignment.Faction.DEVILISH && sect.race == Bloodline.FOX && sect.isClan(),
+					"...its path and race the body's, a devilish fox clan (" + sect.alignment + ", " + sect.race + ")");
+			helper.succeed();
+		} finally {
+			if (sect != null && !sect.extinct) PlayerSects.disband(server, sect, ModLang.MSG_PSECT_DISBANDED);
+			for (ServerPlayer q : made) {
+				if (Possession.inhabits(q.getUUID())) SoulProjection.letGo(q, null);
+				SoulProjection.onDeath(q);
+				CultivationManager.own(q).setPossession(null);
+				if (Clones.inClone(q)) Clones.onDisconnect(q);
+				Clones.dissolve(server, CultivationManager.own(q));
+				CultivationManager.own(q).setClone(null);
+			}
+			if (npc != null) npc.discard();
 			clear(helper, core);
 			leave(made);
 			restore(aside);

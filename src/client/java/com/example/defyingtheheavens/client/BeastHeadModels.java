@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.BeastHead;
 import com.example.defyingtheheavens.Bloodline;
+import com.example.defyingtheheavens.CorpseBlock;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -70,11 +71,21 @@ public final class BeastHeadModels {
 		return HEADS.computeIfAbsent(head, Head::new);
 	}
 
-	/** The beast's head (and tail) {@code entity} is drawn with by its bloodline (ClientBloodlines#look), worn by it; null for a human's look. */
+	/**
+	 * The beast's head (and tail) {@code entity} is drawn with by its bloodline (ClientBloodlines#look), worn by it; null for a human's look.
+	 * A player walking in a demon's body of the dead gone to bones (ClientBodies#corpseRot) wears its race's bare skull and tail bones.
+	 */
 	public static Head of(Entity entity) {
 		ClientBloodlines.Look look = ClientBloodlines.look(entity);
-		return look == null ? null : get(look.bloodline().head()).on(entity, look);
+		boolean bones = entity instanceof net.minecraft.world.entity.player.Player player && ClientBodies.corpseRot(player) == CorpseBlock.Rot.BONES;
+		return look == null ? null : get(look.bloodline().head()).on(entity, look, bones);
 	}
+
+	/**
+	 * The parts a skull has none of (2026-11-13, a demon's body of the dead gone to bones: Head#bones): its ears, eyelids, tongue, whiskers,
+	 * beard and mane, hidden while it is drawn so.
+	 */
+	private static final String[] SOFT = {"ear_left", "ear_right", "lids", "tongue", "whisker_left", "whisker_right", "beard", "mane"};
 
 	/** A beast's head and tail, ready to wear. */
 	public static final class Head {
@@ -83,13 +94,21 @@ public final class BeastHeadModels {
 		private final Brow brow;
 		private final Beast headBeast, tailBeast;
 		private final Part headPart, tailPart;
+		/**
+		 * A race's bones (2026-11-13, the user: "demon race skeletons should probably look different to other races' skeletons"): its head
+		 * painted as a bare skull on its own layout ({@code <race>_bones_beast.png}, tools/beast-art Beasts#writeBones), and a tail of
+		 * vertebrae of its own on the same texture, its pieces the living tail's (they sway as it does); null for the wardens' heads.
+		 */
+		private final ResourceLocation bonesTexture;
+		private final Part bonesTailPart;
 		/** The human head's pose and the body's, as followed (empty parts that only hold a pose). */
 		private final ModelPart headAnchor = new ModelPart(List.of(), Map.of()), bodyAnchor = new ModelPart(List.of(), Map.of());
 		private boolean bodyFollowed;
-		/** Who wears it now (whose animations), its colouring and tails, and the texture they're drawn in. */
+		/** Who wears it now (whose animations), its colouring and tails, and the texture they're drawn in; whether as bare bones. */
 		private Entity wearer;
 		private int tails = 1;
 		private ResourceLocation texture;
+		private boolean bones;
 
 		Head(BeastHead kind) {
 			this.kind = kind;
@@ -101,13 +120,21 @@ public final class BeastHeadModels {
 			boolean tailed = kind != BeastHead.OX && kind != BeastHead.HORSE;
 			this.tailBeast = tailed ? new Beast(this, true) : null;
 			this.tailPart = tailed ? new Part(new Model(this, DefyingTheHeavens.id("geo/beast/" + kind.getId() + "_tail.geo.json"))) : null;
+			this.bonesTexture = tailed ? DefyingTheHeavens.id("textures/entity/bloodline/" + kind.getId() + "_bones_beast.png") : null;
+			this.bonesTailPart = tailed ? new Part(new Model(this, DefyingTheHeavens.id("geo/beast/" + kind.getId() + "_tail_bones.geo.json"))) : null;
 		}
 
 		/** Worn by {@code wearer} (its animations; null for none), in {@code look}'s colouring (null: the head's own texture, Ox-Head's...). */
 		public Head on(Entity wearer, ClientBloodlines.Look look) {
+			return on(wearer, look, false);
+		}
+
+		/** As {@link #on(Entity, ClientBloodlines.Look)}; {@code bones}: as its race's bare skull and tail bones (a body of the dead gone to bones). */
+		public Head on(Entity wearer, ClientBloodlines.Look look, boolean bones) {
 			this.wearer = wearer;
 			this.tails = look == null ? 1 : look.tails();
-			this.texture = look == null ? ownTexture : ClientBloodlines.beastTexture(look);
+			this.bones = bones && bonesTexture != null;
+			this.texture = this.bones ? bonesTexture : look == null ? ownTexture : ClientBloodlines.beastTexture(look);
 			return this;
 		}
 
@@ -131,17 +158,20 @@ public final class BeastHeadModels {
 		public void render(PoseStack pose, VertexConsumer buffer, int light, int overlay, float red, float green, float blue, float alpha) {
 			RenderType type = RenderType.entityCutoutNoCull(texture);
 			MultiBufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
-			long id = wearer == null ? 0 : wearer.getId() * 2L;
+			// Bones and flesh apart (the soft parts hidden or not: Model#setCustomAnimations): GeckoLib skips the animations of an instance
+			// drawn again in a frame, so two bodies lying (no wearer) one fresh, one bones, kept the first one's hidden parts.
+			long id = (wearer == null ? 0 : wearer.getId() * 4L) + (bones ? 2 : 0);
 			pose.pushPose();
 			headAnchor.translateAndRotate(pose);
 			pose.scale(-1.0f, -1.0f, 1.0f);
 			headPart.draw(pose, headBeast, source, type, buffer, light, overlay, red, green, blue, alpha, id);
 			pose.popPose();
-			if (tailPart != null && bodyFollowed) {
+			Part tail = bones ? bonesTailPart : tailPart;
+			if (tail != null && bodyFollowed) {
 				pose.pushPose();
 				bodyAnchor.translateAndRotate(pose);
 				pose.scale(-1.0f, -1.0f, 1.0f);
-				tailPart.draw(pose, tailBeast, source, type, buffer, light, overlay, red, green, blue, alpha, id + 1);
+				tail.draw(pose, tailBeast, source, type, buffer, light, overlay, red, green, blue, alpha, id + 1);
 				pose.popPose();
 			}
 		}
@@ -295,7 +325,18 @@ public final class BeastHeadModels {
 		 */
 		@Override
 		public void setCustomAnimations(Beast beast, long instanceId, AnimationState<Beast> state) {
-			if (!beast.tail || head.wearer == null) return;
+			if (!beast.tail) {
+				// A skull has no soft parts (Head#bones): hidden while it is drawn as bones, shown again for the living (one model for both).
+				for (String soft : SOFT) {
+					CoreGeoBone bone = getAnimationProcessor().getBone(soft);
+					if (bone != null) bone.setHidden(head.bones);
+				}
+				return;
+			}
+			if (head.wearer == null) {
+				lie();
+				return;
+			}
 			float partial = state.getPartialTick();
 			float time = head.wearer.tickCount + partial;
 			float walk = head.walking(partial);
@@ -326,6 +367,47 @@ public final class BeastHeadModels {
 				if (piece == null) break;
 				turn(piece, Mth.sin(time * IDLE_PACE * 0.7f - s * 0.5f) * 0.04f, swing(time, stride, walk, -s * 0.6f), 0);
 			}
+		}
+
+		/**
+		 * A tail on a body lying (CorpseRenderer: worn by no one): laid out straight from the small of the back toward its feet, flat along it,
+		 * a fox's tails fanned out on the ground as many as it had, the rest hidden. (Its standing curl, kept as the body was laid over, stood
+		 * it up into the sky, its bones' and its flesh's alike: found 2026-11-13.)
+		 */
+		private void lie() {
+			if (head.kind == BeastHead.FOX) {
+				int tails = Mth.clamp(head.tails, 1, Bloodline.MOST_TAILS);
+				float spread = Math.min(0.9f, 0.15f * (tails - 1));
+				for (int i = 1; i <= Bloodline.MOST_TAILS; i++) {
+					CoreGeoBone root = getAnimationProcessor().getBone("tail_" + i);
+					if (root == null) continue;
+					root.setHidden(i > tails);
+					laid(root, tails == 1 ? 0 : -spread + 2 * spread * (i - 1) / (tails - 1));
+					for (int s = 1; s <= 2; s++) straight(getAnimationProcessor().getBone("tail_" + i + "_" + s));
+				}
+				return;
+			}
+			for (int s = 0; ; s++) {
+				CoreGeoBone piece = getAnimationProcessor().getBone("tail_" + s);
+				if (piece == null) break;
+				if (s == 0) laid(piece, 0);
+				else straight(piece);
+			}
+		}
+
+		/** A tail's first piece turned from pointing back (the model's +z) to its body's feet (its -y), {@code fan} radians out to a side. */
+		private static void laid(CoreGeoBone root, float fan) {
+			root.setRotX(Mth.HALF_PI);
+			root.setRotY(0);
+			root.setRotZ(fan);
+		}
+
+		/** A tail's piece straight on from the one before it. */
+		private static void straight(CoreGeoBone piece) {
+			if (piece == null) return;
+			piece.setRotX(0);
+			piece.setRotY(0);
+			piece.setRotZ(0);
 		}
 
 		/** How far a tail swings at the standing sway, by the time, and the walking swing, by the stride ({@code walk} between them). */

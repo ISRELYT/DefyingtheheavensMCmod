@@ -342,6 +342,13 @@ public final class MeditationManager {
 		PlayerCultivation c = CultivationManager.get(p);
 
 		session.ticks++;
+		// Meditating in a body of the dead refines its yin for the walker's own ghost path, nothing else (CorpseWalk#meditate): no qi drawn in,
+		// no surge, no turning inward.
+		if (CorpseWalk.walking(p)) {
+			if (tick % 10 == 0) CorpseWalk.meditate(p, 0.5);
+			if (tick % 20 == 0) ModPackets.broadcastMeditation(p, true);
+			return;
+		}
 		if (session.settling > 0 && --session.settling == 0) { // settled on the island: from here, getting up ends it
 			session.x = p.getX();
 			session.y = p.getY();

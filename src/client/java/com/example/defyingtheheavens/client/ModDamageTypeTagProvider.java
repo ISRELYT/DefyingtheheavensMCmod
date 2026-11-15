@@ -57,5 +57,10 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.YIN_LIGHTNING, ModDamageTypes.YIN_TRIBULATION);
 		// Sword intent (the Sunken Sword Tomb's, and the war art's second cut): turned by armour as a blade is, but a cut of intent shoves no one.
 		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.SWORD_INTENT);
+		// A Spatial Gap storm's bolt (2026-11-13): armour and its enchantments no help, so it strikes everyone alike; Resistance and wards
+		// still turn some. It jolts no flight: the storm's winds carry one instead.
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.SPATIAL_STORM);
+		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.SPATIAL_STORM);
+		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.SPATIAL_STORM);
 	}
 }

@@ -82,6 +82,7 @@ public final class ClientBloodlines {
 	public static Look look(Entity entity) {
 		if (entity instanceof CultivatorNpc npc) return npcLook(npc);
 		if (entity instanceof AbstractClientPlayer player && ClientBodies.disguised(player)) {
+			if (ClientBodies.isCorpse(player)) return ClientBodies.corpseRace(player); // the dead's own race, a man's or a demon's (CorpseWalk)
 			CultivatorNpc npc = ClientBodies.npc(player);
 			if (npc != null) return npcLook(npc);
 		}

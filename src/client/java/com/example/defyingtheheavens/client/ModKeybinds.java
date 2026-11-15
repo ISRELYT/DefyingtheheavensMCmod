@@ -23,6 +23,8 @@ public final class ModKeybinds {
 	public static final KeyMapping[] ABILITY_SLOTS = new KeyMapping[PlayerCultivation.WHEEL_SLOTS];
 	/** Opens the Dao Codex, the mod's guide ({@link CodexScreen}). */
 	public static KeyMapping CODEX;
+	/** Riding one's bound beast: it strikes what one looks at with its own move (SaddleStrikes). */
+	public static KeyMapping SADDLE_STRIKE;
 
 	public static void register() {
 		OPEN_MENU = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -45,6 +47,8 @@ public final class ModKeybinds {
 		}
 		CODEX = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 				ModLang.KEY_CODEX, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, ModLang.KEY_CATEGORY));
+		SADDLE_STRIKE = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				ModLang.KEY_SADDLE_STRIKE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, ModLang.KEY_CATEGORY));
 	}
 
 	private static final java.util.List<KeyMapping> ALL = new java.util.ArrayList<>();
@@ -55,6 +59,7 @@ public final class ModKeybinds {
 			ALL.addAll(java.util.List.of(OPEN_MENU, MEDITATE, CIRCULATE, ABILITY_WHEEL, SPELL_WHEEL, CAST_SPELL, QUICK_ABILITY));
 			ALL.addAll(java.util.Arrays.asList(ABILITY_SLOTS));
 			ALL.add(CODEX);
+			ALL.add(SADDLE_STRIKE);
 		}
 		return ALL;
 	}

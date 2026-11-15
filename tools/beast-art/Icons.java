@@ -335,4 +335,118 @@ public class Icons {
 		}
 		return img;
 	}
+
+	/**
+	 * Ghostly Possession (the dead's own, 2026-11-13; {@code java BeastArt <assets> ghostpossession} writes it alone): a pale ghost of the dead
+	 * diving down into a body's head from the upper right, its tail sweeping back behind it and nothing else (no cord: nothing tethers the
+	 * dead); the body standing dim at the left, a glow about its head where the ghost goes in.
+	 */
+	static BufferedImage ghostPossession() {
+		BufferedImage img = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		int body = BeastArt.rgb(0x5E5A66), edge = BeastArt.rgb(0x2E2A36), glow = BeastArt.rgb(0xA8F0E6);
+		int ghost = BeastArt.rgb(0xE2FFFB), ghostDeep = BeastArt.rgb(0x7FD6CA), eye = BeastArt.rgb(0x16262A);
+		boolean[][] solid = new boolean[32][32];
+		for (int y = 0; y < 32; y++) {
+			for (int x = 0; x < 32; x++) {
+				boolean head = x >= 5 && x <= 12 && y >= 12 && y <= 18;
+				boolean trunk = x >= 4 && x <= 13 && y >= 19 && y <= 26;
+				boolean legs = (x >= 5 && x <= 7 || x >= 10 && x <= 12) && y >= 27;
+				solid[x][y] = head || trunk || legs;
+			}
+		}
+		for (int y = 0; y < 32; y++) {
+			for (int x = 0; x < 32; x++) {
+				int c = 0;
+				if (solid[x][y]) {
+					boolean rim = x == 0 || y == 0 || x == 31 || y == 31 || !solid[x - 1][y] || !solid[x + 1][y] || !solid[x][y - 1] || !solid[x][y + 1];
+					c = rim ? edge : body;
+					double lx = x - 8.5, ly = y - 12.5; // lit from where the ghost comes down into it
+					double lit = Math.max(0, 1 - Math.sqrt(lx * lx + ly * ly) / 7.0);
+					if (lit > 0) c = BeastArt.mix(c, glow, lit * 0.55);
+				} else {
+					double gx = x - 8.5, gy = y - 15;
+					double d = Math.sqrt(gx * gx + gy * gy);
+					if (d < 8) c = (int) Math.round(70 * (1 - d / 8)) << 24 | glow & 0xFFFFFF; // the glow about its head
+				}
+				// The ghost: along a swoop from the upper right down to the head, thick at its head and thinning to its tail.
+				double best = Double.MAX_VALUE, at = 0;
+				for (int i = 0; i <= 60; i++) {
+					double t = i / 60.0, u = 1 - t;
+					double px = u * u * 9.5 + 2 * u * t * 18 + t * t * 28, py = u * u * 9.0 + 2 * u * t * 1.5 + t * t * 5;
+					double r = 4.2 * (1 - t) + 0.7 * t;
+					double inside = Math.sqrt((x - px) * (x - px) + (y - py) * (y - py)) - r;
+					if (inside < best) {
+						best = inside;
+						at = t;
+					}
+				}
+				if (best < 0) {
+					int g = BeastArt.mix(ghost, ghostDeep, Math.min(1, at * 1.4 + (best > -0.8 ? 0.35 : 0)));
+					int alpha = (int) Math.round(255 * (1 - 0.55 * at));
+					c = solid[x][y] ? BeastArt.mix(c, g, 0.7) | 0xFF000000 : alpha << 24 | g & 0xFFFFFF;
+				}
+				img.setRGB(x, y, c);
+			}
+		}
+		// Its eyes, on the head of it, looking down into the body.
+		img.setRGB(8, 8, eye);
+		img.setRGB(11, 8, eye);
+		img.setRGB(8, 9, eye);
+		img.setRGB(11, 9, eye);
+		return img;
+	}
+
+	/**
+	 * Natal Recall (the natal treasure, 2026-11-13; {@code java BeastArt <assets> natalrecall} writes it alone): a blade flying point first down
+	 * to a golden core at the lower left, streaks of light behind it, a glow where its point comes home.
+	 */
+	static BufferedImage natalRecall() {
+		BufferedImage img = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		int coreLight = BeastArt.rgb(0xFFF0A8), coreDeep = BeastArt.rgb(0xD89A22), rim = BeastArt.rgb(0x5A3A10);
+		int steel = BeastArt.rgb(0xEEF3F8), steelEdge = BeastArt.rgb(0x7E8A9C), gold = BeastArt.rgb(0xE0B038), grip = BeastArt.rgb(0x6A2A1A);
+		int light = BeastArt.rgb(0xFFF6D0);
+		double tipX = 14, tipY = 18, guardX = 22.5, guardY = 9.5, endX = 26.5, endY = 5.5;
+		for (int y = 0; y < 32; y++) {
+			for (int x = 0; x < 32; x++) {
+				double px = x + 0.5, py = y + 0.5;
+				int c = 0;
+				// The glow where it comes home, and the core itself.
+				double gx = px - 9, gy = py - 23, g = Math.sqrt(gx * gx + gy * gy);
+				if (g < 9) c = (int) Math.round(90 * (1 - g / 9)) << 24 | coreLight & 0xFFFFFF;
+				if (g <= 5.2) c = g > 4.4 ? rim : BeastArt.mix(coreLight, coreDeep, Math.min(1, g / 4.4 + (gx + gy > 1 ? 0.25 : 0)));
+				// The streaks of its flight behind it (up and to the right), fading.
+				for (double off : new double[] {-2.2, 0, 2.2}) {
+					double ax = endX + 0.5 + off * 0.707, ay = endY - 0.5 + off * 0.707;
+					double t = ((px - ax) * 0.707 + (py - ay) * -0.707);
+					double across = Math.abs((px - ax) * 0.707 + (py - ay) * 0.707);
+					double reach = off == 0 ? 6 : 4;
+					if (t > 0 && t < reach && across < 0.6) {
+						int alpha = (int) Math.round(200 * (1 - t / reach) * (off == 0 ? 1 : 0.7));
+						if (alpha > (c >>> 24)) c = alpha << 24 | light & 0xFFFFFF;
+					}
+				}
+				// The blade: point to guard.
+				double bt = ((px - tipX) * (guardX - tipX) + (py - tipY) * (guardY - tipY)) / ((guardX - tipX) * (guardX - tipX) + (guardY - tipY) * (guardY - tipY));
+				if (bt >= 0 && bt <= 1) {
+					double cx = tipX + bt * (guardX - tipX), cy = tipY + bt * (guardY - tipY);
+					double d = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+					double half = 0.55 + 0.75 * Math.min(1, bt * 3);
+					if (d <= half) c = d > half - 0.6 ? steelEdge : steel;
+				}
+				// The guard across it, the grip and the pommel.
+				double ux = px - guardX, uy = py - guardY;
+				double along = ux * 0.707 + uy * -0.707, side = ux * 0.707 + uy * 0.707;
+				if (Math.abs(along) < 0.7 && Math.abs(side) < 3.0) c = gold;
+				double ht = ((px - guardX) * (endX - guardX) + (py - guardY) * (endY - guardY)) / ((endX - guardX) * (endX - guardX) + (endY - guardY) * (endY - guardY));
+				if (ht > 0.12 && ht <= 1) {
+					double cx = guardX + ht * (endX - guardX), cy = guardY + ht * (endY - guardY);
+					if (Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy)) <= 0.75) c = grip;
+				}
+				double ex = px - (endX + 0.6), ey = py - (endY - 0.6);
+				if (ex * ex + ey * ey <= 1.3) c = gold;
+				img.setRGB(x, y, c);
+			}
+		}
+		return img;
+	}
 }

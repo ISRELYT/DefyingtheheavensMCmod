@@ -108,6 +108,16 @@ public final class CultivationManager {
 			Clones.act(player);
 			return;
 		}
+		// The dead's own possession (GhostPossession): into the body looked at, or out of the one it is in.
+		if (ability == Ability.GHOST_POSSESSION) {
+			GhostPossession.act(player);
+			return;
+		}
+		// One's natal treasure called to one's hand (NatalTreasures#recall).
+		if (ability == Ability.NATAL_RECALL) {
+			NatalTreasures.recall(player);
+			return;
+		}
 		// The races' acts (RaceGifts): a tiger's roar, a fox's illusion.
 		if (ability == Ability.TIGERS_ROAR) {
 			RaceGifts.roar(player);

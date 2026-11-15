@@ -283,6 +283,7 @@ public final class Physiques {
 			c.setAlignment(c.getAlignment() - DEVOUR_SHIFT);
 			CultivationManager.markDirty(killer.server);
 			CultivationManager.sync(killer);
+			PersonalDisciples.witnessed(killer, -DEVOUR_SHIFT); // a righteous disciple near sees it
 			killer.sendSystemMessage(Component.translatable(ModLang.MSG_DEVOURED_DRAG, DEVOUR_SHIFT, Alignment.describe(c.getAlignment()))
 					.withStyle(ChatFormatting.DARK_RED));
 		}

@@ -373,7 +373,7 @@ public final class ImmortalGate {
 		}
 		if (++c.ticks % 20 == 0) {
 			float harm = (float) (p.getMaxHealth() * carriedShare(p) * (1 - armourShare(p)));
-			if (harm > 0) p.hurt(ModDamageTypes.spatialPressure(passage), harm);
+			SpatialTrialHandler.press(p, ModDamageTypes.spatialPressure(passage), harm); // nothing to one who out-heals it
 			if (!p.isAlive()) return;
 			p.displayClientMessage(Component.translatable(ModLang.MSG_GATE_CLIMB, Math.max(0, EXIT_Y - Mth.floor(p.getY()))), true);
 		}

@@ -65,11 +65,12 @@ public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 
 	/**
 	 * What the server last told of the core's Sect page (PlayerSects#sendInfo): the player's sect on it ({@code own}: its name, tribute waiting
-	 * and a day's, places, mats inside, the founder's cap, gates, altar, ticks to the next aspirant or -1, its kind, its people), or whether one
-	 * could be founded ({@code canFound}, else {@code refusal} why), the mats inside, their cap, and the fallen sect it would revive.
+	 * and a day's, places, mats inside, the founder's cap, gates, altar, ticks to the next aspirant or -1, its kind, the stacks of spoils its
+	 * people brought back from their errands (SectErrands), its people), or whether one could be founded ({@code canFound}, else
+	 * {@code refusal} why), the mats inside, their cap, and the fallen sect it would revive.
 	 */
 	public record SectInfo(BlockPos pos, boolean own, String name, long tribute, long daily, int capacity, int mats, int cap, int gates,
-			boolean altar, long nextArrival, boolean clan, boolean holy, boolean immortal, boolean body, List<SectMember> members,
+			boolean altar, long nextArrival, boolean clan, boolean holy, boolean immortal, boolean body, int spoils, List<SectMember> members,
 			boolean canFound, Component refusal, String fallen) {}
 
 	private State state;
@@ -497,6 +498,7 @@ public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 		int members = (int) info.members().stream().filter(m -> !m.player()).count();
 		int y = lines(g, Component.translatable(ModLang.CORE_SECT_PLACES, members, info.capacity(), info.mats(), info.cap()), top + 24, PALE);
 		y = lines(g, Component.translatable(ModLang.CORE_SECT_TRIBUTE, info.tribute(), info.daily()), y, 0xF2C94C);
+		if (info.spoils() > 0) y = lines(g, Component.translatable(ModLang.CORE_SECT_SPOILS, info.spoils()), y, 0xF2C94C);
 		y = lines(g, info.nextArrival() < 0 ? Component.translatable(ModLang.CORE_SECT_FULL)
 				: Component.translatable(ModLang.CORE_SECT_NEXT, Math.max(1, (info.nextArrival() + 1199) / 1200) + " min"), y, MUTED);
 		y = lines(g, info.gates() == 0 ? Component.translatable(ModLang.CORE_SECT_NO_GATE)

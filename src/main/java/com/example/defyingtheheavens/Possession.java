@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -23,6 +24,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,6 +80,24 @@ public final class Possession {
 		UUID sect;
 		/** Where Soul Projection was put on the body's ability wheel, to leave by (-1: it was there already, or the wheel was full). */
 		int wheelSlot = -1;
+		/** What that slot held before (one of the dead's way out takes a locked ability's place on a full wheel: #putLeaveOnWheel), or null. */
+		Ability wheelReplaced;
+		/**
+		 * A body of the dead's (CorpseWalk, 2026-11-13): its block entity's tag as it was lifted (laid again from it as the soul leaves), or
+		 * null for a living body's. Its {@link #body} is the corpse's own identity (CorpseBlockEntity#id).
+		 */
+		final CompoundTag corpse;
+		/** A corpse's rot as it goes on in the soul's keeping: ticks dead (CorpseWalk#rot). */
+		double corpseAge;
+		/** Corpse Yin Refining refined meditating in a corpse, owed to the soul's own record: paid as it leaves (CorpseWalk#meditate). */
+		double corpseYin;
+		/** A corpse's sect has seen its dead walk and turned on the soul (CorpseWalk): told once. */
+		boolean sectTurned;
+		/**
+		 * One of the dead in it by its own possession (GhostPossession, 2026-11-13): no soul sent out, nothing tethering it; its way out the
+		 * dead's own ability (Ability#GHOST_POSSESSION), not Soul Projection.
+		 */
+		boolean ghost;
 
 		Tenancy(ServerPlayer soulPlayer, ServerPlayer heldPlayer, CultivatorNpc npc, PlayerCultivation record, UUID sect) {
 			this.soul = soulPlayer.getUUID();
@@ -90,9 +110,31 @@ public final class Possession {
 			this.body = heldPlayer != null ? heldPlayer.getUUID() : npc.getUUID();
 			this.record = record;
 			this.sect = sect;
+			this.corpse = null;
+		}
+
+		/** A corpse's: {@code saved} its block entity's tag, {@code id} its own identity, dead {@code age} ticks as it rises. */
+		Tenancy(ServerPlayer soulPlayer, PlayerCultivation record, UUID id, CompoundTag saved, double age) {
+			this.soul = soulPlayer.getUUID();
+			this.soulPlayer = soulPlayer;
+			this.npcBody = false;
+			this.heldPlayer = null;
+			this.bodyName = null;
+			this.bodyProfile = null;
+			this.npc = null;
+			this.body = id;
+			this.record = record;
+			this.sect = null; // no sect's own: its grounds and barrier know no walking dead
+			this.corpse = saved;
+			this.corpseAge = age;
 		}
 
 		boolean isNpc() { return npcBody; }
+
+		boolean isCorpse() { return corpse != null; }
+
+		/** A living player's body (else an NPC's, or a corpse's). */
+		boolean isPlayer() { return !npcBody && corpse == null; }
 	}
 
 	/**
@@ -113,6 +155,8 @@ public final class Possession {
 	 */
 	public static Predicate<PlayerCultivation> clientBorrowed = c -> false;
 	public static Function<Player, Component> clientName = player -> null;
+	/** Client hook (set by the client): whether this record is the local player's body while they, one of the dead, are in it (GhostPossession). */
+	public static Predicate<PlayerCultivation> clientGhostBorrowed = c -> false;
 
 	// --- Queries ---
 
@@ -132,7 +176,81 @@ public final class Possession {
 	public static boolean isHeld(UUID player) {
 		if (BY_BODY.isEmpty()) return false;
 		Tenancy t = BY_BODY.get(player);
-		return t != null && !t.isNpc();
+		return t != null && t.isPlayer();
+	}
+
+	/** Whether {@code soul}'s soul walks in a body of the dead (CorpseWalk). */
+	public static boolean inCorpse(UUID soul) {
+		if (BY_SOUL.isEmpty()) return false;
+		Tenancy t = BY_SOUL.get(soul);
+		return t != null && t.isCorpse();
+	}
+
+	/** Whether {@code soul} is one of the dead in a body by its own possession (GhostPossession), not a soul sent out. */
+	public static boolean isGhostTenant(UUID soul) {
+		if (BY_SOUL.isEmpty()) return false;
+		Tenancy t = BY_SOUL.get(soul);
+		return t != null && t.ghost;
+	}
+
+	/** The dead in bodies by their own possession now (GhostPossession), online and in a world. */
+	static List<ServerPlayer> ghostTenants() {
+		List<ServerPlayer> found = new ArrayList<>();
+		for (Tenancy t : BY_SOUL.values()) if (t.ghost && t.soulPlayer != null && !t.soulPlayer.isRemoved()) found.add(t.soulPlayer);
+		return found;
+	}
+
+	/** Whether {@code c} is the record of a body one of the dead is in by its own possession (server), or the local player's while theirs is (client). */
+	public static boolean isGhostBorrowed(PlayerCultivation c) {
+		for (Tenancy t : BY_SOUL.values()) if (t.record == c) return t.ghost;
+		return clientGhostBorrowed.test(c);
+	}
+
+	/** The players walking in bodies of the dead now (CorpseWalk), online and in a world. */
+	static List<ServerPlayer> corpseWalkers() {
+		List<ServerPlayer> found = new ArrayList<>();
+		for (Tenancy t : BY_SOUL.values()) if (t.isCorpse() && t.soulPlayer != null && !t.soulPlayer.isRemoved()) found.add(t.soulPlayer);
+		return found;
+	}
+
+	/** The corpse {@code soul} walks in, as its block entity's tag was when it rose (not to be changed), or null. */
+	static CompoundTag corpseOf(ServerPlayer soul) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		return t == null ? null : t.corpse;
+	}
+
+	/** How long the corpse {@code soul} walks in has been dead, ticks, as its rot goes on in the soul's keeping; -1 for none. */
+	static double corpseAge(ServerPlayer soul) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		return t == null || !t.isCorpse() ? -1 : t.corpseAge;
+	}
+
+	static void setCorpseAge(ServerPlayer soul, double age) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		if (t != null && t.isCorpse()) t.corpseAge = age;
+	}
+
+	/** The Corpse Yin Refining owed to {@code soul} for meditating in its corpse (a share of its ghost path's stage). */
+	static double corpseYin(ServerPlayer soul) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		return t == null || !t.isCorpse() ? 0 : t.corpseYin;
+	}
+
+	/** {@code soul} is owed {@code share} more of its ghost path's stage; kept with its possession too, so a crash doesn't lose it. */
+	static void oweCorpseYin(ServerPlayer soul, double share) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		if (t == null || !t.isCorpse()) return;
+		t.corpseYin += share;
+		CompoundTag mine = CultivationManager.own(soul).getPossession();
+		if (mine != null) mine.putDouble("CorpseYin", t.corpseYin);
+	}
+
+	/** Whether {@code soul}'s corpse's sect has turned on it already (told once), marking it so. */
+	static boolean sectTurned(ServerPlayer soul) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		if (t == null || t.sectTurned) return true;
+		t.sectTurned = true;
+		return false;
 	}
 
 	/** Whether a soul is in the body of {@code body} (a player or an NPC). */
@@ -226,7 +344,7 @@ public final class Possession {
 	/** The player whose body {@code soul} is in while they are away (logged out, the body still held), or null. */
 	public static UUID awayOwner(ServerPlayer soul) {
 		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
-		return t == null || t.isNpc() || t.heldPlayer != null ? null : t.body;
+		return t == null || !t.isPlayer() || t.heldPlayer != null ? null : t.body;
 	}
 
 	/** The body {@code soul} is in, as itself (the player watching it, or the NPC set aside), or null. */
@@ -246,6 +364,7 @@ public final class Possession {
 		if (player.level().isClientSide) return clientName.apply(player);
 		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(player.getUUID());
 		if (t == null || !(player instanceof ServerPlayer soul)) return null;
+		if (t.isCorpse()) return Component.literal(t.corpse.getString("Name")); // the dead's own name, walking
 		if (!t.isNpc()) return t.heldPlayer != null ? t.heldPlayer.getDisplayName() : t.bodyName;
 		CultivatorNpc npc = findNpc(soul.server, t);
 		return npc == null ? null : nameOf(npc);
@@ -284,7 +403,14 @@ public final class Possession {
 	 * the player watches, the NPC is set aside. False (nothing changed) if it can't.
 	 */
 	static boolean enter(ServerPlayer soul, LivingEntity target) {
+		return enter(soul, target, false);
+	}
+
+	/** As {@link #enter(ServerPlayer, LivingEntity)}; {@code ghost}: by one of the dead's own possession (GhostPossession), not a soul sent out. */
+	static boolean enter(ServerPlayer soul, LivingEntity target, boolean ghost) {
 		if (inhabits(soul.getUUID()) || holds(target.getUUID()) || !target.isAlive()) return false;
+		// Nor a player who is in a body themselves (one of the dead walking in one has no soul out to show for it): theirs is lent already.
+		if (target instanceof ServerPlayer p && inhabits(p.getUUID())) return false;
 		ServerPlayer victim = target instanceof ServerPlayer p ? p : null;
 		CultivatorNpc npc = target instanceof CultivatorNpc n && !n.isGhost() ? n : null;
 		if (victim == null && npc == null) return false;
@@ -338,6 +464,7 @@ public final class Possession {
 		own.setPossession(mine);
 
 		Tenancy t = new Tenancy(soul, victim, npc, record, sect);
+		t.ghost = ghost;
 		BY_SOUL.put(t.soul, t);
 		BY_BODY.put(t.body, t);
 		moving = true;
@@ -377,9 +504,11 @@ public final class Possession {
 		RealmSuppressSystem.refreshNow();
 		lookAll(soul, t);
 		Component name = victim != null ? victim.getDisplayName() : nameOf(npc);
-		soul.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_INHABIT, name).withStyle(ChatFormatting.LIGHT_PURPLE));
+		soul.sendSystemMessage(Component.translatable(ghost ? ModLang.MSG_GHOST_POSSESS_INHABIT : ModLang.MSG_POSSESS_INHABIT, name)
+				.withStyle(ChatFormatting.LIGHT_PURPLE));
 		if (victim != null) {
-			victim.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_TAKEN, soul.getGameProfile().getName()).withStyle(ChatFormatting.DARK_PURPLE));
+			victim.sendSystemMessage(Component.translatable(ghost ? ModLang.MSG_GHOST_POSSESS_TAKEN : ModLang.MSG_POSSESS_TAKEN, soul.getGameProfile().getName())
+					.withStyle(ChatFormatting.DARK_PURPLE));
 		}
 		if (opened) { // as the elixir's opening shows: the first breath of qi through the body
 			ServerLevel at = soul.serverLevel();
@@ -397,9 +526,81 @@ public final class Possession {
 	}
 
 	/**
+	 * {@code soul}'s soul rises in the body of the dead lying at {@code pos} (CorpseWalk, the user's picks of 2026-11-13; checked already by
+	 * CorpseWalk#refusal): the body lifted whole, nothing spilt, its rot going on in the soul's keeping; the soul's own things put by, what
+	 * the body holds the soul's to use (what it wore on it); the soul standing where it lay, as it lay. Its record is what the dead was
+	 * (CorpseWalk#recordOf), at the whole strength of its realm, rot or none. False (nothing changed) if it can't.
+	 */
+	static boolean enterCorpse(ServerPlayer soul, ServerLevel level, BlockPos pos) {
+		return enterCorpse(soul, level, pos, false);
+	}
+
+	/** As {@link #enterCorpse(ServerPlayer, ServerLevel, BlockPos)}; {@code ghost}: by one of the dead's own possession (GhostPossession). */
+	static boolean enterCorpse(ServerPlayer soul, ServerLevel level, BlockPos pos, boolean ghost) {
+		if (inhabits(soul.getUUID()) || !(level.getBlockEntity(pos) instanceof CorpseBlockEntity corpse)) return false;
+		UUID id = corpse.id();
+		if (holds(id)) return false;
+		MinecraftServer server = soul.server;
+		PlayerCultivation own = CultivationManager.own(soul);
+		PlayerCultivation record = CorpseWalk.recordOf(corpse);
+		double age = Math.max(0, level.getGameTime() - corpse.diedAt());
+		float yaw = corpse.yaw();
+		String name = corpse.name();
+		List<ItemStack> items = corpse.takeAll();
+		CompoundTag saved = corpse.saveWithoutMetadata();
+		CorpseBlock.rising = true;
+		try {
+			level.removeBlock(pos, false);
+		} finally {
+			CorpseBlock.rising = false;
+		}
+		record.setAbilityEnabled(Ability.BURN_LIFESPAN, false);
+		own.setAbilityEnabled(Ability.BURN_LIFESPAN, false);
+		CompoundTag mine = new CompoundTag();
+		mine.putString("Role", "Tenant");
+		mine.putUUID("Body", id);
+		mine.putBoolean("Npc", false);
+		mine.put("Corpse", saved);
+		mine.putDouble("CorpseAge", age);
+		mine.put("Stash", takeFrom(soul));
+		own.setPossession(mine);
+
+		Tenancy t = new Tenancy(soul, record, id, saved, age);
+		t.ghost = ghost;
+		BY_SOUL.put(t.soul, t);
+		BY_BODY.put(t.body, t);
+		moving = true;
+		try {
+			soul.stopRiding();
+			Vec3 at = Vec3.atBottomCenterOf(pos);
+			if (soul.level() != level) soul.teleportTo(level, at.x, at.y, at.z, yaw, 0);
+			else soul.connection.teleport(at.x, at.y, at.z, yaw, 0);
+			soul.connection.resetPosition();
+			soul.setYHeadRot(yaw);
+			soul.setDeltaMovement(Vec3.ZERO);
+			soul.fallDistance = 0;
+			soul.noPhysics = false;
+			rebase(soul);
+			CultivationManager.refresh(soul); // the dead's strength: its record answers now
+			giveTo(soul, CorpseWalk.bodyOf(items, soul));
+		} finally {
+			moving = false;
+		}
+		putLeaveOnWheel(t);
+		CultivationManager.markDirty(server);
+		CultivationManager.sync(soul);
+		Spells.sync(soul);
+		NetherworldManager.refresh(soul);
+		RealmSuppressSystem.refreshNow();
+		lookAll(soul, t);
+		soul.sendSystemMessage(Component.translatable(ModLang.MSG_CORPSE_RISE, name).withStyle(ChatFormatting.DARK_AQUA));
+		return true;
+	}
+
+	/**
 	 * {@code soul}'s soul leaves the body it is in: everything that is the body's goes back to it where the soul stands (a player
-	 * gets their view, their game mode and their body back; an NPC stands there again), and the soul's own things come back to it.
-	 * The soul is left there out of the body (SoulProjection makes it a soul again).
+	 * gets their view, their game mode and their body back; an NPC stands there again; a corpse lies down again), and the soul's own
+	 * things come back to it. The soul is left there out of the body (SoulProjection makes it a soul again).
 	 */
 	static void leave(ServerPlayer soul) {
 		Tenancy t = BY_SOUL.get(soul.getUUID());
@@ -416,7 +617,10 @@ public final class Possession {
 		ServerLevel level = soul.serverLevel();
 		moving = true;
 		try {
-			if (!t.isNpc()) {
+			if (t.isCorpse()) {
+				// The dead lie down again where the soul stands, as rotten as they came to be, holding what the soul carried in them.
+				CorpseWalk.layBack(soul, t.corpse, t.corpseAge, body);
+			} else if (!t.isNpc()) {
 				ServerPlayer victim = t.heldPlayer;
 				PlayerCultivation theirs = CultivationManager.own(server, t.body);
 				CompoundTag held = theirs.getPossession();
@@ -493,6 +697,8 @@ public final class Possession {
 		RealmSuppressSystem.refreshNow();
 		lookAll(soul, null);
 		BorrowedLife.left(soul); // what it drew off the body (Borrowed Life) settles in the soul, its own record again
+		// Corpse Yin Refining refined meditating in a corpse, sent home to the soul's own record now it is its own again (CorpseWalk).
+		if (t.isCorpse()) CorpseWalk.pay(soul, t.corpseYin);
 	}
 
 	/**
@@ -538,6 +744,10 @@ public final class Possession {
 		Tenancy t = BY_SOUL.get(soul.getUUID());
 		if (t == null) return false;
 		t.soulPlayer = soul;
+		if (t.isCorpse()) { // the soul's own player is the body: nothing to keep by it (its rot and the rest: CorpseWalk#tick)
+			if (soul.tickCount % 20 == 0) lookAll(soul, t);
+			return true;
+		}
 		if (!t.isNpc()) {
 			ServerPlayer victim = t.heldPlayer;
 			if (victim != null && (victim.isRemoved() || victim.hasDisconnected())) {
@@ -589,7 +799,7 @@ public final class Possession {
 	 */
 	public static void onDisconnect(ServerPlayer player) {
 		Tenancy t = BY_BODY.isEmpty() ? null : BY_BODY.get(player.getUUID());
-		if (t == null || t.isNpc()) return;
+		if (t == null || !t.isPlayer()) return;
 		t.heldPlayer = null;
 		t.soulPlayer.displayClientMessage(Component.translatable(ModLang.MSG_POSSESS_OWNER_AWAY, t.bodyName), true);
 	}
@@ -605,7 +815,7 @@ public final class Possession {
 		// Back while their body is still held: watching it again, as they left off. Their view is put back on the soul's next tick
 		// (#tick): this is called before the world has taken them in, and moving their view now would break their login.
 		Tenancy held = BY_BODY.isEmpty() ? null : BY_BODY.get(player.getUUID());
-		if (held != null && !held.isNpc()) {
+		if (held != null && held.isPlayer()) {
 			held.heldPlayer = player;
 			player.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_STILL_HELD, held.soulPlayer.getGameProfile().getName())
 					.withStyle(ChatFormatting.DARK_PURPLE));
@@ -619,7 +829,9 @@ public final class Possession {
 			own.setPossession(null);
 			CultivationManager.markDirty(player.server);
 			CompoundTag body = takeFrom(player);
-			if (tag.getBoolean("Npc") || !tag.hasUUID("Body")) dropAll(player, body);
+			// A corpse it walked in lies down again where it stood, and the Corpse Yin Refining it owed is paid (CorpseWalk).
+			if (tag.contains("Corpse")) CorpseWalk.crashed(player, tag.getCompound("Corpse"), tag.getDouble("CorpseAge"), body, tag.getDouble("CorpseYin"));
+			else if (tag.getBoolean("Npc") || !tag.hasUUID("Body")) dropAll(player, body);
 			else returnTo(player.server, tag.getUUID("Body"), body);
 			if (tag.contains("Stash")) giveTo(player, tag.getCompound("Stash"));
 			return;
@@ -641,9 +853,11 @@ public final class Possession {
 		CultivationManager.markDirty(player.server);
 		if (tag.contains("Mode")) player.setGameMode(GameType.byId(tag.getInt("Mode")));
 		if (player.getCamera() != player) player.setCamera(player);
-		// Soul Projection put on their wheel to leave by, if it was left there.
+		// Soul Projection (or the dead's own possession) put on their wheel to leave by, if it was left there: what was there before put back.
 		int slot = tag.contains("WheelSlot") ? tag.getInt("WheelSlot") : -1;
-		if (slot >= 0 && slot < PlayerCultivation.WHEEL_SLOTS && own.getWheelSlot(slot) == Ability.SOUL_PROJECTION) own.setWheelSlot(slot, null);
+		if (slot >= 0 && slot < PlayerCultivation.WHEEL_SLOTS && (own.getWheelSlot(slot) == Ability.SOUL_PROJECTION || own.getWheelSlot(slot) == Ability.GHOST_POSSESSION)) {
+			own.setWheelSlot(slot, tag.contains("WheelReplaced") ? Ability.byId(tag.getString("WheelReplaced")) : null);
+		}
 		// Given back while they were away: they wake where it was left.
 		if (tag.contains("At")) {
 			CompoundTag at = tag.getCompound("At");
@@ -967,7 +1181,7 @@ public final class Possession {
 	}
 
 	/** An NPC's body knows its own heaven method (CultivatorNpc#heavenMethod), as far as its cultivation goes, its spells on the wheel. */
-	private static void knowOwnMethod(CultivatorNpc npc, PlayerCultivation record) {
+	static void knowOwnMethod(CultivatorNpc npc, PlayerCultivation record) {
 		HeavenMethod method = npc.heavenMethod();
 		if (method == null || record.isMortal() || record.heaven().knows(method)) return;
 		record.heaven().setMethod(method, Math.max(1, HeavenMethods.understoodTo(record, method)), 0);
@@ -991,28 +1205,58 @@ public final class Possession {
 		Tempering.forget(id);
 	}
 
-	/** Soul Projection on the body's ability wheel, to leave it by, if it isn't there and a slot is free. */
+	/** The way out of a body: Soul Projection for a soul sent out, the dead's own possession for one of the dead in it (GhostPossession). */
+	private static Ability leaveBy(Tenancy t) {
+		return t.ghost ? Ability.GHOST_POSSESSION : Ability.SOUL_PROJECTION;
+	}
+
+	/**
+	 * The way out ({@link #leaveBy}) on the body's ability wheel, to leave it by, if it isn't there: in a free slot; on a full wheel (a body's
+	 * own default one is: the realm's first eight), one of the dead's in place of an ability the body can't use now (Soul Projection's first,
+	 * locked to one of the dead in it), that one put back as it leaves ({@link Tenancy#wheelReplaced}).
+	 */
 	private static void putLeaveOnWheel(Tenancy t) {
-		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) if (t.record.getWheelSlot(i) == Ability.SOUL_PROJECTION) return;
-		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) {
-			if (t.record.getWheelSlot(i) == null) {
-				t.record.setWheelSlot(i, Ability.SOUL_PROJECTION);
-				t.wheelSlot = i;
-				// Noted with their possession, so a crash leaves their own wheel as it was (onJoin takes it off again).
-				if (!t.isNpc() && t.record.getPossession() != null) t.record.getPossession().putInt("WheelSlot", i);
-				return;
+		Ability leave = leaveBy(t);
+		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) if (t.record.getWheelSlot(i) == leave) return;
+		int slot = -1;
+		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS && slot < 0; i++) if (t.record.getWheelSlot(i) == null) slot = i;
+		if (slot < 0 && t.ghost) {
+			for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS && slot < 0; i++) if (t.record.getWheelSlot(i) == Ability.SOUL_PROJECTION) slot = i;
+			for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS && slot < 0; i++) {
+				Ability there = t.record.getWheelSlot(i);
+				if (there != null && !there.isUnlocked(t.record)) slot = i;
 			}
+		}
+		if (slot < 0) return;
+		t.wheelReplaced = t.record.getWheelSlot(slot);
+		t.record.setWheelSlot(slot, leave);
+		t.wheelSlot = slot;
+		// Noted with their possession, so a crash leaves their own wheel as it was (onJoin puts it back).
+		if (!t.isNpc() && t.record.getPossession() != null) {
+			t.record.getPossession().putInt("WheelSlot", slot);
+			if (t.wheelReplaced != null) t.record.getPossession().putString("WheelReplaced", t.wheelReplaced.getId());
 		}
 	}
 
 	private static void takeLeaveOffWheel(Tenancy t) {
-		if (t.wheelSlot >= 0 && t.record.getWheelSlot(t.wheelSlot) == Ability.SOUL_PROJECTION) t.record.setWheelSlot(t.wheelSlot, null);
+		if (t.wheelSlot >= 0 && t.record.getWheelSlot(t.wheelSlot) == leaveBy(t)) t.record.setWheelSlot(t.wheelSlot, t.wheelReplaced);
 		t.wheelSlot = -1;
+		t.wheelReplaced = null;
+	}
+
+	/** Everyone in {@code soul}'s world told now whose look it wears (a corpse's rot moved on: CorpseWalk). */
+	static void lookNow(ServerPlayer soul) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(soul.getUUID());
+		if (t != null) lookAll(soul, t);
 	}
 
 	/** Everyone in {@code soul}'s world told whose look it wears ({@code t} null: its own again). */
 	private static void lookAll(ServerPlayer soul, Tenancy t) {
-		if (t != null && !t.isNpc()) {
+		if (t != null && t.isCorpse()) { // the dead's own look, as rotten as it is now (CorpseWalk#rot)
+			ModPackets.broadcastCorpseLook(soul, t.corpse, CorpseWalk.rot(t.corpseAge).ordinal());
+			return;
+		}
+		if (t != null && t.isPlayer()) {
 			// Their name and skin go with it, for clients that won't have them in the list while they're away.
 			com.mojang.authlib.properties.Property textures = t.bodyProfile.getProperties().get("textures").stream().findFirst().orElse(null);
 			Component name = t.heldPlayer != null ? t.heldPlayer.getDisplayName() : t.bodyName;

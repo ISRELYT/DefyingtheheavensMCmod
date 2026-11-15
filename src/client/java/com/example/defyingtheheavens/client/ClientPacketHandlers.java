@@ -150,7 +150,10 @@ public final class ClientPacketHandlers {
 			double bodyCultivation = buf.readDouble();
 			boolean bodyDrawn = buf.readBoolean();
 			double vigor = buf.readDouble();
+			java.util.UUID natal = buf.readBoolean() ? buf.readUUID() : null;
 			client.execute(() -> {
+				// The natal treasure bound to their core (NatalTreasures): Natal Recall on the Abilities tab.
+				ClientCultivationData.get().setNatalTreasure(natal);
 				// The Body Path (BodyPath): the Cultivation tab's card, switch and Begin button; the vigor bar (BodyTechniques, QiHud).
 				ClientCultivationData.get().body().set(bodyRank, bodyCultivation);
 				ClientCultivationData.get().body().setCultivating(bodyDrawn);
@@ -259,9 +262,48 @@ public final class ClientPacketHandlers {
 			client.execute(() -> ClientSoul.self(state, ticks, body, radius, health, max, host, tether, ownQi, ownMax, ghostPool, bodyHere, soulTears));
 		});
 
+		// One of the dead in a body by its own possession (GhostPossession): its way out of it is open on the body's record.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST_TENANT, (client, handler, buf, sender) -> {
+			boolean in = buf.readBoolean();
+			client.execute(() -> ClientSoul.ghostTenant = in);
+		});
+
+		// The beast the player rides strikes from the saddle (SaddleStrikes#begin): this client, which moves it, carries it in the move.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SADDLE_LUNGE, (client, handler, buf, sender) -> {
+			int beastId = buf.readVarInt();
+			int move = buf.readByte();
+			int targetId = buf.readVarInt();
+			net.minecraft.world.phys.Vec3 way = new net.minecraft.world.phys.Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			double pace = buf.readDouble();
+			int ticks = buf.readVarInt();
+			client.execute(() -> {
+				com.example.defyingtheheavens.SaddleStrikes.Move[] moves = com.example.defyingtheheavens.SaddleStrikes.Move.values();
+				if (client.level == null || move < 0 || move >= moves.length) return;
+				if (client.level.getEntity(beastId) instanceof com.example.defyingtheheavens.DemonBeast beast && beast.rider() == client.player) {
+					beast.lunge(moves[move], targetId, way, pace, ticks);
+				}
+			});
+		});
+
+		// Who a Revealing Talisman burnt finds hidden near the player (Talismans#tick): outlined to them (ClientRevealed).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.REVEALED, (client, handler, buf, sender) -> {
+			int[] ids = new int[Math.min(buf.readVarInt(), 512)];
+			for (int i = 0; i < ids.length; i++) ids[i] = buf.readVarInt();
+			client.execute(() -> ClientRevealed.set(ids));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.BODY_LOOK, (client, handler, buf, sender) -> {
 			int id = buf.readVarInt();
 			int kind = buf.readByte();
+			if (kind == 3) { // a body of the dead walked in (CorpseWalk): whose it was, its look, its rot
+				String dead = buf.readUtf();
+				com.mojang.authlib.GameProfile profile = buf.readBoolean() ? buf.readGameProfile() : null;
+				int skin = buf.readVarInt();
+				String race = buf.readUtf();
+				int variant = buf.readVarInt(), tails = buf.readVarInt(), rot = buf.readVarInt();
+				client.execute(() -> ClientBodies.setCorpse(id, dead, profile, skin, race, variant, tails, rot));
+				return;
+			}
 			java.util.UUID player = null;
 			net.minecraft.network.chat.Component name = null;
 			String textures = null, signature = null;
@@ -406,19 +448,20 @@ public final class ClientPacketHandlers {
 				boolean altar = buf.readBoolean();
 				long next = buf.readVarLong();
 				boolean clan = buf.readBoolean(), holy = buf.readBoolean(), immortal = buf.readBoolean(), body = buf.readBoolean();
+				int spoils = buf.readVarInt();
 				int count = buf.readVarInt();
 				List<FormationCoreScreen.SectMember> members = new ArrayList<>(count);
 				for (int i = 0; i < count; i++) {
 					members.add(new FormationCoreScreen.SectMember(buf.readUUID(), buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
 				}
 				info = new FormationCoreScreen.SectInfo(pos, true, name, tribute, daily, capacity, mats, cap, gates, altar, next, clan, holy, immortal,
-						body, members, false, net.minecraft.network.chat.Component.empty(), "");
+						body, spoils, members, false, net.minecraft.network.chat.Component.empty(), "");
 			} else {
 				boolean canFound = buf.readBoolean();
 				net.minecraft.network.chat.Component refusal = buf.readComponent();
 				int mats = buf.readVarInt(), cap = buf.readVarInt();
 				String fallen = buf.readUtf();
-				info = new FormationCoreScreen.SectInfo(pos, false, "", 0, 0, 0, mats, cap, 0, false, -1, false, false, false, false, List.of(),
+				info = new FormationCoreScreen.SectInfo(pos, false, "", 0, 0, 0, mats, cap, 0, false, -1, false, false, false, false, 0, List.of(),
 						canFound, refusal, fallen);
 			}
 			client.execute(() -> FormationCoreScreen.receiveSect(info));

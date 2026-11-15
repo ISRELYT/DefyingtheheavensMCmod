@@ -166,16 +166,17 @@ public final class ConsciousnessRenderer {
 		return entity instanceof CloneBodyEntity body && self.getUUID().equals(body.getOwnerId());
 	}
 
-	/** For MinecraftMixin: inside the domain, so it shows through walls. */
+	/** For MinecraftMixin: inside the domain, or found hidden by a Revealing Talisman (ClientRevealed), so it shows through walls. */
 	public static boolean isHighlighted(Entity entity) {
 		// A projected nascent soul shows no outline (it is only sensed as near; see SoulProjection).
 		if (entity instanceof net.minecraft.world.entity.player.Player player && ClientSoul.isSoul(player)) return false;
-		return !OUTLINES.isEmpty() && OUTLINES.containsKey(entity.getId());
+		return !OUTLINES.isEmpty() && OUTLINES.containsKey(entity.getId()) || ClientRevealed.isRevealed(entity);
 	}
 
-	/** For LevelRendererMixin: the outline colour of an entity {@link #isHighlighted}. */
+	/** For LevelRendererMixin: the outline colour of an entity {@link #isHighlighted}: the domain's, else a Revealing Talisman's fire-gold. */
 	public static int outlineColor(Entity entity) {
-		return OUTLINES.getOrDefault(entity.getId(), MORTAL_OUTLINE);
+		if (!OUTLINES.isEmpty() && OUTLINES.containsKey(entity.getId())) return OUTLINES.get(entity.getId());
+		return ClientRevealed.isRevealed(entity) ? ClientRevealed.COLOR : MORTAL_OUTLINE;
 	}
 
 	// --- Domains ---

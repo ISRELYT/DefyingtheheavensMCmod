@@ -1,7 +1,7 @@
-// 1.20.1	2026-11-11T18:14:27.6846182	Defying The Heavens/Tags for minecraft:damage_type
-db20b433f2e1ee4b66aa9e3f6924bc54f67c9d51 data\minecraft\tags\damage_type\bypasses_enchantments.json
-a3fdc20a62a80cd817672fe2e498d75719eb3083 data\minecraft\tags\damage_type\no_impact.json
-7635f633286b631eb913368168c286a005213658 data\minecraft\tags\damage_type\bypasses_armor.json
+// 1.20.1	2026-11-13T18:59:28.9962883	Defying The Heavens/Tags for minecraft:damage_type
+8c1510864c34e6f2487c2229a8f55434b184c26c data\minecraft\tags\damage_type\bypasses_enchantments.json
+ab3e4af497a952d22ee505a6b7f73b995fea0580 data\minecraft\tags\damage_type\no_impact.json
+15808fb3386b3b65b03fe0227e578f5d3d87b530 data\minecraft\tags\damage_type\bypasses_armor.json
 c03a491f66229a9715bcb712be436121eacaa958 data\minecraft\tags\damage_type\bypasses_resistance.json
 c03a491f66229a9715bcb712be436121eacaa958 data\minecraft\tags\damage_type\bypasses_invulnerability.json
 db20b433f2e1ee4b66aa9e3f6924bc54f67c9d51 data\minecraft\tags\damage_type\bypasses_effects.json

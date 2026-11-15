@@ -313,6 +313,11 @@ public final class SoulProjection {
 
 	/** The ability wheel or the Abilities tab: go out, leave a body the soul is in, call the soul back, or think better of either. */
 	public static void toggle(ServerPlayer player) {
+		// One of the dead in a body by its own possession (no soul sent out: GhostPossession) leaves it by the same way.
+		if (GhostPossession.isTenant(player)) {
+			GhostPossession.leave(player, Possession.inCorpse(player.getUUID()) ? ModLang.MSG_CORPSE_LEFT : ModLang.MSG_POSSESS_LET_GO);
+			return;
+		}
 		Session s = SESSIONS.get(player.getUUID());
 		if (s == null) {
 			// A clone has no nascent soul of its own to send out (Clones): its maker's sits in the main body.
@@ -948,13 +953,17 @@ public final class SoulProjection {
 		return InteractionResult.SUCCESS;
 	}
 
-	/** Why {@code player}'s soul can't enter {@code target} (a lang key), or null if it can. */
-	private static String refusal(ServerPlayer player, LivingEntity target, int ownRealm) {
+	/**
+	 * Why {@code player}'s soul can't enter {@code target} (a lang key), or null if it can; one of the dead's own possession weighs a body so
+	 * too (GhostPossession).
+	 */
+	static String refusal(ServerPlayer player, LivingEntity target, int ownRealm) {
 		// A soul of the dead takes a person's body as a living soul does (the user's call, 2026-10-19): in it, it is the body (the dead's
 		// rules go by the record it plays, CultivationManager#get: a living body breathes, burns, touches and is touched).
 		if (target instanceof ServerPlayer victim) {
+			// Nor one in a body themselves (one of the dead walking in one has no soul out to show for it: GhostPossession).
 			if (victim == player || victim.isCreative() || victim.isSpectator() || isActive(victim.getUUID()) || InnerRealm.isInside(victim)
-					|| Possession.isHeld(victim.getUUID())) {
+					|| Possession.isHeld(victim.getUUID()) || Possession.inhabits(victim.getUUID())) {
 				return ModLang.MSG_POSSESS_CANNOT;
 			}
 			if (GhostSystem.isGhost(victim)) return ModLang.MSG_POSSESS_DEAD; // the dead have no body to take
@@ -1004,6 +1013,50 @@ public final class SoulProjection {
 			updateSoulHealth(player, CultivationManager.own(player));
 			return false;
 		}
+		settledIn(player, s);
+		return true;
+	}
+
+	/**
+	 * The soul (right-clicking) rises in a body of the dead lying at {@code pos} (CorpseWalk, 2026-11-13): within reach, at least
+	 * {@link #POSSESS_REALM_GAP} realms below the highest of the cultivator's paths (one's own body whatever its realm: CorpseWalk#refusal),
+	 * with {@link #POSSESS_QI_FRACTION} of its pool to pay, as for a person's body. It walks in it as in a person's ({@link State#INHABITING}).
+	 */
+	public static InteractionResult tryPossessCorpse(ServerPlayer player, net.minecraft.core.BlockPos pos) {
+		Session s = SESSIONS.get(player.getUUID());
+		if (s == null || s.state != State.PROJECTED || s.possessed != null) return InteractionResult.FAIL;
+		ServerLevel level = player.serverLevel();
+		if (!(level.getBlockEntity(pos) instanceof CorpseBlockEntity corpse) || player.position().distanceTo(Vec3.atCenterOf(pos)) > POSSESS_REACH + 1) {
+			return InteractionResult.FAIL;
+		}
+		String refusal = CorpseWalk.refusal(player, corpse);
+		if (refusal != null) {
+			player.displayClientMessage(Component.translatable(refusal), true);
+			return InteractionResult.FAIL;
+		}
+		PlayerCultivation c = CultivationManager.own(player);
+		TwoPaths.Path path = c.soulPath();
+		double cost = TwoPaths.poolMax(c, path) * POSSESS_QI_FRACTION;
+		if (TwoPaths.pool(c, path) < cost) {
+			player.displayClientMessage(Component.translatable(path == TwoPaths.Path.GHOST ? ModLang.MSG_POSSESS_GHOST_QI : ModLang.MSG_POSSESS_QI,
+					(int) (POSSESS_QI_FRACTION * 100)), true);
+			return InteractionResult.FAIL;
+		}
+		keepWounds(player, c);
+		removeSoulHealth(player);
+		if (!Possession.enterCorpse(player, level, pos)) {
+			updateSoulHealth(player, c);
+			return InteractionResult.FAIL;
+		}
+		settledIn(player, s);
+		TwoPaths.spend(c, path, cost);
+		CultivationManager.markDirty(player.server);
+		CorpseWalk.risen(player);
+		return InteractionResult.SUCCESS;
+	}
+
+	/** The soul is in a body now (a person's, or the dead's: Possession): solid again, on the ground, seen by all as the body. */
+	private static void settledIn(ServerPlayer player, Session s) {
 		s.state = State.INHABITING;
 		s.ticks = 0;
 		s.possessed = null;
@@ -1017,7 +1070,6 @@ public final class SoulProjection {
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.6f);
 		level.sendParticles(VIOLET, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.3, 0.6, 0.3, 0.02);
-		return true;
 	}
 
 	/**
@@ -1064,7 +1116,8 @@ public final class SoulProjection {
 		if (s == null || s.state != State.INHABITING) return;
 		LivingEntity body = Possession.bodyEntity(player);
 		UUID away = Possession.awayOwner(player); // its player logged out, the body held on: they die as they come back
-		leaveBody(player, s, ModLang.MSG_POSSESS_BODY_DIED);
+		// A corpse falls back down where it stands (Possession#leave lays it): nothing of it to die.
+		leaveBody(player, s, Possession.inCorpse(player.getUUID()) ? ModLang.MSG_CORPSE_FELL : ModLang.MSG_POSSESS_BODY_DIED);
 		if (body != null) Possession.kill(body, source, player);
 		else if (away != null) Possession.diedAway(player, away);
 	}

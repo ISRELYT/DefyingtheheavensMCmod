@@ -94,7 +94,11 @@ public final class TalkSystem {
 		/** A sect mission's sealed letter (SectMissions), handed to any of the people of the sect it is for. Appended. */
 		DELIVER("deliver"),
 		/** The basics ({@link TalkSystem#teachBasics}): a first heaven scripture, from any living cultivator, to one who knows none. Appended. */
-		BASICS("basics");
+		BASICS("basics"),
+		/** Asking one to be one's personal disciple (PersonalDisciples#take). Appended. */
+		TAKE_DISCIPLE("take_disciple"),
+		/** One's own disciple's instructions: follow, stay, guard, its method, a war art, letting it go (PersonalDisciples#actions). Appended. */
+		DISCIPLE("disciple");
 
 		private final String id;
 
@@ -468,6 +472,8 @@ public final class TalkSystem {
 			player.displayClientMessage(Component.translatable(ModLang.TALK_GIFT_EMPTY), true);
 			return;
 		}
+		// One's disciple at a realm's gate, given the pill it asked for (PersonalDisciples#givePill): through it at once.
+		if (PersonalDisciples.givePill(player, npc, stack)) return;
 		double worth = worth(stack.copyWithCount(1));
 		if (worth <= 0) {
 			say(player, npc, line("gift.refuse", npc), 0);
@@ -631,6 +637,13 @@ public final class TalkSystem {
 		if (wish != null) replies.add(wish);
 		// A sealed letter carried for its sect (a sect mission: SectMissions), handed to any of its people.
 		if (SectMissions.letterFor(player, npc) != null) replies.add(topic(Topic.DELIVER));
+		// One's personal disciple (PersonalDisciples): its instructions; anyone else asked to be one, greyed with why it won't be.
+		if (PersonalDisciples.isDiscipleOf(npc, player)) {
+			replies.add(topic(Topic.DISCIPLE));
+		} else if (PersonalDisciples.offered(player, npc)) {
+			Component why = PersonalDisciples.refusal(player, npc);
+			replies.add(new Reply(Topic.TAKE_DISCIPLE.ordinal(), Component.translatable(ModLang.talkTopic(Topic.TAKE_DISCIPLE.getId())), why == null, why));
+		}
 		return replies;
 	}
 
@@ -738,6 +751,15 @@ public final class TalkSystem {
 	public static void topic(ServerPlayer player, int entityId, int replyId) {
 		CultivatorNpc npc = partner(player, entityId);
 		if (npc == null) return;
+		// One's personal disciple's instructions (PersonalDisciples): follow, stay, guard, its method, a war art, let go.
+		if (replyId >= PersonalDisciples.ACTIONS) {
+			npc.beginTalk(player);
+			Component said = PersonalDisciples.act(player, npc, replyId - PersonalDisciples.ACTIONS);
+			List<Reply> replies = new ArrayList<>(replies(player, npc, standing(player, npc)));
+			replies.addAll(PersonalDisciples.actions(player, npc));
+			ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(said), replies);
+			return;
+		}
 		// A wish's own choices (Wishes): grant it, the years taken.
 		if (replyId >= Wishes.ACTIONS) {
 			npc.beginTalk(player);
@@ -782,10 +804,13 @@ public final class TalkSystem {
 			case BEASTS -> primordialBeasts(npc);
 			case DELIVER -> SectMissions.deliver(player, npc);
 			case BASICS -> teachBasics(player, npc);
+			case TAKE_DISCIPLE -> PersonalDisciples.take(player, npc);
+			case DISCIPLE -> Component.translatable(ModLang.DISCIPLE_SAY_PUZZLED);
 		};
 		if (answer == null) return; // the trial began: the talk is over (SparSystem#start closed it)
 		List<Reply> after = new ArrayList<>(replies(player, npc, standing));
 		if (topic == Topic.WISH) after.addAll(Wishes.actions(player, npc));
+		if (topic == Topic.DISCIPLE || topic == Topic.TAKE_DISCIPLE) after.addAll(PersonalDisciples.actions(player, npc));
 		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), after);
 	}
 

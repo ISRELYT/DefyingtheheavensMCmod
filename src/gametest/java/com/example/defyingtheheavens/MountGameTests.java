@@ -15,6 +15,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 
@@ -144,7 +145,86 @@ public class MountGameTests implements FabricGameTest {
 		}
 	}
 
+	// --- Fighting from the saddle (2026-11-13) ---
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void fromTheSaddleItStrikesWhatItsRiderLooksAt(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		List<Entity> spawned = new ArrayList<>();
+		try {
+			ServerPlayer owner = survivor(helper, made, "saddle-striker");
+			int rank = PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY);
+			DemonBeast tiger = beast(helper, spawned, BeastKind.BLOODFANG_TIGER, new BlockPos(2, 2, 2), rank);
+			tiger.bindTo(owner.getUUID());
+			helper.assertTrue(SpiritBonds.interact(tiger, owner, InteractionHand.MAIN_HAND) == InteractionResult.SUCCESS && owner.getVehicle() == tiger, "On its back");
+			tiger.positionRider(owner);
+			Zombie prey = zombie(helper, spawned, new BlockPos(7, 2, 2));
+			owner.setXRot(-90); // the sky
+			SaddleStrikes.strike(owner);
+			helper.assertTrue(tiger.saddleStrike == null && tiger.signatureReady == 0, "Looking at nothing it may strike: no strike, nothing spent");
+			face(owner, prey);
+			helper.assertTrue(SaddleStrikes.moveOf(tiger.kind().signature) == SaddleStrikes.Move.POUNCE, "A tiger's strike is its pounce");
+			SaddleStrikes.strike(owner);
+			helper.assertTrue(tiger.saddleStrike != null && tiger.saddleStrike.target == prey, "Looked at and pressed: it springs at it");
+			helper.assertTrue(tiger.signatureReady == helper.getLevel().getGameTime() + DemonBeastGoals.restAfter(BeastKind.Signature.POUNCE),
+					"...its pounce spent as long as its wild kin's");
+			// Its rider's client carries it there (DemonBeast#lunge); here it is set down at its prey.
+			tiger.setPos(prey.getX() - 1.0, prey.getY(), prey.getZ());
+			float before = prey.getHealth();
+			SaddleStrikes.tick(tiger);
+			helper.assertTrue(prey.getHealth() < before && tiger.saddleStrike == null, "Reaching it, it strikes (" + before + " to " + prey.getHealth() + "), and the strike is done");
+			SaddleStrikes.strike(owner);
+			helper.assertTrue(tiger.saddleStrike == null, "Not again before its rest is over");
+			helper.assertTrue(tiger.getTarget() == null, "...and still it takes up no fight of its own");
+			helper.succeed();
+		} finally {
+			spawned.forEach(Entity::discard);
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aRiddenBearSlamsAllRoundItButItsRider(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		List<Entity> spawned = new ArrayList<>();
+		try {
+			ServerPlayer owner = survivor(helper, made, "slam-rider");
+			int rank = PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY);
+			DemonBeast bear = beast(helper, spawned, BeastKind.EARTHQUAKE_BEAR, new BlockPos(4, 2, 4), rank);
+			bear.bindTo(owner.getUUID());
+			SpiritBonds.interact(bear, owner, InteractionHand.MAIN_HAND);
+			bear.positionRider(owner);
+			Zombie aimed = zombie(helper, spawned, new BlockPos(6, 2, 4)), beside = zombie(helper, spawned, new BlockPos(4, 2, 6));
+			face(owner, aimed);
+			SaddleStrikes.strike(owner);
+			helper.assertTrue(bear.saddleStrike != null && bear.saddleStrike.move == SaddleStrikes.Move.SLAM, "Pressed, the bear rears to slam");
+			float rider = owner.getHealth(), first = aimed.getHealth(), second = beside.getHealth();
+			for (int i = 0; i < SaddleStrikes.SLAM_AT; i++) SaddleStrikes.tick(bear);
+			helper.assertTrue(aimed.getHealth() < first && beside.getHealth() < second, "Down it comes: all round it struck");
+			helper.assertTrue(owner.getHealth() == rider, "...but its rider");
+			helper.succeed();
+		} finally {
+			spawned.forEach(Entity::discard);
+			leave(made);
+		}
+	}
+
 	// --- Helpers ---
+
+	/** {@code p} looking at {@code e}'s middle. */
+	private static void face(ServerPlayer p, Entity e) {
+		Vec3 to = e.position().add(0, e.getBbHeight() * 0.5, 0).subtract(p.getEyePosition());
+		double flat = Math.sqrt(to.x * to.x + to.z * to.z);
+		p.setYRot((float) Math.toDegrees(Math.atan2(-to.x, to.z)));
+		p.setXRot((float) -Math.toDegrees(Math.atan2(to.y, flat)));
+	}
+
+	private static Zombie zombie(GameTestHelper helper, List<Entity> spawned, BlockPos at) {
+		Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, at);
+		zombie.setInvulnerable(false);
+		spawned.add(zombie);
+		return zombie;
+	}
 
 	private static DemonBeast beast(GameTestHelper helper, List<Entity> spawned, BeastKind kind, BlockPos at, int rank) {
 		ServerLevel level = helper.getLevel();

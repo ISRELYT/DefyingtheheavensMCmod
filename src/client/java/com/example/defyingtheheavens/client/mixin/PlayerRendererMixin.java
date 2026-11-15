@@ -24,9 +24,24 @@ public abstract class PlayerRendererMixin {
 			shift = At.Shift.AFTER), cancellable = true)
 	private void dth$ghostlyHand(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, ModelPart arm,
 								 ModelPart sleeve, CallbackInfo ci) {
+		// A body of the dead walked in (CorpseWalk): its own hand, paled or rotting, or a skeleton's (ClientBodies#drawCorpseArm).
+		if (com.example.defyingtheheavens.client.ClientBodies.drawCorpseArm(pose, buffers, light, player, arm, sleeve,
+				arm == ((PlayerRenderer) (Object) this).getModel().rightArm)) {
+			ci.cancel();
+			return;
+		}
 		if (!ClientGhosts.drawnAsLight(player)) return; // a form is a look: a Ghost King's form's hand too, a human form's not
 		SoulRenderer.drawGhostArm(pose, buffers, player.getSkinTextureLocation(), arm, sleeve, light);
 		ci.cancel();
+	}
+
+	/** A body of the dead gone to bones, walked in (CorpseWalk), is drawn as a skeleton in place of the player (CorpseBonesRenderer). */
+	@Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+			at = @At("HEAD"), cancellable = true)
+	private void dth$walkingBones(AbstractClientPlayer player, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light,
+								  CallbackInfo ci) {
+		if (com.example.defyingtheheavens.client.ClientBodies.corpseRot(player) != com.example.defyingtheheavens.CorpseBlock.Rot.BONES) return;
+		if (com.example.defyingtheheavens.client.CorpseBonesRenderer.draw(player, yaw, partialTick, pose, buffers, light)) ci.cancel();
 	}
 
 	/** A player in an NPC cultivator's body (Possession) carries that NPC's plate over their head, not a name tag (ClientBodies). */

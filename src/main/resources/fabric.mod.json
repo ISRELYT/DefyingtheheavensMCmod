@@ -10,7 +10,8 @@
     "main": ["com.example.defyingtheheavens.DefyingTheHeavens"],
     "client": ["com.example.defyingtheheavens.client.DefyingTheHeavensClient"],
     "fabric-datagen": ["com.example.defyingtheheavens.client.DefyingTheHeavensDataGenerator"],
-    "jade": ["com.example.defyingtheheavens.compat.JadePlugin"]
+    "jade": ["com.example.defyingtheheavens.compat.JadePlugin"],
+    "jei_mod_plugin": ["com.example.defyingtheheavens.client.compat.jei.DthJeiPlugin"]
   },
   "mixins": [
     "defying-the-heavens.mixins.json",
@@ -20,6 +21,10 @@
     },
     {
       "config": "defying-the-heavens.iris.mixins.json",
+      "environment": "client"
+    },
+    {
+      "config": "defying-the-heavens.jei.mixins.json",
       "environment": "client"
     }
   ],
@@ -32,6 +37,7 @@
     "geckolib": ">=4.8.4"
   },
   "suggests": {
-    "jade": "*"
+    "jade": "*",
+    "jei": "*"
   }
 }

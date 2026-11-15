@@ -78,7 +78,7 @@ public class CorpseRenderer implements BlockEntityRenderer<CorpseBlockEntity> {
 		pose.mulPose(Axis.XP.rotationDegrees(-90));
 		pose.scale(-SCALE, -SCALE, SCALE);
 		pose.translate(0, -1.501, 0);
-		if (rot == CorpseBlock.Rot.BONES) drawBones(pose, buffers, light);
+		if (rot == CorpseBlock.Rot.BONES) drawBones(body, pose, buffers, light);
 		else drawBody(body, rot, pose, buffers, light);
 		pose.popPose();
 		yin(body, rot);
@@ -107,8 +107,11 @@ public class CorpseRenderer implements BlockEntityRenderer<CorpseBlockEntity> {
 		}
 	}
 
-	/** A skeleton in the body's place, lying as it lay. */
-	private void drawBones(PoseStack pose, MultiBufferSource buffers, int light) {
+	/**
+	 * A skeleton in the body's place, lying as it lay; a demon's with its race's bare skull in place of a man's, and its tail's bones
+	 * (BeastHeadModels: the bones' look, 2026-11-13).
+	 */
+	private void drawBones(CorpseBlockEntity body, PoseStack pose, MultiBufferSource buffers, int light) {
 		skeleton.setAllVisible(true);
 		skeleton.young = false; // a model is drawn as a child's until told otherwise
 		skeleton.crouching = false;
@@ -124,7 +127,18 @@ public class CorpseRenderer implements BlockEntityRenderer<CorpseBlockEntity> {
 		skeleton.leftArm.zRot = -0.08f;
 		skeleton.head.zRot = 0.25f; // the skull rolled to one side
 		skeleton.hat.copyFrom(skeleton.head);
+		Bloodline race = body.race();
+		BeastHeadModels.Head beast = race == null ? null : BeastHeadModels.get(race.head());
+		if (beast != null) {
+			skeleton.head.visible = false;
+			skeleton.hat.visible = false;
+		}
 		skeleton.renderToBuffer(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(SKELETON)), light, OverlayTexture.NO_OVERLAY, 0.92f, 0.9f, 0.84f, 1.0f);
+		if (beast != null) {
+			beast.on(null, new ClientBloodlines.Look(race, body.raceVariant(), body.tails()), true);
+			beast.follow(skeleton);
+			beast.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(beast.texture())), light, OverlayTexture.NO_OVERLAY, 0.92f, 0.9f, 0.84f, 1.0f);
+		}
 	}
 
 	/** {@code model} lying still: arms by its sides a little out, legs a little apart, looking straight up; its outer layers on its limbs. */

@@ -140,21 +140,27 @@ public class NetherworldSpringsGameTests implements FabricGameTest {
 				// All in reach and ticking: time for any running water to run its course.
 				.thenIdle(SETTLE_TICKS)
 				.thenExecute(() -> {
-					int overLand;
+					List<String> overLand;
 					try {
 						overLand = springsOverLand(nw, chunks);
 					} finally {
 						letGo.run();
 					}
-					helper.assertTrue(WASHED.get() == 0 && overLand == 0, "In " + chunks.size() + " fresh chunks of the Fields " + WASHED.get()
-							+ " plants were washed into items " + SEEN + " and " + overLand + " springs run over the land");
+					helper.assertTrue(WASHED.get() == 0 && overLand.isEmpty(), "In " + chunks.size() + " fresh chunks of the Fields " + WASHED.get()
+							+ " plants were washed into items " + SEEN + " and " + overLand.size() + " springs run over the land " + overLand);
 				})
 				.thenSucceed();
 	}
 
-	/** Counts the springs in these chunks whose water runs onto the land (not straight down into the abyss). */
-	private static int springsOverLand(ServerLevel nw, Set<Long> chunks) {
-		int count = 0;
+	/**
+	 * The springs in these chunks whose water runs onto the land (not straight down into the abyss): each told where it is, where its way
+	 * out is (and what is in it), and what first stands beneath that, how far down. A spring's way out is open, or carries its falling
+	 * water; one whose "way out" is water standing still is the edge of a lake (its mud lining a block or two down) or of a Yellow Springs
+	 * pool under an overhang, not a spring, and runs nowhere. Until 2026-11-13 those were counted: the "rare leak" this test failed on about
+	 * one run in three. Looked over without them, 2,000 fresh chunks of the Fields held no spring over the land, and no plant was washed away.
+	 */
+	private static List<String> springsOverLand(ServerLevel nw, Set<Long> chunks) {
+		List<String> found = new ArrayList<>();
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		for (long chunk : chunks) {
 			ChunkPos c = new ChunkPos(chunk);
@@ -174,12 +180,27 @@ public class NetherworldSpringsGameTests implements FabricGameTest {
 								way = next;
 							}
 						}
-						if (ways == 1 && !fallsClear(nw, way)) count++;
+						if (ways == 1 && !nw.getFluidState(way).isSource() && !fallsClear(nw, way)) found.add(describe(nw, pos.immutable(), way));
 					}
 				}
 			}
 		}
-		return count;
+		return found;
+	}
+
+	/** A spring over the land, told: where, its way out, the first thing beneath that and how far down, its biome. */
+	private static String describe(ServerLevel nw, BlockPos spring, BlockPos way) {
+		BlockPos.MutableBlockPos below = way.mutable();
+		String under = "nothing";
+		for (int y = way.getY() - 1; y >= nw.getMinBuildHeight(); y--) {
+			BlockState state = nw.getBlockState(below.setY(y));
+			if (rock(state)) {
+				under = BuiltInRegistries.BLOCK.getKey(state.getBlock()) + " " + (way.getY() - y) + " down";
+				break;
+			}
+		}
+		String biome = nw.getBiome(spring).unwrapKey().map(key -> key.location().toString()).orElse("?");
+		return "spring " + spring.toShortString() + " out " + way.toShortString() + " (" + nw.getBlockState(way) + "): " + under + " in " + biome;
 	}
 
 	private static boolean rock(BlockState state) {

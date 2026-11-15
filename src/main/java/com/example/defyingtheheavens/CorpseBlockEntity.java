@@ -47,6 +47,19 @@ public class CorpseBlockEntity extends BlockEntity {
 	/** Laid as one who died long ago ({@link #ancient}: a secret realm's own, its works may lay it anew), not a fresh death. */
 	private boolean old;
 	private final List<ItemStack> held = new ArrayList<>();
+	/**
+	 * The body's own identity (CorpseWalk, 2026-11-13): who the world's people take it for while a soul walks in it (Possession#identity),
+	 * so the hatred an undead earns stays with the body, not its walker. Made the first time it is asked for.
+	 */
+	private java.util.UUID id;
+	/**
+	 * What the dead was, as their record stood when they died (PlayerCultivation#save, trimmed: CorpseWalk#snapshot): a soul walking in the
+	 * body is that, its realm, its arts and its qi as it died with. Null for the ancient dead and bodies laid before 2026-11-13 (their rank
+	 * alone stands for them: CorpseWalk#recordOf).
+	 */
+	private CompoundTag record;
+	/** Whose body it was (a player's or a cultivator's id), or null: one's own body may be walked in by one's own ghost, whatever its realm. */
+	private java.util.UUID dead;
 
 	public CorpseBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.CORPSE, pos, state);
@@ -56,6 +69,7 @@ public class CorpseBlockEntity extends BlockEntity {
 	void of(LivingEntity dead, long now) {
 		yaw = dead.getYRot();
 		diedAt = now;
+		this.dead = dead.getUUID();
 		Bloodline bloodline = Bloodline.HUMAN;
 		if (dead instanceof ServerPlayer player) {
 			profile = player.getGameProfile();
@@ -68,6 +82,10 @@ public class CorpseBlockEntity extends BlockEntity {
 				raceVariant = entry.variant();
 				tails = Bloodlines.tails(player.server, player.getUUID());
 			}
+			// A player's sect too, since 2026-11-13: its people turn on whoever drains or walks in their dead (CorpseYin, CorpseWalk).
+			Sect member = SectMembership.liveSectOf(player.server, player.getUUID());
+			sect = member != null ? member.name : "";
+			record = CorpseWalk.snapshot(c);
 		} else if (dead instanceof CultivatorNpc npc) {
 			name = npc.hasCustomName() ? npc.getCustomName().getString() : npc.getPersonalName();
 			skin = npc.getSkin();
@@ -76,6 +94,7 @@ public class CorpseBlockEntity extends BlockEntity {
 			bloodline = npc.getBloodline();
 			raceVariant = npc.getRaceVariant();
 			tails = Bloodline.tails(npc.getDisplayedRealm());
+			record = CorpseWalk.snapshot(npc);
 		}
 		race = bloodline != null && bloodline.isBeast() ? bloodline.getId() : "";
 		if (level instanceof ServerLevel server) Corpses.lies(server, worldPosition, rank); // its yin by the rank now known
@@ -93,6 +112,8 @@ public class CorpseBlockEntity extends BlockEntity {
 		this.yaw = yaw;
 		profile = null;
 		race = "";
+		record = null;
+		dead = null;
 		diedAt = now - Corpses.BONES_AT - 24_000L;
 		old = true;
 		held.clear();
@@ -140,6 +161,35 @@ public class CorpseBlockEntity extends BlockEntity {
 		setChanged();
 	}
 
+	/** The body's own identity, made the first time it is asked for (see {@link #id}). */
+	public java.util.UUID id() {
+		if (id == null) {
+			id = java.util.UUID.randomUUID();
+			setChanged();
+		}
+		return id;
+	}
+
+	/** The dead's record as it stood when they died (CorpseWalk#snapshot), or null. Not to be changed from outside. */
+	public CompoundTag record() { return record; }
+
+	/** Whose body it was, or null (the ancient dead, bodies laid before 2026-11-13). */
+	public java.util.UUID dead() { return dead; }
+
+	/**
+	 * Laid again as it was when a soul rose in it (CorpseWalk#layBack): everything of {@code saved} (its own tag, as taken then), dead
+	 * {@code age} ticks by {@code now}, lying at {@code yaw}, holding {@code items}.
+	 */
+	void restore(CompoundTag saved, long age, long now, float yaw, List<ItemStack> items) {
+		load(saved);
+		diedAt = now - Math.max(0, age);
+		this.yaw = yaw;
+		held.clear();
+		for (ItemStack stack : items) hold(stack);
+		if (level instanceof ServerLevel server) Corpses.lies(server, worldPosition, rank);
+		setChanged();
+	}
+
 	public String name() { return name; }
 	public GameProfile profile() { return profile; }
 	public int skin() { return skin; }
@@ -182,6 +232,9 @@ public class CorpseBlockEntity extends BlockEntity {
 		ListTag items = new ListTag();
 		for (ItemStack stack : held) items.add(stack.save(new CompoundTag()));
 		tag.put("Held", items);
+		if (id != null) tag.putUUID("CorpseId", id);
+		if (record != null) tag.put("Record", record.copy());
+		if (dead != null) tag.putUUID("Dead", dead);
 	}
 
 	/** What the client needs to draw it: whose it was, its look, its rank, which way it lies. */
@@ -212,6 +265,9 @@ public class CorpseBlockEntity extends BlockEntity {
 		yinDrawn = tag.getBoolean("YinDrawn");
 		sect = tag.getString("Sect");
 		old = tag.getBoolean("Ancient");
+		if (tag.hasUUID("CorpseId")) id = tag.getUUID("CorpseId");
+		if (tag.contains("Record", Tag.TAG_COMPOUND)) record = tag.getCompound("Record").copy();
+		if (tag.hasUUID("Dead")) dead = tag.getUUID("Dead");
 		if (tag.contains("Held", Tag.TAG_LIST)) {
 			held.clear();
 			ListTag items = tag.getList("Held", Tag.TAG_COMPOUND);

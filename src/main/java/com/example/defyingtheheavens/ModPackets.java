@@ -118,6 +118,23 @@ public final class ModPackets {
 	public static final ResourceLocation SOUL_SELF = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_self");
 	public static final ResourceLocation BODY_LOOK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "body_look");
 	/**
+	 * S2C: whether the player, one of the dead, is in a body by its own possession now (GhostPossession): its client then shows the body's
+	 * record its way out (Ability#GHOST_POSSESSION: Possession#clientGhostBorrowed).
+	 */
+	public static final ResourceLocation GHOST_TENANT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "ghost_tenant");
+	/**
+	 * S2C: who a Revealing Talisman's eyes find hidden near the player (Talismans#tick: a Concealment Talisman burnt, or behind a barrier of
+	 * their own), their entity ids, told each second while it lasts: the client outlines them (ClientRevealed) until told again or it runs out.
+	 */
+	public static final ResourceLocation REVEALED = new ResourceLocation(DefyingTheHeavens.MOD_ID, "revealed");
+	/** C2S: the Saddle Strike key pressed while riding: the bound beast strikes what its rider looks at (SaddleStrikes#strike; the server judges). */
+	public static final ResourceLocation SADDLE_STRIKE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "saddle_strike");
+	/**
+	 * S2C: to a rider, their beast's strike from the saddle to carry it in (SaddleStrikes#begin: its entity id, the move, what it strikes (-1),
+	 * its way, its pace, how many ticks; 0 ticks: over): DemonBeast#lunge, as their client moves the beast they ride.
+	 */
+	public static final ResourceLocation SADDLE_LUNGE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "saddle_lunge");
+	/**
 	 * S2C: a soul someone perceives: its entity id, whether it is still out, where its body sits, the being it possesses (-1) and
 	 * its tether's strength. Repeated twice a second while it stays out; clients forget it without.
 	 */
@@ -427,6 +444,7 @@ public final class ModPackets {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(MARK_TERRITORY, (server, player, handler, buf, responseSender) -> server.execute(() -> Territories.mark(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BEGIN_BODY_PATH, (server, player, handler, buf, responseSender) -> server.execute(() -> BodyPath.begin(player)));
+		ServerPlayNetworking.registerGlobalReceiver(SADDLE_STRIKE, (server, player, handler, buf, responseSender) -> server.execute(() -> SaddleStrikes.strike(player)));
 		ServerPlayNetworking.registerGlobalReceiver(SEIZE_SOUL, (server, player, handler, buf, responseSender) -> server.execute(() -> {
 			if (SoulRiver.isTravelling(player.getUUID())) SoulRiverFeast.seize(player);
 			else RiftHaunting.seize(player);
@@ -566,6 +584,60 @@ public final class ModPackets {
 		}
 	}
 
+	/** Tells {@code ghost} whether it is in a body by its own possession now ({@link #GHOST_TENANT}). */
+	public static void sendGhostTenant(ServerPlayer ghost, boolean in) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBoolean(in);
+		ServerPlayNetworking.send(ghost, GHOST_TENANT, buf);
+	}
+
+	/** Tells {@code rider} to carry {@code beast} in its strike from the saddle ({@link #SADDLE_LUNGE}); {@code ticks} 0: it is over. */
+	public static void sendSaddleLunge(ServerPlayer rider, DemonBeast beast, SaddleStrikes.Move move, net.minecraft.world.entity.Entity target,
+			net.minecraft.world.phys.Vec3 way, double pace, int ticks) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(beast.getId());
+		buf.writeByte(move.ordinal());
+		buf.writeVarInt(target == null ? -1 : target.getId());
+		buf.writeDouble(way.x);
+		buf.writeDouble(way.y);
+		buf.writeDouble(way.z);
+		buf.writeDouble(pace);
+		buf.writeVarInt(ticks);
+		ServerPlayNetworking.send(rider, SADDLE_LUNGE, buf);
+	}
+
+	/** Tells {@code viewer} who their Revealing Talisman finds hidden near them now ({@link #REVEALED}: the entity ids, outlined to them). */
+	public static void sendRevealed(ServerPlayer viewer, java.util.List<Integer> ids) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(ids.size());
+		for (int id : ids) buf.writeVarInt(id);
+		ServerPlayNetworking.send(viewer, REVEALED, buf);
+	}
+
+	/**
+	 * The look of the body of the dead {@code soul} walks in (CorpseWalk, 2026-11-13), to everyone in its world (BODY_LOOK, kind 3): whose it
+	 * was ({@code corpse}, its block entity's tag: its name, a player's profile for their skin, a cultivator's skin), a demon's race, colouring
+	 * and tails, and how far gone it is ({@code rot}, CorpseBlock.Rot's ordinal). Told again each second while it lasts, as any body's look.
+	 */
+	public static void broadcastCorpseLook(ServerPlayer soul, net.minecraft.nbt.CompoundTag corpse, int rot) {
+		com.mojang.authlib.GameProfile profile = corpse.contains("Profile", net.minecraft.nbt.Tag.TAG_COMPOUND)
+				? net.minecraft.nbt.NbtUtils.readGameProfile(corpse.getCompound("Profile")) : null;
+		for (ServerPlayer other : soul.serverLevel().players()) {
+			FriendlyByteBuf buf = PacketByteBufs.create();
+			buf.writeVarInt(soul.getId());
+			buf.writeByte(3);
+			buf.writeUtf(corpse.getString("Name"));
+			buf.writeBoolean(profile != null);
+			if (profile != null) buf.writeGameProfile(profile);
+			buf.writeVarInt(corpse.contains("Skin") ? corpse.getInt("Skin") : -1);
+			buf.writeUtf(corpse.getString("Race"));
+			buf.writeVarInt(corpse.getInt("RaceVariant"));
+			buf.writeVarInt(Math.max(1, corpse.getInt("Tails")));
+			buf.writeVarInt(rot);
+			ServerPlayNetworking.send(other, BODY_LOOK, buf);
+		}
+	}
+
 	/**
 	 * A soul {@code to} perceives: its body's place (for the tether; {@code tether} -1: none to draw, its body in another realm), the
 	 * beast it rides, and ({@code inside}) whether it is in a person's body (Possession: drawn as a violet veil over that body).
@@ -700,6 +772,9 @@ public final class ModPackets {
 		buf.writeDouble(c.body().cultivation());
 		buf.writeBoolean(c.body().cultivating());
 		buf.writeDouble(c.body().vigor());
+		// The natal treasure bound to their core (NatalTreasures): Natal Recall on the Abilities tab.
+		buf.writeBoolean(c.natalTreasure() != null);
+		if (c.natalTreasure() != null) buf.writeUUID(c.natalTreasure());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -840,6 +915,24 @@ public final class ModPackets {
 				buf.writeVarInt(e.title + 1);
 				buf.writeVarInt(e.faction);
 				buf.writeBoolean(e.player);
+			}
+		}
+		// The Sect Lists (SectList): the player's own sect's world and place there (-1, 0: none), then each world's ten.
+		Sect mine = SectList.sectOf(player.server, player.getUUID());
+		Rankings.Board mineOn = mine == null ? null : Rankings.Board.of(mine.dimension);
+		buf.writeVarInt(mineOn == null ? -1 : mineOn.ordinal());
+		buf.writeVarInt(mineOn == null ? 0 : SectList.placeOf(player.server, mineOn, mine.id));
+		for (Rankings.Board board : Rankings.Board.values()) {
+			List<SectList.Standing> sects = SectList.top(player.server, board);
+			buf.writeVarInt(sects.size());
+			for (SectList.Standing s : sects) {
+				buf.writeUtf(s.name(), 96);
+				buf.writeVarInt((int) Math.round(s.score()));
+				buf.writeVarInt(s.people());
+				buf.writeVarInt(s.best() + 1);
+				buf.writeVarInt(s.faction());
+				buf.writeBoolean(s.players());
+				buf.writeBoolean(mine != null && s.id().equals(mine.id));
 			}
 		}
 		ServerPlayNetworking.send(player, RANKINGS, buf);

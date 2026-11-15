@@ -294,6 +294,73 @@ public final class ModLang {
 	public static String talkIntent(String id) { return k("talk.intent." + id); }
 	public static String talkIntentHint(String id) { return k("talk.intent." + id + ".hint"); }
 	public static String talkTopic(String id) { return k("talk.topic." + id); }
+	// A personal disciple (PersonalDisciples, 2026-11-13)
+	public static final String DISCIPLE_HAVE_ONE = k("disciple.have_one");
+	public static final String DISCIPLE_MOURNING = k("disciple.mourning");
+	public static final String DISCIPLE_TAKEN = k("disciple.taken");
+	public static final String DISCIPLE_TOO_STRONG = k("disciple.too_strong");
+	public static final String DISCIPLE_ELDER = k("disciple.elder");
+	public static final String DISCIPLE_OTHER_SECT = k("disciple.other_sect");
+	public static final String DISCIPLE_OWN_ROAD = k("disciple.own_road");
+	public static final String DISCIPLE_NOT_ADMIRED = k("disciple.not_admired");
+	public static final String DISCIPLE_TAKEN_SAY = k("disciple.taken_say");
+	public static final String DISCIPLE_TAKEN_MSG = k("disciple.taken_msg");
+	public static final String DISCIPLE_NOT_YOURS = k("disciple.not_yours");
+	public static final String DISCIPLE_ORDER_FOLLOW = k("disciple.order.follow");
+	public static final String DISCIPLE_ORDER_STAY = k("disciple.order.stay");
+	public static final String DISCIPLE_ORDER_GUARD = k("disciple.order.guard");
+	public static final String DISCIPLE_ORDER_RELEASE = k("disciple.order.release");
+	public static final String DISCIPLE_METHOD = k("disciple.method");
+	public static final String DISCIPLE_METHOD_CURRENT = k("disciple.method_current");
+	public static final String DISCIPLE_TEACH = k("disciple.teach");
+	public static final String DISCIPLE_TEACH_KNOWN = k("disciple.teach_known");
+	public static final String DISCIPLE_TEACH_LOW = k("disciple.teach_low");
+	public static final String DISCIPLE_SAY_FOLLOW = k("disciple.say.follow");
+	public static final String DISCIPLE_SAY_STAY = k("disciple.say.stay");
+	public static final String DISCIPLE_SAY_GUARD = k("disciple.say.guard");
+	public static final String DISCIPLE_SAY_RELEASED = k("disciple.say.released");
+	public static final String DISCIPLE_RELEASED_MSG = k("disciple.released_msg");
+	public static final String DISCIPLE_SAY_METHOD = k("disciple.say.method");
+	public static final String DISCIPLE_SAY_TAUGHT = k("disciple.say.taught");
+	public static final String DISCIPLE_SAY_PUZZLED = k("disciple.say.puzzled");
+	public static final String DISCIPLE_ASKS_PILL = k("disciple.asks_pill");
+	public static final String DISCIPLE_PILL_TAKEN = k("disciple.pill_taken");
+	public static final String DISCIPLE_DISMAYED = k("disciple.dismayed");
+	public static final String DISCIPLE_LEAVES = k("disciple.leaves");
+	public static final String DISCIPLE_DIED = k("disciple.died");
+	// Sending one's sect's people out (SectErrands): its errands, the board's word on sending, how they came back, the founder's page.
+	public static String errandTask(String id) { return k("errand.task." + id); }
+	public static String errandState(String id) { return k("errand.state." + id); }
+	public static String errandAbout(String id) { return k("errand.about." + id); }
+	public static final String ERRAND_NOT_FOUNDER = k("errand.not_founder");
+	public static final String ERRAND_NO_ONE = k("errand.no_one");
+	public static final String ERRAND_AWAY = k("errand.away");
+	public static final String ERRAND_RESTING = k("errand.resting");
+	public static final String ERRAND_PERSONAL = k("errand.personal");
+	public static final String ERRAND_TOO_MANY = k("errand.too_many");
+	public static final String ERRAND_NO_REALM = k("errand.no_realm");
+	public static final String ERRAND_NO_SECT = k("errand.no_sect");
+	public static final String ERRAND_HUNT_OF = k("errand.hunt_of");
+	public static final String ERRAND_GATHER = k("errand.gather");
+	public static final String ERRAND_REALM_OF = k("errand.realm_of");
+	public static final String ERRAND_LETTER_TO = k("errand.letter_to");
+	public static final String ERRAND_SENT = k("errand.sent");
+	public static final String ERRAND_A_DAY = k("errand.a_day");
+	public static final String ERRAND_DAYS = k("errand.days");
+	public static final String ERRAND_BACK_DONE = k("errand.back.done");
+	public static final String ERRAND_BACK_WOUNDED = k("errand.back.wounded");
+	public static final String ERRAND_BACK_BREAKTHROUGH = k("errand.back.breakthrough");
+	public static final String ERRAND_BACK_LOST = k("errand.back.lost");
+	public static final String ERRAND_TAB = k("errand.tab");
+	public static final String ERRAND_OUT_OF = k("errand.out_of");
+	public static final String ERRAND_NOBODY = k("errand.nobody");
+	public static final String ERRAND_SEND_TO = k("errand.send_to");
+	public static final String ERRAND_ABOVE = k("errand.above");
+	public static final String ERRAND_SEND = k("errand.send");
+	public static final String ERRAND_SPOILS_WAITING = k("errand.spoils_waiting");
+	public static final String ERRAND_RANK = k("errand.rank");
+	public static final String ERRAND_NO_REALM_OPEN = k("errand.no_realm_open");
+	public static final String ERRAND_NO_LETTER = k("errand.no_letter");
 	public static String talkRegardLevel(String id) { return k("talk.regard." + id); }
 	public static String talkDirection(String id) { return k("talk.direction." + id); }
 	public static String talkPath(String faction) { return k("talk.path." + faction); }
@@ -341,6 +408,15 @@ public final class ModLang {
 	public static final String RANKING_YOU_OFF = k("ranking.you_off");
 	public static final String RANKING_ROW = k("ranking.row");
 	public static final String RANKING_HINT = k("ranking.hint");
+	// The Sect List (SectList, 2026-11-13): the lists' second tab
+	public static final String RANKING_MODE_PEOPLE = k("ranking.mode.people");
+	public static final String RANKING_MODE_SECTS = k("ranking.mode.sects");
+	public static final String RANKING_SECT_YOU = k("ranking.sect_you");
+	public static final String RANKING_SECT_YOU_OFF = k("ranking.sect_you_off");
+	public static final String RANKING_SECT_EMPTY = k("ranking.sect_empty");
+	public static final String RANKING_SECT_SCORE = k("ranking.sect_score");
+	public static final String RANKING_SECT_PEOPLE = k("ranking.sect_people");
+	public static final String RANKING_SECT_PLAYERS = k("ranking.sect_players");
 	public static final String BTN_JOURNAL_RUMOURS = k("button.journal_rumours");
 	public static final String BTN_JOURNAL_RANKINGS = k("button.journal_rankings");
 	public static final String TOOLTIP_RANKING_STELE = k("tooltip.ranking_stele");
@@ -374,6 +450,7 @@ public final class ModLang {
 	public static final String MSG_PSECT_JOIN_OTHER = k("message.psect.join_other");
 	public static final String MSG_PSECT_TRIBUTE = k("message.psect.tribute");
 	public static final String MSG_PSECT_NO_TRIBUTE = k("message.psect.no_tribute");
+	public static final String MSG_PSECT_SPOILS = k("message.psect.spoils");
 	public static final String MSG_PSECT_DISBANDED = k("message.psect.disbanded");
 	public static final String MSG_PSECT_CORE_LOST = k("message.psect.core_lost");
 	public static final String MSG_PSECT_FOUNDER_STAYS = k("message.psect.founder_stays");
@@ -390,6 +467,7 @@ public final class ModLang {
 	public static final String CORE_SECT_GROUNDS = k("core.sect.grounds");
 	public static final String CORE_SECT_NO_GATE = k("core.sect.no_gate");
 	public static final String CORE_SECT_TRIBUTE = k("core.sect.tribute");
+	public static final String CORE_SECT_SPOILS = k("core.sect.spoils");
 	public static final String CORE_SECT_NEXT = k("core.sect.next");
 	public static final String CORE_SECT_FULL = k("core.sect.full");
 	public static final String CORE_SECT_RENAME = k("core.sect.rename");
@@ -873,6 +951,21 @@ public final class ModLang {
 	public static final String MSG_POSSESS_FREED = k("message.possess.freed");
 	public static final String MSG_POSSESS_LET_GO = k("message.possess.let_go");
 	public static final String MSG_POSSESS_BODY_DIED = k("message.possess.body_died");
+	// Walking in the dead (CorpseWalk, 2026-11-13).
+	public static final String MSG_CORPSE_RISE = k("message.corpse_walk.rise");
+	public static final String MSG_CORPSE_FELL = k("message.corpse_walk.fell");
+	public static final String MSG_CORPSE_LEFT = k("message.corpse_walk.left");
+	public static final String MSG_CORPSE_NO_GHOST_QI = k("message.corpse_walk.no_ghost_qi");
+	public static final String MSG_CORPSE_ROTS = k("message.corpse_walk.rots");
+	public static final String MSG_CORPSE_BARE = k("message.corpse_walk.bare");
+	public static final String MSG_CORPSE_SECT_TURNS = k("message.corpse_walk.sect_turns");
+	public static final String MSG_CORPSE_NO_FOOD = k("message.corpse_walk.no_food");
+	public static final String MSG_CORPSE_YIN_NONE = k("message.corpse_walk.yin_none");
+	public static final String MSG_CORPSE_YIN_OWED = k("message.corpse_walk.yin_owed");
+	public static final String MSG_GHOST_POSSESS_NONE = k("message.ghost_possession.none");
+	public static final String MSG_GHOST_POSSESS_DRY = k("message.ghost_possession.dry");
+	public static final String MSG_GHOST_POSSESS_INHABIT = k("message.ghost_possession.inhabit");
+	public static final String MSG_GHOST_POSSESS_TAKEN = k("message.ghost_possession.taken");
 	public static final String MSG_POSSESS_OWNER_LEFT = k("message.possess.owner_left");
 	public static final String MSG_POSSESS_LOST = k("message.possess.lost");
 	public static final String MSG_POSSESS_OWNER_AWAY = k("message.possess.owner_away");
@@ -1181,6 +1274,25 @@ public final class ModLang {
 	public static final String FORGE_NEEDS_CORE = k("forge.needs_core");
 	public static final String FORGE_NEEDS_TOKEN = k("forge.needs_token");
 	public static final String FORGE_NEEDS_ELEMENT_CORE = k("forge.needs_element_core");
+	// Natal treasures (NatalTreasures, 2026-11-13)
+	public static final String NATAL_TREASURE = k("natal.treasure");
+	public static final String MSG_NATAL_TOO_LOW = k("message.natal.too_low");
+	public static final String MSG_NATAL_NOT_FORGED = k("message.natal.not_forged");
+	public static final String MSG_NATAL_OTHERS = k("message.natal.others");
+	public static final String MSG_NATAL_BOUND = k("message.natal.bound");
+	public static final String MSG_NATAL_UNBIND_ASK = k("message.natal.unbind_ask");
+	public static final String MSG_NATAL_UNBOUND = k("message.natal.unbound");
+	public static final String MSG_NATAL_SEVER_ASK = k("message.natal.sever_ask");
+	public static final String MSG_NATAL_BROKEN = k("message.natal.broken");
+	public static final String MSG_NATAL_RECALLED = k("message.natal.recalled");
+	public static final String MSG_NATAL_NOT_FOUND = k("message.natal.not_found");
+	public static final String MSG_NATAL_IN_HAND = k("message.natal.in_hand");
+	public static final String MSG_NATAL_RECALL_QI = k("message.natal.recall_qi");
+	public static final String MSG_NATAL_RECALL_WAIT = k("message.natal.recall_wait");
+	public static final String MSG_NATAL_ONLY_OWNER = k("message.natal.only_owner");
+	public static final String TOOLTIP_NATAL_OF = k("tooltip.natal.of");
+	public static final String TOOLTIP_NATAL_MIGHT = k("tooltip.natal.might");
+	public static final String TOOLTIP_FORGED_BY = k("tooltip.artifact.forged_by");
 	// The weapons made of their element (ElementalWeaponItem)
 	public static final String ELEMENTAL_SHARE = k("tooltip.artifact.elemental_share");
 	public static final String FLAME_BLADE_PERK = k("tooltip.artifact.flame_blade");
@@ -1294,7 +1406,11 @@ public final class ModLang {
 	public static final String MISSION_HAVE = k("mission.have");
 	public static final String MISSION_YEARS = k("mission.years");
 	public static final String MISSION_CORE_REALM = k("mission.core_realm");
+	/** A day part and an hour part, joined ("1 day 4 hours"). */
 	public static final String MISSION_TIME_DAYS = k("mission.time.days");
+	public static final String MISSION_TIME_DAY = k("mission.time.day");
+	public static final String MISSION_TIME_N_DAYS = k("mission.time.n_days");
+	public static final String MISSION_TIME_HOUR = k("mission.time.hour");
 	public static final String MISSION_TIME_HOURS = k("mission.time.hours");
 	public static final String MISSION_TIME_SOON = k("mission.time.soon");
 	/** How the sect speaks of a disciple's mission (SectMissions#chatSubject): a deed done ("Tester slew..."), a mission taken on. */
@@ -1390,6 +1506,18 @@ public final class ModLang {
 	public static final String MSG_TALISMAN_ESCAPE_NO_GROUND = k("message.talisman.escape_no_ground");
 	public static final String MSG_TALISMAN_CONCEALED = k("message.talisman.concealed");
 	public static final String MSG_TALISMAN_REVEALED = k("message.talisman.revealed");
+	// The three of 2026-11-13: Homeward, Qi-Sealing, Revealing
+	public static final String MSG_TALISMAN_HOMEWARD_NONE = k("message.talisman.homeward_none");
+	public static final String MSG_TALISMAN_HOMEWARD_START = k("message.talisman.homeward_start");
+	public static final String MSG_TALISMAN_HOMEWARD_LEFT = k("message.talisman.homeward_left");
+	public static final String MSG_TALISMAN_HOMEWARD_MOVED = k("message.talisman.homeward_moved");
+	public static final String MSG_TALISMAN_HOMEWARD_HURT = k("message.talisman.homeward_hurt");
+	public static final String MSG_TALISMAN_HOMEWARD_GONE = k("message.talisman.homeward_gone");
+	public static final String MSG_TALISMAN_HOMEWARD_HOME = k("message.talisman.homeward_home");
+	public static final String MSG_TALISMAN_UNSEALED = k("message.talisman.unsealed");
+	public static final String MSG_TALISMAN_SEALED = k("message.talisman.sealed");
+	public static final String MSG_QI_SEALED_CAST = k("message.talisman.sealed_cast");
+	public static final String MSG_TALISMAN_REVEALING = k("message.talisman.revealing");
 	public static final String TOOLTIP_TALISMAN_THROW = k("tooltip.talisman.throw");
 	public static final String TOOLTIP_TALISMAN_BURN = k("tooltip.talisman.burn");
 	public static final String TOOLTIP_TALISMAN_DRAWN = k("tooltip.talisman.drawn");
@@ -1433,6 +1561,7 @@ public final class ModLang {
 	public static String codexBeastMoves(String moves) { return k("codex.beast.moves." + moves); }
 	// Switching abilities by key, without the wheel (client QuickAbilities)
 	public static final String KEY_QUICK_ABILITY = "key." + DefyingTheHeavens.MOD_ID + ".quick_ability";
+	public static final String KEY_SADDLE_STRIKE = "key." + DefyingTheHeavens.MOD_ID + ".saddle_strike";
 	/** Followed by the slot's number, 1 to 8: "key.defying-the-heavens.ability_slot_3". */
 	public static final String KEY_ABILITY_SLOT_PREFIX = "key." + DefyingTheHeavens.MOD_ID + ".ability_slot_";
 	public static final String MSG_QUICK_ABILITY_STATE = k("message.quick_ability.state");
@@ -1511,8 +1640,6 @@ public final class ModLang {
 	public static final String METHODS_HEAVEN_OPENS = k("methods.heaven.opens");
 	public static final String METHODS_HEAVEN_OPENS_SHORT = k("methods.heaven.opens.short");
 	public static final String METHODS_HEAVEN_SHARE = k("methods.heaven.share");
-	/** The deepest realm a breakthrough may lead into, by the methods known (HeavenMethods#opensWay). */
-	public static final String METHODS_HEAVEN_REACH = k("methods.heaven.reach");
 	public static final String METHODS_HEAVEN_UNKNOWN = k("methods.heaven.unknown");
 	public static final String METHODS_HEAVEN_PASSIVE = k("methods.heaven.passive");
 	public static final String TALK_TEACH_HEAVEN = k("talk.teach.heaven");
@@ -1885,6 +2012,8 @@ public final class ModLang {
 	public static final String TOOLTIP_DAO_FRAGMENT = k("tooltip.dao_fragment");
 	public static final String TOOLTIP_CHAOS_ORIGIN_STONE = k("tooltip.chaos_origin_stone");
 	public static final String DEATH_CHAOS_STORM = "death.attack." + DefyingTheHeavens.MOD_ID + ".chaos_storm";
+	/** A Spatial Gap storm's bolt (ModDamageTypes#SPATIAL_STORM). */
+	public static final String DEATH_SPATIAL_STORM = "death.attack." + DefyingTheHeavens.MOD_ID + ".spatial_storm";
 	// The small worlds (SmallWorlds, phase 3d): a seed refined (or why not), the door opened and closed (or why not), a world come into
 	// and gone out of, its land grown, those turned away at its door, the guest list (SmallWorldCommand)
 	public static final String MSG_SEED_NOT_IMMORTAL = k("message.small_world.seed_not_immortal");
@@ -2312,6 +2441,8 @@ public final class ModLang {
 	public static final String MSG_BOND_DIED_LOST = k("message.bond.died_lost");
 	public static final String MSG_MOUNT_TOO_SMALL = k("message.mount.too_small");
 	public static final String MSG_MOUNT_CANT = k("message.mount.cant");
+	public static final String MSG_SADDLE_RESTING = k("message.saddle.resting");
+	public static final String MSG_SADDLE_NOTHING = k("message.saddle.nothing");
 	public static final String MSG_COURT_CLAIMED = k("message.court.claimed");
 	public static final String MSG_COURT_LOST = k("message.court.lost");
 	public static final String MSG_COURT_EMPTY = k("message.court.empty");
@@ -2352,6 +2483,26 @@ public final class ModLang {
 	public static final String MSG_FURNACE_BREAKS = k("message.furnace.breaks");
 	public static final String MSG_BLOOD_NIRVANA_RISEN = k("message.blood_nirvana.risen");
 	public static final String MSG_BLOOD_NIRVANA_BURNT = k("message.blood_nirvana.burnt");
+
+	// JEI's pages for the mod's crafts (client/compat/jei)
+	public static final String JEI_BREW_TIME = k("jei.brew_time");
+	public static final String JEI_NEVER_FAILS = k("jei.never_fails");
+	public static final String JEI_SURE_FROM = k("jei.sure_from");
+	public static final String JEI_AGED = k("jei.aged");
+	public static final String JEI_RARE_HERB = k("jei.rare_herb");
+	public static final String JEI_CAULDRON_HOW = k("jei.cauldron_how");
+	public static final String JEI_FORGE_TIME = k("jei.forge_time");
+	public static final String JEI_FORGE_QI = k("jei.forge_qi");
+	public static final String JEI_FORGE_HOW = k("jei.forge_how");
+	public static final String JEI_CORE = k("jei.core");
+	public static final String JEI_ELEMENT_CORE = k("jei.element_core");
+	public static final String JEI_TOKEN = k("jei.token");
+	public static final String JEI_REFINING = k("jei.refining");
+	public static final String JEI_NATAL_IN = k("jei.natal_in");
+	public static final String JEI_NATAL_OUT = k("jei.natal_out");
+	public static final String JEI_TALISMAN_QI = k("jei.talisman_qi");
+	public static final String JEI_TALISMAN_HOW = k("jei.talisman_how");
+	public static final String JEI_BRUSH = k("jei.brush");
 
 	private ModLang() {}
 }

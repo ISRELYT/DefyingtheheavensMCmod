@@ -400,11 +400,30 @@ public final class Concealments {
 		return sees;
 	}
 
-	/** Its owner, those they trust, an operator in creative or spectator, and anyone stronger than its owner (the user's pick) see through it. */
+	/**
+	 * Its owner, those they trust, an operator in creative or spectator, anyone stronger than its owner (the user's pick), and the eyes of a Revealing
+	 * Talisman burnt, as far as its strength reaches (Talismans#reveals: no more than two realms above it), see through it.
+	 */
 	static boolean weigh(Veil veil, ServerPlayer viewer) {
+		return weighUnaided(veil, viewer) || Talismans.reveals(viewer, veil.rank);
+	}
+
+	/** {@link #weigh} but for a Revealing Talisman's eyes. */
+	private static boolean weighUnaided(Veil veil, ServerPlayer viewer) {
 		if (viewer.getUUID().equals(veil.owner) || veil.trusted.contains(viewer.getUUID())) return true;
 		if ((viewer.isCreative() || viewer.isSpectator()) && viewer.hasPermissions(2)) return true;
 		return Formations.rankOf(viewer) > veil.rank;
+	}
+
+	/**
+	 * Whether (x, y, z) in {@code level} lies within a raised veil that would hide it from {@code viewer} but for the Revealing Talisman they
+	 * burnt (Talismans#tick: whoever stands there is outlined to them).
+	 */
+	public static boolean revealedTo(Level level, ServerPlayer viewer, double x, double y, double z) {
+		for (Veil veil : raised(level)) {
+			if (veil.encloses(x, y, z) && !weighUnaided(veil, viewer) && Talismans.reveals(viewer, veil.rank)) return true;
+		}
+		return false;
 	}
 
 	/** The raised veil holding (x, y, z) in {@code level} that {@code viewer} can't see through, or null. */

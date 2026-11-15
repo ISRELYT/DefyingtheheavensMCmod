@@ -127,7 +127,14 @@
       "com.example.defyingtheheavens.TalismanGameTests",
       "com.example.defyingtheheavens.RankingsGameTests",
       "com.example.defyingtheheavens.PlayerSectGameTests",
-      "com.example.defyingtheheavens.NetherworldSpringsGameTests"
+      "com.example.defyingtheheavens.NetherworldSpringsGameTests",
+      "com.example.defyingtheheavens.WallWindowsGameTests",
+      "com.example.defyingtheheavens.GapStormsGameTests",
+      "com.example.defyingtheheavens.CorpseWalkGameTests",
+      "com.example.defyingtheheavens.NatalTreasureGameTests",
+      "com.example.defyingtheheavens.SectListGameTests",
+      "com.example.defyingtheheavens.PersonalDiscipleGameTests",
+      "com.example.defyingtheheavens.SectErrandsGameTests"
     ]
   }
 }

@@ -349,6 +349,7 @@ public final class Codex {
 				- The dead give off ghostly qi around them, more for a higher realm and less once they are bones, so a ghost cultivator can \
 				cultivate beside them.
 				- One practising Corpse Yin Refining draws a body's yin into the ghost path, with an empty hand (see Methods and Arts).
+				- A projected soul, or one of the dead, can rise in a body and walk in it (see Possession).
 				Experience still drops as it always has.""");
 
 		// ================================================ The Way of Cultivation ================================================
@@ -733,8 +734,12 @@ public final class Codex {
 				- A roc (or a grown hawk) flies: forward goes where you look, so look down to come down, and Space climbs. It flies only \
 				where you could fly yourself: not under the Weak Water's weight or a Killing Formation's, and in a secret realm only if you \
 				fly freely there.
-				- While you ride it, it fights nothing. Get off, and it fights for you again. If it dies under you, the bond's loss is yours \
-				as ever.""");
+				- While you ride it, it fights nothing of its own accord. Get off, and it fights for you again. If it dies under you, the \
+				bond's loss is yours as ever.
+				- Fight from the saddle: look at a foe and press B (Saddle Strike), and your beast strikes it with its own move, as hard \
+				as its wild kin. A tiger pounces, a boar, antelope or rhino charges, a roc dives and a hawk swoops, a frost ape or bear \
+				slams the ground round it, a fox breathes fire, a python coils, a fire monkey throws a burning stone and a flood dragon \
+				a jet of water; wolves, vipers, crocodiles and turtles lunge and bite. Each move needs its own rest before the next.""");
 		page("court_of_the_dead", Items.GOLDEN_HELMET, "springs/ghost_path", Hint.DEAD, "Court of the Dead", """
 				A Ghost King's method, from Core Formation to True Immortal. Stand at the throne of a ghost palace whose king has been slain, \
 				and after a few seconds the palace is yours: its retainers become your subjects and turn on you no more.
@@ -944,7 +949,18 @@ public final class Codex {
 		page("possession", Items.ARMOR_STAND, NS, "Possession", """
 				A projected soul can take over a body at least one realm below the highest of your paths: right-click it. In a \
 				cultivator's body you play as yourself, with everything it carries, and others see its face and name.
-				Let go, or call your soul home, to leave the body. If the body dies, your soul is thrown out unharmed.""");
+				Let go, or call your soul home, to leave the body. If the body dies, your soul is thrown out unharmed.
+				The dead can be walked in too. Right-click a body lying where it fell, fresh, rotting or bare bones, and you rise in it. \
+				The dead have their own way in: Ghostly Possession, every ghost's ability from the lowest realm. Look at a body and use it: \
+				one of the dead lying where it fell, or a living player or cultivator, at least a realm below your highest path. No soul goes \
+				out, so nothing tethers you, however far you walk; it costs ghostly qi to go in and a little each second to stay. Use it again \
+				to leave. In a body of the dead you are what the dead was, at the whole strength \
+				of their realm, with their arts and what they held, but a body that walks doesn't fly, eat or heal itself, except slowly \
+				where the yin is thick. It keeps rotting while you walk in it, slower the higher you stand, until you walk as a skeleton, \
+				a demon's with its race's bare skull and tail bones. A soul sent out stays tethered to its own body in there. \
+				Leave it and it lies down again where you stand.
+				The righteous fall on the walking dead, mortals run from them, and a sect that sees its own dead walk turns on you for good. \
+				Meditating in a body refines Corpse Yin Refining for your own ghost path, yours when you leave it.""");
 		page("clone", ModItems.BLANK_MANUAL, NS, "Clone", """
 				A technique for Nascent Soul and above, learned from its manual. Use it to split off a second body at the cost of half your \
 				qi; use it again to move into the clone while your main body sits in meditation.
@@ -1044,12 +1060,18 @@ public final class Codex {
 				Thrown, they burst where they land:
 				- Fire: flame that burns all round it. Five Thunder: a bolt of lightning. Frost: cold that slows all it catches. Binding: \
 				holds the one it strikes where they stand for a few seconds, but nothing a realm or more above it.
+				- Qi-Sealing: the one it strikes can't cast a spell or fly for a few seconds, the fewer the stronger they are, and \
+				nothing a realm or more above it is sealed.
 				Burnt (use), they work on you:
 				- Golden Light: a shell that soaks up harm for half a minute. Divine Speed: swift feet for a minute.
 				- Thousand-Li Escape: a flash of a hundred blocks or more the way you face, onto safe ground. Not where space is sealed: \
 				a Space domain, the ways between the worlds, the secret realms.
 				- Concealment: beasts and cultivators don't notice you for a minute, until you strike, unless they stand two realms or \
 				more above the talisman.
+				- Homeward: stand still and unhurt for five seconds and it carries you to your own nearest Formation Core in this world. \
+				A step or a blow and it burns out for nothing. Not where space is sealed.
+				- Revealing: for half a minute you see through Concealment barriers, and anyone hidden near you, by a Concealment \
+				Talisman or behind a barrier of their own, is outlined in gold. Not what stands two realms or more above the talisman.
 				Each kind has its own short wait between two. The Yang Fire and Ghost-Quelling Talismans can be drawn too.""");
 		page("rankings", ModBlocks.RANKING_STELE, null, "The Lists", """
 				Every world keeps its list of its hundred strongest: the Earth List (the lower realms), the Heaven List (the Jade \
@@ -1063,7 +1085,11 @@ public final class Codex {
 				market square, and you can make one. The Journal tab's second page shows them too.
 				@craft ranking_stele
 				- Cultivators know their world's list: one of its hundred is greeted by their place, and thought the better of. When a \
-				place in its top ten changes hands, people talk of it for a few days.""");
+				place in its top ten changes hands, people talk of it for a few days.
+				- The Sects tab shows each world's ten strongest sects. A sect's score is the strength of its ten strongest people added \
+				up, and more for each of them on that world's list, the more the higher they stand. A sect a player founded is on it too, \
+				so yours climbs as its disciples grow. The members of a top-ten sect are thought the better of, and when a sect rises \
+				into the top three, it is talked of.""");
 		page("forge", ModBlocks.ARTIFACT_FORGE, null, "The Artifact Forge", """
 				Artifacts are forged, not crafted. Make an Artifact Forge from five copper ingots, a blast furnace, two iron ingots and a \
 				Low-Grade spirit stone.
@@ -1121,6 +1147,20 @@ public final class Codex {
 				comes out of your qi instead of your health. It never softens a heavenly tribulation.
 				Heaven and Immortal artifacts don't burn, and Immortal blades never wear out. Sect elders, sect masters, wandering rogues \
 				and the Immortal Realm's merchants sell artifacts, and sect treasuries keep some.""");
+		page("natal_treasure", ModItems.artifact(ArtifactKind.SABER, ArtifactGrade.EARTH), null, "Natal Treasure", """
+				From Core Formation you can bind one blade to your golden core as your natal treasure. It must be a blade you forged \
+				yourself: every blade remembers who forged it (its tooltip says so).
+				- To bind it, hold it and sneak and right-click the Artifact Forge. You can have one at a time.
+				- In your hand it grows with you: it adds 10 percent to all your blows at Core Formation, and 10 percent more for every \
+				realm above. In anyone else's hand it is an ordinary blade.
+				- To raise its grade, put it in the forge with the next grade's materials for its kind, and forge as usual. Only you can \
+				work it. It keeps its work, and comes out as good as new. If the forging fails, the materials burn but the blade comes \
+				back unharmed.
+				- Natal Recall (an ability) calls it to your hand from anywhere in the world you are in: off the ground, out of anyone's \
+				pack, or from a chest in loaded land. It costs 10 percent of your qi. Lying on the ground it never despawns or burns.
+				If it breaks, it is gone, and your soul is wounded for 20 minutes: half your qi pool, and your blows 30 percent weaker. \
+				Unbinding it at the forge (sneak and right-click with it, twice) wounds you the same, as does binding another blade while \
+				one is still bound.""");
 		page("elemental_weapons", ModItems.artifact(ArtifactKind.FLAME_BLADE, ArtifactGrade.SPIRIT), null, "Weapons of the Elements", """
 				Some weapons are not made of metal but of an element itself, given a weapon's shape by a demon core of that element. They \
 				are forged at the Artifact Forge like any other artifact, from Spirit grade up.
@@ -1377,10 +1417,40 @@ public final class Codex {
 				- Hang Sect Plaques by your gates: aspirants come in there, and its guards keep them. A Heaven Altar inside the barrier is \
 				its Altar of Heaven.
 				- Its cultivators bring tribute every day, more the stronger they are, kept for up to thirty days: collect it at the core.
+				- It keeps a mission board of its own on its plaza, where you send its cultivators out on errands.
 				- Players join only when you invite them from the Sect page. They accept on their own Sect tab, or with the link in their \
 				chat. Cast anyone out from the Sect page or the Sect tab.
 				- Disband it at the core. If its core is broken, it breaks up. Either way its cultivators go their own ways, and its players \
 				belong to no sect.""");
+		page("personal_disciple", Items.WRITABLE_BOOK, null, "A Disciple of Your Own", """
+				You can take one cultivator as your own disciple, through talk: "Will you be my disciple?" It must be weaker than you, \
+				no elder, and either one of your own sect or a wanderer who thinks warmly of you.
+				- Your disciple follows you and fights for you with its own spells. In talk ("Disciple, hear me.") tell it to follow you, \
+				to stay where it is, or to guard the place you stand. While you are away, it waits for you in meditation.
+				- Pick its method from the heaven methods you know, and teach it the war arts you know, Sword Intent and Blood Battle, \
+				once its realm is high enough.
+				- Within 32 blocks of you it cultivates half again as fast, walking or not. It can reach the Lists, and it may outgrow you.
+				- At the gate of a new realm it asks you for a pill: that breakthrough's own, or a Cultivation Pill. Give it as a gift and \
+				it breaks through at once. Without one, it tries on its own after a day.
+				- A righteous disciple thinks less of you when it sees you kill the innocent or do other devilish things, and in the end \
+				it leaves you.
+				- If your disciple dies, a week must pass before you take another. You can also let it go its own way at any time.""");
+		page("sect_errands", ModBlocks.MISSION_BOARD, NS, Hint.CULTIVATE, "Sending Your Disciples Out", """
+				A sect of your own keeps a mission board on its plaza, by its Formation Core. As its founder you have a Send Out page on \
+				it, where you send its cultivators out on errands.
+				- Hunt: a demon beast of the realm you pick, from Qi Refining to Core Formation, 400 to 900 blocks out. About two days. \
+				They bring back its demon core, its hide and meat.
+				- Herbs: spirit herbs 250 to 600 blocks out. About a day. The stronger they are, the older and rarer the herbs.
+				- Secret Realm: into a secret realm of your world, only while one stands open. About three days. Spirit stones, and now \
+				and then a rarity.
+				- Letter: to the nearest other sect, which thinks better of you for it. About a day.
+				- At most a third of your cultivators can be out at once, and the page warns you when a task is above the one you send.
+				- They really travel. Out of everyone's sight they go on unseen, but come near and you find them on the road or at their \
+				hunting ground, to be met, talked to, or fought. One who goes into a secret realm stays inside until their time is up.
+				- When their time is up they come back with the spoils; or wounded, with half of them, to rest a few days; or now and \
+				then broken through on the road. Some never come back, the likelier the further the task stood above them: the sect \
+				mourns them, and it is talked of nearby.
+				- The spoils wait at your Formation Core. Collect on its Sect page takes them with the tribute.""");
 		page("missions", ModBlocks.MISSION_BOARD, "sects/joined", Hint.SECT, "The Mission Board", """
 				Every sect keeps a mission board on its plaza, by its Formation Core. Each day it posts five missions for each of its \
 				disciples, fitted to their realm: Easy, Fitting or Hard. You may hold three at once.
@@ -1567,7 +1637,11 @@ public final class Codex {
 				Between the Overworld and the Jade Firmament lies the Spatial Gap, a sea of torn space. A rift at the very centre of the \
 				Overworld leads into it, and so does a Spatial Tear.
 				Anyone who can fly flies freely there; anyone who can't falls back out. Every block you cross in the gap counts as many \
-				blocks in the world. Its pressure and storms wear you down the whole time, so bring healing.
+				blocks in the world. Its pressure and storms wear you down the whole time, so bring healing. A body that heals faster than \
+				the pressure presses doesn't feel it at all.
+				Its storms are the real danger. Each bolt strikes the same for everyone, and armour doesn't help. Under or inside a storm \
+				its winds halve your flight and carry you along with it, and in the upper layers the storms close in on whoever climbs \
+				toward them. Watch for them early and go round.
 				Rise through its upper layers to come out in the Jade Firmament; sink through its floor and you fall into the Overworld's \
 				sky.""");
 		page("jade_firmament", Items.EMERALD, HB + "|worlds/jade_firmament", "The Jade Firmament", """

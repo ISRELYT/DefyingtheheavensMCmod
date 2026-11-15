@@ -74,7 +74,8 @@ public final class WarArts {
 			it.remove();
 			LivingEntity target = cut.target;
 			if (!target.isAlive() || target.isRemoved() || !(target.level() instanceof ServerLevel level)) continue;
-			ServerPlayer by = server.getPlayerList().getPlayer(cut.by);
+			net.minecraft.world.entity.Entity by = server.getPlayerList().getPlayer(cut.by);
+			if (by == null) by = level.getEntity(cut.by); // a disciple's (PersonalDisciples), its master's art taught it
 			target.invulnerableTime = 0;
 			cutting = true;
 			try {
@@ -108,7 +109,17 @@ public final class WarArts {
 
 	/** A blow landing (ALLOW_DAMAGE): a player's own with a blade, Sword Intent lit, followed by a second cut; Blood Battle lit, a share healed. */
 	static void landed(LivingEntity target, DamageSource source, float amount) {
-		if (cutting || amount <= 0 || !(source.getEntity() instanceof ServerPlayer p) || source.getDirectEntity() != p || target == p) return;
+		if (cutting || amount <= 0) return;
+		// A cultivator taught them as a player's disciple (PersonalDisciples; kept if it is let go): its own blows, always lit (no player's qi to pay).
+		if (source.getEntity() instanceof CultivatorNpc npc && source.getDirectEntity() == npc && target != npc && !npc.cultivation().techniques().isEmpty()) {
+			java.util.Set<Technique> known = npc.cultivation().techniques();
+			if (known.contains(Technique.SWORD_INTENT)) {
+				CUTS.add(new Cut(npc.getUUID(), target, (float) (amount * INTENT_SHARE), npc.level().getGameTime() + INTENT_DELAY));
+			}
+			if (known.contains(Technique.BLOOD_BATTLE)) npc.heal((float) (amount * BLOOD_HEAL));
+			return;
+		}
+		if (!(source.getEntity() instanceof ServerPlayer p) || source.getDirectEntity() != p || target == p) return;
 		if (!source.is(DamageTypes.PLAYER_ATTACK)) return;
 		if (lit(p, Ability.SWORD_INTENT) && p.getMainHandItem().getItem() instanceof SwordItem) {
 			CUTS.add(new Cut(p.getUUID(), target, (float) (amount * INTENT_SHARE), p.server.overworld().getGameTime() + INTENT_DELAY));

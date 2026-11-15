@@ -106,6 +106,10 @@ public class SpellProjectile extends Projectile {
 	public SpellProjectile(EntityType<? extends SpellProjectile> type, Level level) {
 		super(type, level);
 		noPhysics = true;
+		// Its trails and glows (a meteor's, a falling mountain's) reach far past its little box: never culled by that box, by the game
+		// (SpellProjectileRenderer#shouldRender) or by Entity Culling, which reads this, and which would otherwise hide one whose box
+		// were out of sight and stop its ticking on the client.
+		noCulling = true;
 	}
 
 	/**

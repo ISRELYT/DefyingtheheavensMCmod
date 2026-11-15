@@ -165,6 +165,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private final Set<UUID> aggressed = new HashSet<>();
 	/** Set while it is being taken out of the world to finish a journey elsewhere (NpcTravel), so that isn't a departure. */
 	boolean travelling;
+	/**
+	 * Out on an errand for a player's sect, gone on along the road unseen as its land unloaded (SectErrands#unloaded): its body is kept with
+	 * its errand, so none is saved with the land (it would come back twice).
+	 */
+	boolean goneOnTheRoad;
 	private boolean caughtUp;
 	private int seclusionAttempts;
 	private int combatTicks;
@@ -269,6 +274,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(0, new FloatGoal(this));
 		goalSelector.addGoal(0, new CultivatorGoals.BegGoal(this));
 		goalSelector.addGoal(1, new CultivatorGoals.FleeGoal(this));
+		goalSelector.addGoal(1, new PersonalDisciples.FollowGoal(this)); // a player's disciple keeps by its master (above its own life, below its fights)
 		goalSelector.addGoal(2, new CultivatorGoals.CombatGoal(this));
 		goalSelector.addGoal(2, new CultivatorSpells.SpellGoal(this)); // its spells, alongside the fight (the user's ask, 2026-10-24)
 		goalSelector.addGoal(2, new BodyCultivators.TechniqueGoal(this)); // a body cultivator's techniques, alongside the fight (2026-11-01)
@@ -276,6 +282,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(2, new CultivatorGoals.KneelGoal(this)); // before one far above it, passing by (the user's pick, 2026-10-27)
 		goalSelector.addGoal(2, new JudgementHallService.EscortedGoal(this)); // a wandering soul led to the Wheel (Judgement Hall Service)
 		goalSelector.addGoal(2, new CorpseYin.DrainGoal(this)); // a devilish cultivator draining a fresh body's yin after a fight (CorpseYin)
+		goalSelector.addGoal(2, new SectErrands.ErrandGoal(this)); // one of a player's sect sent out on an errand: there and home again (SectErrands)
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new SecretRealmRivals.VisitGoal(this)); // come for a secret realm: its herbs, its vaults, its heart (SecretRealmRivals)
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
@@ -286,6 +293,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(6, new CultivatorGoals.WanderGoal(this));
 		goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0f));
 		goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+		targetSelector.addGoal(0, new PersonalDisciples.DefendGoal(this)); // a disciple: its master's foes, or what comes to the spot it guards
 		targetSelector.addGoal(1, new CultivatorGoals.RetaliateGoal(this));
 		targetSelector.addGoal(2, new CultivatorGoals.HostilityGoal(this));
 		targetSelector.addGoal(3, new CultivatorGoals.GuardGoal(this));
@@ -576,8 +584,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (player instanceof ServerPlayer sp) value += Regard.bloodShift(getBloodline(), DemonPath.bloodline(CultivationManager.get(sp)));
 		// A body cultivator is warm to one who tempers the body as it does (Regard#BODY_KIN).
 		if (isBodyCultivator() && player instanceof ServerPlayer sp && BodyPath.rank(CultivationManager.get(sp)) >= 0) value += Regard.BODY_KIN;
-		// One on its world's list is thought the better of (Rankings#regardBonus).
-		if (player instanceof ServerPlayer sp) value += Rankings.regardBonus(sp, this);
+		// One on its world's list is thought the better of (Rankings#regardBonus), and one of a sect among its world's ten (SectList#regardBonus).
+		if (player instanceof ServerPlayer sp) value += Rankings.regardBonus(sp, this) + SectList.regardBonus(sp, this);
 		UUID who = Possession.identity(player);
 		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
@@ -1071,9 +1079,14 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public boolean isInCombat() { return combatTicks > 0; }
 
 	private void secondTick(ServerLevel level) {
+		// Out on an errand for a player's sect (SectErrands): out of everyone's sight it goes on unseen, and one lost is gone.
+		SectErrands.second(level, this);
+		if (isRemoved()) return;
 		// Asleep only while it means to be (NpcLife): anything that took it away from its bed has woken it.
 		if (hasPose(Pose.SLEEPING) && (activity == null || activity.kind != NpcLife.Kind.SLEEP || !NpcLife.canLive(this))) setPose(Pose.STANDING);
-		if (isMeditating() && !isMortal()) cultivate(1.0, meditationMultiplier(level));
+		// A personal disciple near its master cultivates the faster, walking or not (PersonalDisciples#cultivationFactor).
+		double beside = PersonalDisciples.cultivationFactor(this);
+		if ((isMeditating() || beside > 1) && !isMortal()) cultivate(1.0, meditationMultiplier(level) * beside);
 		// Natural recovery out of combat: quicker once qi sustains the body, the whole of a great one mended in half a minute
 		// (CultivationStats#mendPerSecond: the high realms' bodies took hours at two a second).
 		if (!isInCombat() && getHealth() < getMaxHealth()) heal(isMortal() || getRank() < 4 ? 0.5f : CultivationStats.mendPerSecond(getMaxHealth()));
@@ -1087,8 +1100,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				Sect.Member member = sect.members.get(getUUID());
 				if (member == null) {
 					// The sect no longer counts it (let go for a newcomer while its land was unloaded, or a copy of one that
-					// departed): it sets off, as it would have.
-					dismiss(level);
+					// departed): it sets off, as it would have. Not one lost on an errand, seen still: it goes on, never to come back.
+					if (SectErrands.errandOf(this) == null) dismiss(level);
 				} else {
 					member.lastAt = blockPosition(); // where to wake it, should it be let go once its land unloads
 					if (member.title != getTitle()) setTitle(member.title);
@@ -1096,7 +1109,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			}
 		}
 		// A lower-realm sect member who becomes a Heavenly Being has outgrown the sect.
-		if (lifecycle == Lifecycle.SECT && ModDimensions.isLowerRealm(level.dimension()) && getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY)) {
+		if (lifecycle == Lifecycle.SECT && master == null && ModDimensions.isLowerRealm(level.dimension())
+				&& getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY)) {
 			beginDeparture(level);
 		}
 		if (lifecycle == Lifecycle.ROGUE && livesItsLife()) decideRogueCourse();
@@ -1198,7 +1212,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			double required = cultivation.cultivationRequired();
 			if (value < required) break;
 			int rank = PlayerCultivation.rank(realm, stage);
-			if (rank >= cap || rank == PlayerCultivation.RITUAL_RANK && !cultivation.hasHeavensLeave()) {
+			// A personal disciple at a realm's gate waits for the pill it asked its master for (a day at most: PersonalDisciples#holdsAtGate).
+			boolean waits = stage.isLast() && !catchingUp && PersonalDisciples.holdsAtGate(this, realm.next());
+			if (rank >= cap || rank == PlayerCultivation.RITUAL_RANK && !cultivation.hasHeavensLeave() || waits) {
 				value = required;
 				break;
 			}
@@ -1320,7 +1336,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	public void setQiFlying(boolean flying) {
 		if (flying == isQiFlying()) return;
-		if (flying && !canFlySustainably()) return;
+		if (flying && (!canFlySustainably() || Talismans.qiSealed(this))) return; // sealed by a Qi-Sealing Talisman: no flight while it lasts
 		setFlag(FLAG_SWORD, flying && canSwordFlySustainably() && (!canQiFlySustainably() || !hurried()));
 		setFlag(FLAG_FLYING, flying);
 		setNoGravity(flying);
@@ -1540,6 +1556,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * (Possession: it is the body it knows).
 	 */
 	public boolean isAlly(Entity other) {
+		// A personal disciple stands with its master and what is theirs (PersonalDisciples).
+		if (master != null && other instanceof LivingEntity living && PersonalDisciples.sidesWith(this, living)) return true;
 		// One sent to a secret realm by a sect stands with that sect's own there (SecretRealmRivals), as a member does.
 		UUID own = sectId != null ? sectId : visitingFor;
 		if (own == null) return false;
@@ -1691,9 +1709,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return sect == null ? 0 : sect.barrierRadius + TERRITORY_MARGIN;
 	}
 
-	/** Only Heavenly Beings and above may leave the grounds outside a fight. */
+	/** Only Heavenly Beings and above may leave the grounds outside a fight; and one sent out on an errand, wherever it is (SectErrands). */
 	public boolean isLeashed() {
-		return sectId != null && getRank() < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY);
+		return sectId != null && getRank() < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY) && SectErrands.errandOf(this) == null;
 	}
 
 	public Sect sect() {
@@ -1769,7 +1787,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void decideRogueCourse() {
 		// What preys on a settlement (a Merit wish's threat, Wishes) or a sect's people (a mission's quarry, SectMissions) has one course: the
 		// one who took it on. No seclusion, no ascent.
-		if (lifecycle != Lifecycle.ROGUE || isMortal() || Wishes.isThreat(this) || SectMissions.isFoe(this)) return;
+		// A personal disciple's course is its master's (PersonalDisciples).
+		if (lifecycle != Lifecycle.ROGUE || isMortal() || Wishes.isThreat(this) || SectMissions.isFoe(this) || master != null) return;
 		if (ModDimensions.isUpperRealm(level().dimension())) {
 			if (ascended && level() instanceof ServerLevel level) seekSectOrSeclusion(level);
 			return;
@@ -2120,6 +2139,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!visitRealm.isEmpty()) SecretRealmRivals.visitorDied(server, this); // one come for a secret realm: gone from its roll
 		NpcLife.end(this);
 		NpcLife.onDeath(server, this); // its fellows cry out, and mourn it where it fell
+		PersonalDisciples.died(server, this); // a player's disciple: its master mourns it a week before taking another
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
 		if (lifecycle == Lifecycle.SECLUDED) Rumours.forgetCave(this);
 		HermitSites.onLeft(server, this, killer != null); // a region's hermit: replaced in time, unless a player killed it
@@ -2143,6 +2163,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				CultivationManager.sync(killer);
 				killer.displayClientMessage(Component.translatable(shift > 0 ? ModLang.MSG_ALIGNMENT_UP : ModLang.MSG_ALIGNMENT_DOWN,
 						Math.abs(shift), Alignment.describe(c.getAlignment())), true);
+				PersonalDisciples.witnessed(killer, shift); // a righteous disciple near sees its master's path darken
 			}
 			CelestialCourt.onSlain(this, killer); // one of the Immortal Realm's devilish immortals slain: merit for an officer of the Court
 		}
@@ -2194,6 +2215,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	public HeavenMethod heavenMethod() {
 		if (isMortal() || isGhost() || isBodyCultivator()) return null; // a body cultivator's ways are the body's (bodyManual)
+		// A personal disciple's is the one its master set it to (PersonalDisciples).
+		if (taughtMethod != null && master != null) return taughtMethod;
 		// A Heavenly Venerable's is its own element's True Immortal method (CelestialCourt).
 		if (getTitle() == NpcTitle.HEAVENLY_VENERABLE && courtElement != null) return HeavenMethod.of(courtElement, Realm.TRUE_IMMORTAL);
 		Sect sect = isSectMember() ? sect() : null;
@@ -2314,6 +2337,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			Spells.forget(getUUID()); // what its spells left lingering ends with it (CultivatorSpells)
 		}
 		super.remove(reason);
+	}
+
+	/** Not saved with its land once it has gone on along the road unseen ({@link #goneOnTheRoad}): its errand keeps its body. */
+	@Override
+	public boolean shouldBeSaved() {
+		return !goneOnTheRoad && super.shouldBeSaved();
 	}
 
 	/**
@@ -2444,6 +2473,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			npc.putInt("VisitOpening", visitOpening);
 			if (visitingFor != null) npc.putUUID("VisitingFor", visitingFor);
 		}
+		if (master != null) {
+			CompoundTag disciple = new CompoundTag();
+			disciple.putUUID("Master", master);
+			disciple.putString("Order", discipleOrder.name());
+			if (discipleSpot != null) disciple.put("Spot", NbtUtils.writeBlockPos(discipleSpot));
+			if (taughtMethod != null) disciple.putString("Method", taughtMethod.getId());
+			disciple.putInt("PillGate", pillGate);
+			disciple.putLong("PillAsked", pillAskedAt);
+			disciple.putBoolean("PillGiven", pillGiven);
+			npc.put("Disciple", disciple);
+		}
 		tag.put("Npc", npc);
 	}
 
@@ -2458,6 +2498,49 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void setSettledAt(BlockPos at) { settledAt = at == null ? null : at.immutable(); }
 	public CompoundTag wish() { return wish; }
 	public void setWish(CompoundTag tag) { wish = tag; }
+
+	// --- A player's personal disciple (PersonalDisciples) ---
+
+	/** Its master (a player's UUID), or null: no one's disciple. */
+	private UUID master;
+	/** What its master told it, and the spot it stays at or guards (null: none). */
+	private PersonalDisciples.Order discipleOrder = PersonalDisciples.Order.FOLLOW;
+	private BlockPos discipleSpot;
+	/** The heaven method its master set it to cultivate (theirs), or null: its own. */
+	private HeavenMethod taughtMethod;
+	/** The realm whose gate it asked its master for a pill at (-1 none), when, and whether it has it. */
+	private int pillGate = -1;
+	private long pillAskedAt;
+	private boolean pillGiven;
+
+	public UUID master() { return master; }
+	public void setMaster(UUID master) { this.master = master; }
+	public PersonalDisciples.Order discipleOrder() { return discipleOrder; }
+	public BlockPos discipleSpot() { return discipleSpot; }
+
+	public void setDiscipleOrder(PersonalDisciples.Order order, BlockPos spot) {
+		discipleOrder = order == null ? PersonalDisciples.Order.FOLLOW : order;
+		discipleSpot = spot == null ? null : spot.immutable();
+	}
+
+	public void setTaughtMethod(HeavenMethod method) { taughtMethod = method; }
+	public int pillGate() { return pillGate; }
+	public long pillAskedAt() { return pillAskedAt; }
+	public boolean pillGiven() { return pillGiven; }
+
+	void askPill(int gate, long now) {
+		pillGate = gate;
+		pillAskedAt = now;
+		pillGiven = false;
+	}
+
+	void givePill() { pillGiven = true; }
+
+	void resetPill() {
+		pillGate = -1;
+		pillAskedAt = 0;
+		pillGiven = false;
+	}
 
 	// --- One come for a secret realm (SecretRealmRivals) ---
 
@@ -2523,6 +2606,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		visitRealm = npc.getString("VisitRealm");
 		visitOpening = npc.getInt("VisitOpening");
 		visitingFor = npc.hasUUID("VisitingFor") ? npc.getUUID("VisitingFor") : null;
+		CompoundTag disciple = npc.getCompound("Disciple");
+		master = disciple.hasUUID("Master") ? disciple.getUUID("Master") : null;
+		PersonalDisciples.Order order = PersonalDisciples.Order.FOLLOW;
+		for (PersonalDisciples.Order o : PersonalDisciples.Order.values()) if (o.name().equals(disciple.getString("Order"))) order = o;
+		setDiscipleOrder(order, disciple.contains("Spot") ? NbtUtils.readBlockPos(disciple.getCompound("Spot")) : null);
+		taughtMethod = HeavenMethod.byId(disciple.getString("Method"));
+		pillGate = disciple.contains("PillGate") ? disciple.getInt("PillGate") : -1;
+		pillAskedAt = disciple.getLong("PillAsked");
+		pillGiven = disciple.getBoolean("PillGiven");
 		aggressed.clear();
 		ListTag list = npc.getList("Aggressed", Tag.TAG_INT_ARRAY);
 		for (Tag entry : list) aggressed.add(NbtUtils.loadUUID(entry));
@@ -2591,7 +2683,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// or not, so it's gone (NpcTravel, with nobody near) before anyone could come upon it still in the grounds.
 		if (npc.sectId != null && npc.level() instanceof ServerLevel level) {
 			Sect sect = SectManager.get(level.getServer(), npc.sectId);
-			if (sect != null && !sect.extinct && !sect.members.containsKey(npc.getUUID())) npc.dismiss(level);
+			// (Not one of a player's sect lost on an errand, found where it stood: it is gone the moment it ticks, SectErrands#second.)
+			if (sect != null && !sect.extinct && !sect.members.containsKey(npc.getUUID()) && SectErrands.errandOf(npc) == null) npc.dismiss(level);
 		}
 	}
 
@@ -2599,6 +2692,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!(entity instanceof CultivatorNpc npc)) return;
 		LOADED.remove(npc);
 		if (!npc.livesItsLife()) return;
+		// Out on an errand for a player's sect (SectErrands): it goes on unseen from here, its body with its errand (none saved with the land).
+		if (SectErrands.unloaded(npc)) {
+			RogueIndex.onUnload(npc);
+			return;
+		}
 		RogueIndex.onUnload(npc);
 		NpcLedger.onUnload(npc);
 		// Its land unloading (not its death or discarding), a member's place is kept: it stays there till it is next loaded.

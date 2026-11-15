@@ -75,6 +75,14 @@ public final class Talismans {
 	public static final int SPEED_TICKS = 1200, CONCEAL_TICKS = 1200;
 	/** A concealed one is noticed anyway by a cultivator or beast this many stages (two realms) or more above the talisman. */
 	public static final int SEES_THROUGH = 8;
+	/** Homeward: how long one stands still and unhurt before it takes one home, and how far one may stir meanwhile (blocks). */
+	public static final int HOMEWARD_TICKS = 100;
+	public static final double HOMEWARD_STIR = 0.4;
+	/** Qi-Sealing: seconds sealed, a second less for each two stages the sealed stands above the talisman (none a realm or more above it). */
+	public static final int SEAL_SECONDS = 5;
+	/** Revealing: how long its sight lasts, and how far off the hidden show to it. */
+	public static final int REVEAL_TICKS = 600;
+	public static final double REVEAL_REACH = 32;
 
 	// --- Drawing ---
 
@@ -308,9 +316,46 @@ public final class Talismans {
 			case BINDING -> {
 				if (struck != null) bind(struck, rank, power, thrower);
 			}
+			case QI_SEALING -> {
+				if (struck != null) seal(struck, rank, power, thrower);
+			}
 			default -> {
 			}
 		}
+	}
+
+	/**
+	 * A Qi-Sealing Talisman strikes {@code target}: its qi sealed ({@link ModEffects#QI_SEALED}) for {@link #SEAL_SECONDS}, a second less for each
+	 * two stages it stands above the talisman ({@code rank}); nothing a realm or more above it. Sealed, it casts no spell and doesn't fly: a
+	 * player weighed down out of the air (QiFlight#weighDown), a cultivator brought down. Returns whether it took hold.
+	 */
+	public static boolean seal(LivingEntity target, int rank, float power, LivingEntity thrower) {
+		int theirs = rankOf(target);
+		if (theirs >= rank + ABOVE_BURNER) {
+			if (thrower instanceof ServerPlayer p) {
+				p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_UNSEALED, target.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
+			}
+			return false;
+		}
+		int seconds = SEAL_SECONDS - Math.max(0, theirs - rank) / 2;
+		int ticks = Math.max(20, Math.round(seconds * 20 * power));
+		target.addEffect(new MobEffectInstance(ModEffects.QI_SEALED, ticks, 0, false, false, true), thrower);
+		if (target instanceof ServerPlayer sealed) {
+			QiFlight.weighDown(sealed, ticks);
+			sealed.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_SEALED, (ticks + 19) / 20).withStyle(ChatFormatting.DARK_PURPLE), true);
+		} else if (target instanceof CultivatorNpc npc && npc.isQiFlying()) {
+			npc.setQiFlying(false);
+		}
+		if (target.level() instanceof ServerLevel level) {
+			level.sendParticles(ParticleTypes.WITCH, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(), 24, 0.35, 0.5, 0.35, 0.02);
+			level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 0.8f, 1.4f);
+		}
+		return true;
+	}
+
+	/** Whether {@code e}'s qi is sealed now (a Qi-Sealing Talisman: no spell, no flight). */
+	public static boolean qiSealed(LivingEntity e) {
+		return e.hasEffect(ModEffects.QI_SEALED);
 	}
 
 	/** Who a burst at {@code at} of {@code radius} catches: the one struck (unless spared) and every being its thrower's spells would mark (HeavenSpells#mark). */
@@ -380,11 +425,203 @@ public final class Talismans {
 				return escape(p, stack, power);
 			}
 			case CONCEALMENT -> conceal(p, rank, power);
+			case HOMEWARD -> {
+				return homeward(p);
+			}
+			case REVEALING -> reveal(p, rank, power);
 			default -> {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	// --- Homeward ---
+
+	/** A Homeward burning under way: in which world, where it stood, when it is done, the core it goes to. */
+	private record Homeward(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension, Vec3 from, long until, BlockPos core) {}
+
+	private static final java.util.Map<java.util.UUID, Homeward> HOMEWARD = new java.util.HashMap<>();
+
+	/**
+	 * A Homeward Talisman burnt: {@code p}'s own nearest Formation Core in this world found ({@link #nearestCore}) and the burning begun: standing
+	 * still and unhurt for {@link #HOMEWARD_TICKS}, they are taken to it ({@link #tick}); stirring or struck meanwhile, it burns out for nothing.
+	 * Not where space is sealed (as a Thousand-Li Escape), nor with no core of theirs in this world: then it isn't spent.
+	 */
+	static boolean homeward(ServerPlayer p) {
+		if (sealed(p)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_ESCAPE_SEALED).withStyle(ChatFormatting.GRAY), true);
+			return false;
+		}
+		BlockPos core = nearestCore(p);
+		if (core == null) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_NONE).withStyle(ChatFormatting.GRAY), true);
+			return false;
+		}
+		HOMEWARD.put(p.getUUID(), new Homeward(p.level().dimension(), p.position(), p.level().getGameTime() + HOMEWARD_TICKS, core));
+		ServerLevel level = p.serverLevel();
+		aroundThem(level, ParticleTypes.END_ROD, p, 16, 0.2, 0.02);
+		level.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.6f, 1.2f);
+		p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_START, HOMEWARD_TICKS / 20).withStyle(ChatFormatting.GOLD), true);
+		return true;
+	}
+
+	/** {@code p}'s own Formation Core nearest them in their world (a core's formation on record, its owner theirs), or null. */
+	static BlockPos nearestCore(ServerPlayer p) {
+		BlockPos best = null;
+		double nearest = Double.MAX_VALUE;
+		for (Formation formation : FormationData.get(p.serverLevel()).all()) {
+			if (formation.kind != Formation.Kind.CORE || !p.getUUID().equals(formation.getOwner())) continue;
+			double d = formation.center.distSqr(p.blockPosition());
+			if (d < nearest) {
+				nearest = d;
+				best = formation.center;
+			}
+		}
+		return best;
+	}
+
+	/** Whether {@code p} is burning a Homeward Talisman now. */
+	public static boolean goingHome(ServerPlayer p) {
+		return HOMEWARD.containsKey(p.getUUID());
+	}
+
+	/** {@code victim} struck (a blow that landed: SoulLivingEntityMixin): a Homeward burning of theirs burns out. */
+	public static void hurt(LivingEntity victim) {
+		if (HOMEWARD.isEmpty() || !(victim instanceof ServerPlayer p) || HOMEWARD.remove(p.getUUID()) == null) return;
+		p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_HURT).withStyle(ChatFormatting.RED), true);
+	}
+
+	/** Its burning done: {@code p} taken to stand by {@code core} (its land loaded), if the core stands there still and there is room. */
+	private static void goHome(ServerPlayer p, BlockPos core) {
+		ServerLevel level = p.serverLevel();
+		level.getChunk(core.getX() >> 4, core.getZ() >> 4);
+		if (!(level.getBlockEntity(core) instanceof FormationCoreBlockEntity)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_GONE).withStyle(ChatFormatting.GRAY), true);
+			return;
+		}
+		BlockPos at = beside(level, core);
+		if (at == null) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_GONE).withStyle(ChatFormatting.GRAY), true);
+			return;
+		}
+		aroundThem(level, ParticleTypes.END_ROD, p, 32, 0.8, 0.05);
+		level.playSound(null, p.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.0f);
+		p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, p.getYRot(), p.getXRot());
+		p.connection.resetPosition();
+		p.resetFallDistance();
+		aroundThem(level, ParticleTypes.END_ROD, p, 32, 0.8, 0.05);
+		level.playSound(null, p.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.2f);
+		p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_HOME).withStyle(ChatFormatting.GOLD), true);
+	}
+
+	/** Room to stand by {@code core}: on the ground beside it, the nearest ring out to three blocks first; null for none. */
+	static BlockPos beside(ServerLevel level, BlockPos core) {
+		for (int r = 1; r <= 3; r++) {
+			for (int dx = -r; dx <= r; dx++) {
+				for (int dz = -r; dz <= r; dz++) {
+					if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+					for (int dy = 0; dy >= -2; dy--) {
+						BlockPos feet = core.offset(dx, dy, dz);
+						if (standable(level, feet)) return feet;
+					}
+					BlockPos up = core.offset(dx, 1, dz);
+					if (standable(level, up)) return up;
+				}
+			}
+		}
+		BlockPos on = core.above();
+		return standable(level, on) ? on : null;
+	}
+
+	// --- Revealing ---
+
+	/**
+	 * A Revealing Talisman burnt: for {@link #REVEAL_TICKS} {@code p}'s eyes see through concealment, as far as the talisman's strength reaches
+	 * ({@link ModEffects#REVEALING}, its amplifier the talisman's {@code rank}): Concealment barriers of no more than two realms above it hide
+	 * nothing from them (Concealments#weigh, asked again each second), and those hidden by Concealment Talismans, or behind a barrier of their own,
+	 * show to them, outlined ({@link #tick}).
+	 */
+	static void reveal(ServerPlayer p, int rank, double power) {
+		int ticks = (int) Math.round(REVEAL_TICKS * power);
+		p.addEffect(new MobEffectInstance(ModEffects.REVEALING, ticks, Math.min(127, rank), false, false, true));
+		ServerLevel level = p.serverLevel();
+		aroundThem(level, ParticleTypes.FLAME, p, 16, 1.6, 0.01);
+		level.playSound(null, p.blockPosition(), SoundEvents.ENDER_EYE_DEATH, SoundSource.PLAYERS, 0.8f, 1.4f);
+		p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_REVEALING, (ticks + 19) / 20).withStyle(ChatFormatting.GOLD), true);
+	}
+
+	/** Whether {@code viewer}'s Revealing sees through concealment of {@code concealedRank}: no more than two realms above the talisman. */
+	public static boolean reveals(LivingEntity viewer, int concealedRank) {
+		MobEffectInstance revealing = viewer.getEffect(ModEffects.REVEALING);
+		return revealing != null && concealedRank < revealing.getAmplifier() + SEES_THROUGH;
+	}
+
+	/** Whether {@code e} is hidden as a Revealing Talisman finds the hidden: a Concealment Talisman burnt, or behind a Concealment Barrier of its own. */
+	private static boolean hidden(LivingEntity e) {
+		return e.hasEffect(ModEffects.CONCEALED) || e instanceof CultivatorNpc npc && npc.isConcealed();
+	}
+
+	/** How strongly {@code e} is hidden: its Concealment Talisman's strength, else its own rank. */
+	private static int hiddenRank(LivingEntity e) {
+		MobEffectInstance concealed = e.getEffect(ModEffects.CONCEALED);
+		return concealed != null ? concealed.getAmplifier() : Math.max(0, rankOf(e));
+	}
+
+	// --- Each tick ---
+
+	/**
+	 * Each server tick: the Homeward burnings under way (broken by a step, or done), and each second, every Revealing's eyes told who hides within
+	 * {@link #REVEAL_REACH} of them (ModPackets#sendRevealed: drawn outlined to them alone): those concealed as far as it reaches ({@link #hidden}),
+	 * and anyone within a Concealment barrier the talisman alone lets them see into (Concealments#revealedTo).
+	 */
+	public static void tick(net.minecraft.server.MinecraftServer server) {
+		if (!HOMEWARD.isEmpty()) {
+			var each = HOMEWARD.entrySet().iterator();
+			while (each.hasNext()) {
+				var entry = each.next();
+				Homeward going = entry.getValue();
+				ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
+				if (p == null || !p.isAlive() || p.level().dimension() != going.dimension()) {
+					each.remove();
+					continue;
+				}
+				if (p.position().distanceToSqr(going.from()) > HOMEWARD_STIR * HOMEWARD_STIR) {
+					each.remove();
+					p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_MOVED).withStyle(ChatFormatting.RED), true);
+					continue;
+				}
+				long left = going.until() - p.level().getGameTime();
+				if (left > 0) {
+					if (left % 20 == 0) {
+						aroundThem(p.serverLevel(), ParticleTypes.END_ROD, p, 8, 0.1 + (HOMEWARD_TICKS - left) / (double) HOMEWARD_TICKS * 1.6, 0.01);
+						p.displayClientMessage(Component.translatable(ModLang.MSG_TALISMAN_HOMEWARD_LEFT, left / 20).withStyle(ChatFormatting.GOLD), true);
+					}
+					continue;
+				}
+				each.remove();
+				goHome(p, going.core());
+			}
+		}
+		if (server.getTickCount() % 20 != 0) return;
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+			if (!p.hasEffect(ModEffects.REVEALING)) continue;
+			List<Integer> ids = new ArrayList<>();
+			ServerLevel level = p.serverLevel();
+			for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(REVEAL_REACH), e -> e != p && e.isAlive())) {
+				if (hidden(e) && reveals(p, hiddenRank(e)) || Concealments.revealedTo(level, p, e.getX(), e.getY() + 0.5, e.getZ())) ids.add(e.getId());
+			}
+			ModPackets.sendRevealed(p, ids);
+		}
+	}
+
+	/** A player gone (or the server stopping): no burning of theirs goes on. */
+	public static void forget(java.util.UUID id) {
+		HOMEWARD.remove(id);
+	}
+
+	public static void clear() {
+		HOMEWARD.clear();
 	}
 
 	/**
