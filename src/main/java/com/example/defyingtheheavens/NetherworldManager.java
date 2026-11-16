@@ -19,7 +19,7 @@ public final class NetherworldManager {
 	private static final int INTERVAL = 20;
 
 	/** What each player's client was last told, so an unchanged state isn't sent again. */
-	private record Sent(long ghostQi, long ghostQiMax, double density, float corruption, int trend, int heldSeconds) {}
+	private record Sent(long ghostQi, long ghostQiMax, double density, float corruption, int trend, int heldSeconds, float pull, int pullSeconds) {}
 
 	private static final Map<UUID, Sent> SENT = new HashMap<>();
 	/** Each player's corruption trend from the last second, for the HUD (1 rising, -1 ebbing, 0 held). */
@@ -111,11 +111,15 @@ public final class NetherworldManager {
 		boolean shows = s.yinCorruption() > 0 || ModDimensions.isNetherworld(player.level().dimension()) && YinCorruption.affects(player);
 		float corruption = shows ? (float) s.yinCorruption() : -1.0f;
 		int held = (int) Math.max(0, (s.yinPausedUntil() - player.level().getGameTime() + 19) / 20);
+		// A soul lingering after its death: the Netherworld's pull on it, by its own record whatever body it is in (Lingering); -1 for none.
+		boolean lingering = Lingering.lingers(player);
+		float pull = lingering ? (float) CultivationManager.own(player).netherworld().pull() : -1.0f;
+		int pullSeconds = lingering ? Lingering.secondsLeft(player) : 0;
 		Sent now = new Sent(Math.round(s.ghostQi() * 10), Math.round(max * 10), s.density(), corruption,
-				TREND.getOrDefault(player.getUUID(), 0), held);
+				TREND.getOrDefault(player.getUUID(), 0), held, pull, pullSeconds);
 		if (now.equals(SENT.get(player.getUUID()))) return;
 		SENT.put(player.getUUID(), now);
-		ModPackets.sendNetherworld(player, s.ghostQi(), max, s.density(), corruption, now.trend(), held);
+		ModPackets.sendNetherworld(player, s.ghostQi(), max, s.density(), corruption, now.trend(), held, pull, pullSeconds);
 	}
 
 	public static void forget(UUID id) {

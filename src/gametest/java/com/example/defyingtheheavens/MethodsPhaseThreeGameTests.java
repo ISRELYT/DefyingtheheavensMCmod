@@ -275,7 +275,8 @@ public class MethodsPhaseThreeGameTests implements FabricGameTest {
 			helper.assertTrue(SoulRiverFeast.take(p, 0, p.getEyePosition()) && near(s.pathCultivation(), SoulRiverFeast.share(0, 1) * GhostMethods.required(fb)),
 					"A Qi Refining soul fed on: a fortieth of the stage (" + s.pathCultivation() + ")");
 			SoulRiverFeast.forgetMemory(p);
-			helper.assertTrue(s.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 2, "The river takes a memory: a foundation's top layer");
+			helper.assertTrue(s.pathCultivation() == 0 && GhostMethods.ghostRank(s) == fb && s.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 11,
+					"The river takes a memory: a quarter of the stage (all it held here), never the stage; no layer since 2026-11-16");
 			helper.succeed();
 		} finally {
 			leave(made);

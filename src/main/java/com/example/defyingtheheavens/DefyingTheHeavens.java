@@ -46,6 +46,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		Legends.register(); // the legendary weapons' record, their keepers and trials
 		LegendCommand.register();
 		SectMissions.register(); // the sect mission board: its postings, quarry, the gate watch, the boards set up
+		VanillaLoot.register(); // the mod's goods and writings in the vanilla world's chests (2026-11-16)
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

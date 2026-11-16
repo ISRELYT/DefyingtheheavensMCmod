@@ -69,13 +69,14 @@ public class ImmortalMarketsGameTests implements FabricGameTest {
 				helper.assertTrue(npc.keepsPost() && !CityMarkets.isMerchant(npc), "Keeps its stall (one of the markets' merchants only in the Immortal Realm)");
 				boolean slip = false, vessel = false, pills = false;
 				for (CultivatorTrades.Goods g : CultivatorTrades.goodsFor(npc, RandomSource.create(n))) {
-					if (g.item().is(ModItems.JADE_SLIP)) {
-						HeavenMethod method = JadeSlipItem.method(g.item());
-						slip = method != null && method.realm() == Realm.TRUE_IMMORTAL && g.price() == CultivatorTrades.heavenSlipPrice(method) && g.regard() == Regard.COURTEOUS;
+					// Art Manuals since 2026-11-16 (the slips are gone): a scripture's, or a ghost foundation's.
+					if (g.item().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.heavenArt(g.item()) != null) {
+						HeavenMethod method = TechniqueManualItem.heavenArt(g.item());
+						slip = method.realm() == Realm.TRUE_IMMORTAL && g.price() == CultivatorTrades.heavenSlipPrice(method) && g.regard() == Regard.COURTEOUS;
 						heavenSlip |= slip;
 					}
-					if (g.item().is(ModItems.GHOST_JADE_SLIP)) {
-						slip = GhostJadeSlipItem.method(g.item()) == GhostMethod.NETHERWORLD_IMMORTAL_CANON;
+					if (g.item().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.ghostArt(g.item()) != null) {
+						slip = TechniqueManualItem.ghostArt(g.item()) == GhostMethod.NETHERWORLD_IMMORTAL_CANON;
 						ghostSlip |= slip;
 					}
 					if (g.item().getItem() instanceof SacredVesselItem) vessel = g.price() == 30 * JADE && g.regard() == Regard.WARM;

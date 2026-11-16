@@ -337,6 +337,10 @@ public final class Codex {
 				Its grade (Low, Mid, High, Supreme or Immortal) is your talent: the higher it is, the faster you cultivate and the fewer \
 				years meditation costs you. Many physiques also have special gifts, and every physique has spiritual roots, which decide \
 				which elements' scriptures you can learn.
+				Some bodies can't take certain methods at all: roots of fewer than five elements never cycle all five (Five Elements \
+				Cycling); a Heaven Sacred Body takes no devilish way; a Blood Demon or Soul-Devouring Body none of the righteous rites, \
+				shrines or the Judgement Hall's errand; a Heaven-Defying Body bows to no heaven (no rites, no shrines); a Nine Yang Body \
+				takes none of the deepest yin; a Ghost Devil Body no rites. Each physique's description names them.
 				The higher the grade, the rarer it is.""");
 		page("bodies", Items.SKELETON_SKULL, null, "The Bodies of the Dead", """
 				When a player or a cultivator dies, their body stays where they fell, and everything they carried stays with it instead of \
@@ -554,9 +558,9 @@ public final class Codex {
 				Axes, in The Way of Cultivation), filled by granting the wishes of the lower realms' people.
 				No method has a volume of this realm: your axes are your method here, and they alone fill your stages, on every path. In the \
 				lower realms your strength is capped at Heavenly Being's.""");
-		page("dao_integration", ModItems.JADE_SLIP, DI, "Dao Integration", """
-				You become one with the Dao, and your might doubles again. Its scriptures are rare: only a few steles in the Jade Firmament's \
-				wondrous lands, and the few cultivators of this realm, can teach them.
+		page("dao_integration", ModItems.TECHNIQUE_MANUAL, DI, "Dao Integration", """
+				You become one with the Dao, and your might doubles again. Its scriptures are rare: only the few cultivators of this realm, \
+				and the libraries of the Jade Firmament's greatest sects, keep them.
 				In the lower realms your strength is still capped at Heavenly Being's.""");
 		page("void_shattering", Items.ENDER_EYE, VS, "Void Shattering", """
 				You shatter the void: the lower realms no longer hold you back, and you keep your full strength everywhere.
@@ -582,15 +586,16 @@ public final class Codex {
 				world.""");
 
 		// ==================================================== Methods and Arts ====================================================
-		chapter("methods", ModItems.JADE_SLIP, Hint.STUDY, "Methods and Arts");
-		page("cultivation_methods", ModItems.JADE_SLIP, QR, "Methods: How You Cultivate", """
+		chapter("methods", ModItems.METHOD_MANUAL, Hint.STUDY, "Methods and Arts");
+		page("cultivation_methods", ModItems.METHOD_MANUAL, QR, "Methods: How You Cultivate", """
 				A method is how you cultivate, and without one you can't cultivate at all: your meditation gathers nothing.
 				A method comes in volumes, one for each realm. Without the volume of the realm you stand in, you gather nothing there. You \
 				can still break through into a realm whose volume you lack (all but the Demon Path), but you will gather nothing in it until \
 				you find one.
 				Each path has its own method:
-				- The heaven path's is Qi Circulation. Every heaven scripture carries its volumes, from Qi Refining up to its own realm.
-				- The ghost path's is Netherworld Breathing. Every ghost foundation carries its volumes in the same way.
+				- The heaven path's is Qi Circulation. Its volumes come from its own Method Manuals, from steles and from cultivators who \
+				teach it.
+				- The ghost path's is Netherworld Breathing, learned the same way; death teaches every soul its first volume.
 				- The Demon Path's is Bloodline Purification. Your blood is its volume: every realm you reach has one, and the race's blood \
 				of the realm ahead is also the only way through its breakthrough.
 				- The Body Path's is Body Tempering. The body is its own volume, every realm of it (see The Body Path).
@@ -610,8 +615,14 @@ public final class Codex {
 				If the method you practise has no volume of your realm, or doesn't gather by meditation, meditation gathers nothing on that \
 				path, and you are told why.""");
 		page("method_manuals", ModItems.METHOD_MANUAL, QR, "Method Manuals", """
-				The methods beyond each path's own are learned from Method Manuals. Right-click one to read it: it teaches the method's \
-				volumes from its first realm up to the realm it is written to, and isn't used up.
+				Every method is learned from a Method Manual. Right-click one to read it: it teaches the method's volumes from its first \
+				realm up to the realm it is written to, and isn't used up.
+				- Qi Circulation's are in every sect's library, and cultivators sell and drop them with their scriptures; Netherworld \
+				Breathing's the ghosts keep with their foundations.
+				- The vanilla world's chests hold them too: dungeons, mineshafts, temples, shipwrecks and ruins the lower realms', \
+				strongholds, mansions, ancient cities, bastions and fortresses deeper ones, end cities the deepest.
+				- Steles each hold one method as well (see Steles).
+				- Some bodies can't take certain methods at all (see Your Physique).
 				- Sect libraries and masters' halls keep them: righteous and neutral sects the heaven path's ways (the rites, Turtle \
 				Breath, Five Elements Cycling, Spirit Beast Bond, Spirit Herb Refining, Clone Seclusion, the realms' own ways; Incense and \
 				Faith the righteous, Ancestral Incense the neutral) and the Judgement Hall's errand, devilish sects the ghost path's darker \
@@ -749,7 +760,7 @@ public final class Codex {
 				A ghost path method, from Foundation Building to Sacred Vessel. Travelling the Soul River, you see the souls it carries \
 				drift past; press {circulate} to seize the nearest and feed on it.
 				The river carries the common dead, mostly far below you. A soul above you fights back: it tears at you, breaks free half the \
-				time, and in the struggle the river may take a memory, a layer of one of your foundations.""");
+				time, and in the struggle the river may take a memory, a quarter of your ghost path's stage.""");
 		page("haunting", Items.SOUL_LANTERN, "springs/ghost_path", Hint.DEAD, "Haunting", """
 				A method of the dead, from Qi Refining to Nascent Soul. Practising it, you may go down the Soul River as a Ghost King may, \
 				and come out among the living where you died. You still touch nothing.
@@ -778,7 +789,7 @@ public final class Codex {
 				The ghost path's methods of its higher realms:
 				- Yellow Springs Immersion (Nascent Soul to Heavenly Being): soak in the waters of the Yellow Springs, the Netherworld's \
 				golden riverlands. Each second in them is a share of your stage, a little less in each realm past Nascent Soul. Their \
-				waters are Meng Po's own: each minute you soak, one time in ten, a layer of one of your foundations is forgotten.
+				waters are Meng Po's own: each minute you soak, one time in ten, a memory is forgotten, a quarter of your ghost path's stage.
 				- Judgement Hall Service (Heavenly Being to Dao Integration): right-click a wandering ghost while sneaking and it follows \
 				you (two at once at most; again, and you let it go). Bring it within eight blocks of the Wheel of Reincarnation at the \
 				Ghost Gate and it passes on, a share of your stage. Left far behind, it wanders off.
@@ -846,22 +857,32 @@ public final class Codex {
 				it will burn. Mid and High formations are made from the tier below.
 				Only Qi Circulation and Netherworld Breathing gather by it, that much faster; the years their gains cost stay the same. \
 				Formations don't add up: the best one reaching you counts, and in your Inner Realm, the one by your body.""");
-		page("heaven_methods", ModItems.JADE_SLIP, QR, "Heaven Scriptures", """
-				Heaven scriptures come one for each element in every realm. A scripture:
-				- carries Qi Circulation's volumes, from Qi Refining up to its own realm;
-				- is a volume of its element's Art, which gives a passive bonus of its element that grows as you do;
-				- teaches its element's arts as its layers settle in.
-				Qi Circulation follows the scripture you practise (choose it on the Methods tab): the more of its element's qi where you \
-				sit, the faster you gather.
-				You only understand a scripture up to your current cultivation. When you reach a new stage, its next layers settle in as you \
-				meditate, even where you gather nothing.""");
-		page("learning", ModBlocks.DAO_STELE, QR, "Learning Scriptures", """
-				- The basics: any living cultivator will teach someone who knows no heaven scripture a Qi Refining one, free.
-				- Jade Slips: right-click one to read it. It teaches its scripture at once and isn't used up. Cultivators carry them, sect \
-				libraries keep them, and elders and rogues sell them to people they like.
-				- Dao Steles: carved stones in the wilds, rarer the higher their scripture. Meditate beside one for a while to learn it.
-				- Teachers: a sect's elders and master, and rogues, may teach you their scripture once their regard for you is Warm.
+		page("heaven_methods", ModItems.TECHNIQUE_MANUAL, QR, "Heaven Scriptures", """
+				Heaven scriptures come one for each element in every realm, from Qi Refining up to their own. A scripture:
+				- teaches its element's arts, of its own realm and every realm below it, all at once;
+				- gives a passive bonus of its element that grows as your realm climbs through it;
+				- quickens Qi Circulation where its element's qi runs thick.
+				A scripture carries none of Qi Circulation's volumes: those come from its own Method Manuals (see Methods: How You \
+				Cultivate). Practise the scripture whose element is thick where you sit (choose it on the Methods tab).
+				Each of its arts is wielded once your cultivation reaches the stage it stands at: the Arts tab says where each one opens.""");
+		page("learning", ModItems.TECHNIQUE_MANUAL, QR, "Art Manuals", """
+				Scriptures, ghost foundations and single arts are learned from Art Manuals. Right-click one to read it: a scripture's or a \
+				foundation's teaches it whole, every art with it, and none is used up.
+				- The basics: any living cultivator will teach someone with no Qi Circulation its first volume, and someone with no \
+				scripture a Qi Refining one, free.
+				- Cultivators carry Art Manuals, sect libraries keep them, elders and rogues sell them to people they like, and the vanilla \
+				world's chests hold them too.
+				- Teachers: a sect's elders and master, and rogues, may teach you their scripture, and the Qi Circulation they breathe by, \
+				once their regard for you is Warm.
 				Scriptures of different elements add their passives together; for scriptures of the same element, only the highest counts.""");
+		page("steles", ModBlocks.DAO_STELE, QR, "Steles", """
+				Dao Steles stand in the wilds, Method Steles in the Netherworld. Each holds one method of its own, of any path: the heavens \
+				chose it for the stele's place, and it never changes. The deeper the stele's carving, the deeper the realm of the method.
+				- Right-click a stele to be told its method, its path, the volumes it holds and what it does, and whether you can take it.
+				- Meditate within four blocks of it for seven seconds, whichever qi you draw in, to learn its volumes up to the stele's \
+				realm.
+				- Practising its method, you cultivate a quarter faster meditating beside it.
+				Some bodies can't take certain methods at all (see Your Physique); the stele tells you so.""");
 		page("elements", Items.BLAZE_POWDER, QR, "The Five Elements", """
 				Wood, water, fire, earth and metal. Every heaven scripture belongs to one element: it draws in that element's qi, and its \
 				arts are of that element too.
@@ -875,8 +896,9 @@ public final class Codex {
 				Each also gives rise to another, in a cycle of its own: wood feeds fire, fire leaves earth in its ash, earth bears metal, \
 				metal gathers water, and water feeds wood.""");
 		page("spells", Items.FIRE_CHARGE, "arts/root", "Arts", """
-				Your scriptures and foundations teach arts as their layers settle in, and a demon's blood teaches its own; you'll find them \
-				on the Arts tab.
+				Your scriptures and foundations teach their arts the moment you read them, each wielded once your path reaches its stage; a \
+				demon's blood teaches its own, and an Art Manual of a single art teaches that one at its realm. You'll find them on the Arts \
+				tab.
 				Ready an art there, or hold {spells} to open the art wheel and pick one, then press {cast} to cast it (each press casts \
 				once). Arts cost qi, and each has a cooldown before it can be cast again: half as long for every realm you stand above the \
 				art's own, a little shorter with each stage you climb, never under a second while there is one; six realms above an art, \
@@ -889,10 +911,10 @@ public final class Codex {
 				From Foundation Building on, each realm has one art that belongs to both the heaven path and the Demon Path. You can use \
 				it once both of those paths have reached its realm.
 				Only the living can cast these arts, and they use your qi.""");
-		page("techniques", ModItems.TECHNIQUE_MANUAL, NS, Hint.CULTIVATE, "Techniques", """
-				Techniques are arts learned from a Technique Manual, rather than gained with a realm. Sects keep these manuals in their \
-				masters' halls, and more rarely in their libraries.
-				Read a manual at its realm and the technique is yours for good. The manual isn't used up, so you can pass it on; if you're \
+		page("techniques", ModItems.TECHNIQUE_JADE_SLIP, NS, Hint.CULTIVATE, "Techniques", """
+				Techniques are arts learned from a Technique Jade Slip, rather than gained with a realm. Sects keep these slips in their \
+				masters' halls, and more rarely in their libraries; end cities hold them now and then.
+				Read a slip at its realm and the technique is yours for good. The slip isn't used up, so you can pass it on; if you're \
 				below its realm, it tells you which realm you need.
 				The techniques so far are Clone and Universe in a Sleeve, and the secret realms' Sword Intent and Blood Battle (see \
 				Abilities).""");
@@ -1368,7 +1390,7 @@ public final class Codex {
 		page("sects", ModBlocks.FORMATION_CORE, null, "Sects", """
 				Sects are villages of cultivators built around a main hall, protected by the barrier of their Formation Core. A gate stands \
 				on the road in, watched by gate guards, and the members follow a daily routine of lectures, practice, sleep and night watch.
-				A sect's library keeps jade slips, and its sealed treasury holds its riches. Members are ranked by strength, from Outer \
+				A sect's library keeps Art Manuals and Method Manuals, and its sealed treasury holds its riches. Members are ranked by strength, from Outer \
 				Disciples up to the Sect Master. Demon clans live the same way, each made up of a single race.""");
 		page("barriers", Items.GLASS, null, "Protective Formations", """
 				A Formation Core raises a barrier around itself that only its sect (or its owner) can pass, and no monsters spawn inside it. \
@@ -1594,8 +1616,8 @@ public final class Codex {
 				and dives with a great gust. It leaves alone anyone a realm or more above it.""");
 		creature("kun_peng", ModItems.beastEgg(BeastKind.KUN_PENG), "Kun-Peng", """
 				A fish as vast as an island, swimming in the Immortal Realm's sea of clouds. Bring it to half its strength and it \
-				breaks from the clouds as the Peng, a bird whose wings cover the sky. It drops a True Immortal jade slip of its \
-				element.""");
+				breaks from the clouds as the Peng, a bird whose wings cover the sky. It drops the Art Manual of a True Immortal \
+				scripture of its element.""");
 		creature("true_phoenix", ModItems.beastEgg(BeastKind.TRUE_PHOENIX), "True Phoenix", """
 				A bird of fire that circles the Immortal Realm. Strike it down once and it falls as an ember and is reborn from its \
 				ashes: you must slay it twice. It drops True Immortal Fox Blood.""");
@@ -1648,7 +1670,7 @@ public final class Codex {
 				sky.""");
 		page("jade_firmament", Items.EMERALD, HB + "|worlds/jade_firmament", "The Jade Firmament", """
 				The Upper Realm: islands of jade-veined land under a jade sky, far richer in qi than the lower realms. Its sects are \
-				stronger, its herbs and spirit stones richer, and its steles teach higher scriptures.
+				stronger, its herbs and spirit stones richer, and its steles hold the methods of deeper realms.
 				Four Axis and Dao Integration are cultivated here.""");
 		page("astral", Items.AMETHYST_CLUSTER, NS + "|worlds/astral", "The Astral Realm", """
 				Beyond the Overworld's sky lies space. The Overworld is one planet among thousands, circling hundreds of stars, and every \
@@ -1806,7 +1828,7 @@ public final class Codex {
 				- Its abode is hollowed out of the mountain: the gate at its foot across the lake's causeway, a long hall with a library on \
 				one side and a hall of spirit springs on the other, then the lecture hall. At its heart a garden lies open to the sky down \
 				a shaft cut through the peak. Bronze Puppets guard its halls.
-				- Bathe in the spirit springs and they mend you. The library's vault keeps manuals and jade slips; the springs', the \
+				- Bathe in the spirit springs and they mend you. The library's vault keeps Art Manuals and Method Manuals; the springs', the \
 				Spring of the Ancients.
 				- Some time into each opening the master's voice lectures in the lecture hall for two minutes: meditate there and you \
 				gather five times as much. Sit through enough of it and an Insight stays with you after.
@@ -1887,7 +1909,20 @@ public final class Codex {
 				Your items drop where you died. You keep everything you cultivated, but while you are dead you can only cultivate the ghost \
 				path (the heaven path and the Demon Path wait until you live again), and the dead cultivate it 1.5 times as fast as the \
 				living.
-				If you are struck down as a ghost, you scatter and re-form at the Gate.""");
+				If you are struck down as a ghost, you scatter and re-form at the Gate.
+				From Nascent Soul on, your soul first lingers among the living a while: see The Soul After Death.""");
+		page("soul_after_death", Items.SOUL_LANTERN, "springs/root", "The Soul After Death", """
+				From Nascent Soul on (on any qi path), a death outside the Netherworld doesn't take you down at once: you rise where your \
+				body lies as your nascent soul, violet light, and linger among the living. Only those who see souls see you, but anyone's \
+				blow lands on you in full, and cultivators of Nascent Soul and above may hunt you.
+				- The Netherworld's Pull, under your qi: when it fills, you are taken down to the Ghost Gate. It takes a minute and a half, \
+				and longer the further your ghost path has come.
+				- Right-click a person a realm or more below you, or a body of the dead (your own too), to take that body. In a body the \
+				pull fills three times as slowly, but it still fills.
+				- Struck down, or logging out, you go down at once.
+				- One who walks the ghost path alone rises as a ghost instead, at any realm, and holds out twice as long.
+				- Nothing lingers after a tribulation's strike, the Five Decays, the Judge's gaze, old age, a soul scattered or severed, \
+				or the Chaos storm.""");
 		page("returning", ModItems.REBIRTH_PILL, "springs/ghost", "Coming Back", """
 				- The Wheel of Reincarnation, across the bridge from the Gate: use its hub to return to life at your spawn point. Nothing a \
 				ghost carries comes back with it.
@@ -1915,13 +1950,13 @@ public final class Codex {
 				and arts you know add to it. It refills on its own wherever you are, as your qi pool does, the faster the higher your ghost path, and \
 				faster still where ghostly qi is thick: three times as fast in the Netherworld, about twenty times on the Ancient \
 				Battlefields.""");
-		page("ghost_path", ModItems.GHOST_JADE_SLIP, "springs/root", "The Ghost Path", """
+		page("ghost_path", ModItems.METHOD_MANUAL, "springs/root", "The Ghost Path", """
 				The path of ghostly qi, walked by both the dead and the living, with its own cultivation bar and its own tribulations. \
-				It begins with a ghost foundation, learned from a Ghost Jade Slip, a Method Stele, or a ghost cultivator willing to teach \
+				It begins with its method or a ghost foundation, learned from a manual, a stele, or a ghost cultivator willing to teach \
 				it.
-				Its method is Netherworld Breathing: each foundation carries its volumes up to its own realm, and teaches its own arts. \
-				The first, the Netherworld Breathing Art, is carved on the stele on the Ghost Gate's plaza, and the dead are taught it as \
-				they die.
+				Its method is Netherworld Breathing, in volumes from its own Method Manuals. The ghost foundations, from Art Manuals, \
+				teach its arts, each wielded once the ghost path reaches its stage. The dead are taught Breathing's first volume and the \
+				first foundation, the Netherworld Breathing Art, as they die.
 				The living choose which qi they draw in with the Path button on the Cultivation tab.""");
 		page("ghost_kings", Items.GOLDEN_HELMET, "springs/ghost_path", "Ghost Kings", """
 				A dead cultivator whose ghost path has reached Core Formation becomes a Ghost King: crowned, mighty, and a lord of the \

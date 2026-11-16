@@ -52,17 +52,6 @@ public class MethodTiersGameTests implements FabricGameTest {
 		}
 		helper.assertTrue(method == null, "The Six Paths Reincarnation Canon is the last");
 		helper.assertTrue(!GhostMethod.GHOST_FIRE_SCRIPTURE.isFoundation() && GhostMethod.WANDERING_SOUL_STEPS.tier() == 0, "The fire and the steps carry no realm");
-		double before = 0;
-		for (GhostMethod m : GhostMethod.values()) {
-			if (!m.isFoundation()) continue;
-			double total = 0;
-			for (int layer = 1; layer <= m.layers(); layer++) total += GhostMethods.layerCost(m, layer);
-			helper.assertTrue(total > before, m.getId() + " takes longer than the one before (" + total / 3600 + " h)");
-			before = total;
-		}
-		helper.assertTrue(GhostMethods.layerCost(GhostMethod.NETHERWORLD_BREATHING, 1) == 180 && GhostMethods.layerCost(GhostMethod.YELLOW_SPRINGS_MARROW, 1) == 180
-				&& GhostMethods.layerCost(GhostMethod.YELLOW_SPRINGS_MARROW, 10) == 360 && GhostMethods.layerCost(GhostMethod.SIX_PATHS_CANON, 46) == 180 * 16,
-				"Every foundation's first layer 3 minutes; Foundation Building's first 6; Four Axis's 48");
 		helper.succeed();
 	}
 
@@ -114,7 +103,8 @@ public class MethodTiersGameTests implements FabricGameTest {
 			helper.assertTrue(GhostMethods.learn(player, GhostMethod.YELLOW_SPRINGS_MARROW) && s.activeMethod() == GhostMethod.YELLOW_SPRINGS_MARROW
 					&& s.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 9, "The Marrow Art, learned, understood to the ninth, takes the practice over: it is the way on");
 			helper.assertTrue(GhostMethods.canBreakthrough(pc) && GhostMethods.breakthrough(s) && GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING
-					&& GhostMethods.settling(s, GhostMethod.YELLOW_SPRINGS_MARROW), "...its way open: through to Foundation Building, its next layers to settle in");
+					&& !GhostMethods.settling(s, GhostMethod.YELLOW_SPRINGS_MARROW) && s.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 11,
+					"...its way open: through to Foundation Building, understood through its Early at once");
 			Spells.practise(player, GhostMethod.GHOST_FIRE_SCRIPTURE);
 			GhostMethods.give(player, GhostMethod.GHOST_CORE_CANON);
 			helper.assertTrue(s.layer(GhostMethod.GHOST_CORE_CANON) == 11 && s.activeMethod() == GhostMethod.GHOST_FIRE_SCRIPTURE,
@@ -178,8 +168,9 @@ public class MethodTiersGameTests implements FabricGameTest {
 				&& CultivatorTrades.slipPrice(GhostMethod.YELLOW_SPRINGS_MARROW) == 180 && CultivatorTrades.slipPrice(GhostMethod.GHOST_CORE_CANON) == 540
 				&& CultivatorTrades.slipPrice(GhostMethod.SIX_PATHS_CANON) == 14_580, "Slips are worth three times more each foundation deeper");
 		boolean sold = CultivatorTrades.goodsFor(axis, RandomSource.create(1)).stream()
-				.anyMatch(g -> GhostJadeSlipItem.method(g.item()) == GhostMethod.SIX_PATHS_CANON && g.regard() == Regard.WARM && g.price() == 14_580);
-		helper.assertTrue(sold, "A Four Axis king sells its canon, to one it is Warm to");
+				.anyMatch(g -> g.item().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.ghostArt(g.item()) == GhostMethod.SIX_PATHS_CANON
+						&& g.regard() == Regard.WARM && g.price() == 14_580);
+		helper.assertTrue(sold, "A Four Axis king sells its canon's Art Manual, to one it is Warm to");
 		helper.succeed();
 	}
 
@@ -190,11 +181,11 @@ public class MethodTiersGameTests implements FabricGameTest {
 		// Counted just before and just after: the test world keeps what earlier runs left lying here.
 		AABB where = new AABB(king.blockPosition()).inflate(2);
 		java.util.function.IntSupplier canons = () -> helper.getLevel().getEntitiesOfClass(ItemEntity.class, where,
-				item -> GhostJadeSlipItem.method(item.getItem()) == GhostMethod.GHOST_CORE_CANON).size();
+				item -> item.getItem().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.ghostArt(item.getItem()) == GhostMethod.GHOST_CORE_CANON).size();
 		int before = canons.getAsInt();
 		king.hurt(helper.getLevel().damageSources().genericKill(), Float.MAX_VALUE);
 		helper.assertTrue(!king.isAlive(), "The king is slain");
-		helper.assertTrue(canons.getAsInt() == before + 1, "The Ghost Core Canon's slip lies where it fell");
+		helper.assertTrue(canons.getAsInt() == before + 1, "The Ghost Core Canon's Art Manual lies where it fell");
 		helper.succeed();
 	}
 
@@ -252,10 +243,15 @@ public class MethodTiersGameTests implements FabricGameTest {
 					for (int dz = -2; dz <= 12; dz++) level.setBlockAndUpdate(SPELL_GROUND.offset(dx, -1, dz), Blocks.STONE.defaultBlockState());
 				}
 				for (GhostMethod m : GhostMethod.values()) if (m.isFoundation()) s.setMethod(m, m.layers(), 0);
+				// Every one understood to its last: the ghost path at True Immortal's peak (as far as it, since 2026-11-16).
+				GhostMethods.setPath(s, PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION));
 				s.setGhostQi(10_000);
 				for (Spell spell : Spell.values()) {
 					if (spell.method() != null && spell.method().isFoundation()) helper.assertTrue(spell.isKnown(CultivationManager.get(player)), spell.getId() + " is known with its foundation perfected");
 				}
+				// Cast with the ghost path no higher than the deepest art cast here wants (Four Axis Late's Six Paths Annihilation): an art strikes
+				// as hard as its caster's might makes it (Spells#harm), and a True Immortal's would unmake what these arts are to hold.
+				GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.LATE));
 				standAt(player, 0, 0, 0); // facing south, +z
 				// Soul Rend: through both zombies in its line.
 				Zombie near = zombie(level, 0, 3, 200), far = zombie(level, 0, 6, 200);

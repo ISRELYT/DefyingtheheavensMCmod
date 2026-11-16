@@ -51,12 +51,14 @@ public final class Incorporeal {
 	}
 
 	/**
-	 * What a ghost (not a soul) may use: a Marrow Cleansing Elixir, which opens a mortal's meridians in death as in life, and a
-	 * slip to read, a Ghost Jade Slip or a heaven method's Jade Slip (the dead take up no heaven method: HeavenMethods#refusal says so).
+	 * What a ghost (not a soul) may use: a Marrow Cleansing Elixir, which opens a mortal's meridians in death as in life, and the writings to
+	 * read: an Art Manual, a Method Manual, a technique's slip (and a slip from before, which becomes its Art Manual); the dead take up no heaven
+	 * art nor method (HeavenMethods#refusal, CultivationMethods#refusal say so).
 	 */
 	public static boolean mayUse(Player player, net.minecraft.world.item.ItemStack stack) {
 		return GhostSystem.isGhost(player) && !SoulProjection.isSoul(player) && (stack.is(ModItems.MARROW_CLEANSING_ELIXIR)
-				|| stack.is(ModItems.GHOST_JADE_SLIP) || stack.is(ModItems.JADE_SLIP) || stack.is(ModItems.METHOD_MANUAL));
+				|| stack.is(ModItems.GHOST_JADE_SLIP) || stack.is(ModItems.JADE_SLIP) || stack.is(ModItems.METHOD_MANUAL)
+				|| stack.is(ModItems.TECHNIQUE_MANUAL) || stack.is(ModItems.TECHNIQUE_JADE_SLIP));
 	}
 
 	/**

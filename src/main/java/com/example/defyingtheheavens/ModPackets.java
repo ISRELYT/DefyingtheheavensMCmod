@@ -947,7 +947,7 @@ public final class ModPackets {
 	}
 
 	public static void sendNetherworld(ServerPlayer player, double ghostQi, double ghostQiMax, double density, float corruption,
-									   int trend, int heldSeconds) {
+									   int trend, int heldSeconds, float pull, int pullSeconds) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeDouble(ghostQi);
 		buf.writeDouble(ghostQiMax);
@@ -955,6 +955,8 @@ public final class ModPackets {
 		buf.writeFloat(corruption);
 		buf.writeByte(trend);
 		buf.writeVarInt(Math.max(0, heldSeconds));
+		buf.writeFloat(pull); // the Netherworld's pull on a soul lingering after its death (Lingering), -1 for none
+		buf.writeVarInt(Math.max(0, pullSeconds));
 		ServerPlayNetworking.send(player, NETHERWORLD_SYNC, buf);
 	}
 
@@ -1017,6 +1019,7 @@ public final class ModPackets {
 		buf.writeBoolean(ghost);
 		buf.writeBoolean(ghost && GhostSystem.isKing(subject));
 		buf.writeByte(TwoPaths.look(CultivationManager.get(subject)).ordinal());
+		buf.writeBoolean(ghost && Lingering.isSoul(subject)); // a nascent soul lingering after its death: a soul's violet (Lingering)
 		ServerPlayNetworking.send(viewer, GHOST, buf);
 	}
 

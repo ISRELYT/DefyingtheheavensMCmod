@@ -160,7 +160,7 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 					blood = DemonBloodItem.race(stack);
 					bloodRealm = DemonBloodItem.realm(stack);
 				}
-				if (stack.is(ModItems.JADE_SLIP)) slip = JadeSlipItem.method(stack);
+				if (stack.is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.heavenArt(stack) != null) slip = TechniqueManualItem.heavenArt(stack); // its Art Manual since 2026-11-16
 			}
 			items.forEach(Entity::discard);
 			String what = kind + (peng ? " (the Peng)" : "");
@@ -170,7 +170,7 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 			helper.assertTrue(blood == kin && (kin == null || bloodRealm == Realm.TRUE_IMMORTAL), what + ": its race's True Immortal blood (" + blood + ", " + bloodRealm + ")");
 			if (kind == BeastKind.KUN_PENG) {
 				QiElement element = peng ? QiElement.METAL : QiElement.WATER;
-				helper.assertTrue(slip != null && slip.realm() == Realm.TRUE_IMMORTAL && slip.element() == element, what + ": a True Immortal slip of its form's element (" + slip + ")");
+				helper.assertTrue(slip != null && slip.realm() == Realm.TRUE_IMMORTAL && slip.element() == element, what + ": a True Immortal scripture's Art Manual of its form's element (" + slip + ")");
 			}
 		}
 		helper.succeed();

@@ -137,20 +137,19 @@ public final class SoulRiverFeast {
 		return true;
 	}
 
-	/** The river takes a memory: the top layer of one of {@code p}'s ghost foundations (a layer past its first), to settle in again. */
+	/** What a memory taken costs: this share of the ghost path's stage (a foundation's top layer before 2026-11-16, when the layers went). */
+	public static final double MEMORY_SHARE = 0.25;
+
+	/** The river takes a memory: {@link #MEMORY_SHARE} of {@code p}'s ghost path's stage, gathered again by cultivating. */
 	static void forgetMemory(ServerPlayer p) {
 		forgetMemory(p, ModLang.MSG_FEAST_MEMORY);
 	}
 
-	/** A memory taken ({@link #forgetMemory}), told by {@code line} (the Yellow Springs' forgetting: YellowSpringsImmersion). */
+	/** A memory taken ({@link #forgetMemory}), told by {@code line} (the Yellow Springs' forgetting: YellowSpringsImmersion). Nothing from a path with none to lose. */
 	static void forgetMemory(ServerPlayer p, String line) {
-		NetherworldState s = CultivationManager.get(p).netherworld();
-		List<GhostMethod> deep = new ArrayList<>();
-		for (GhostMethod method : s.knownMethods()) if (s.layer(method) > 1) deep.add(method);
-		if (deep.isEmpty()) return;
-		GhostMethod method = deep.get(RANDOM.nextInt(deep.size()));
-		s.setMethod(method, s.layer(method) - 1, 0);
-		p.sendSystemMessage(Component.translatable(line, method.getDisplayName()).withStyle(ChatFormatting.DARK_RED));
+		if (GhostMethods.ghostRank(CultivationManager.get(p).netherworld()) < 0) return;
+		if (CultivationMethods.lose(p, TwoPaths.Path.GHOST, MEMORY_SHARE) <= 0) return;
+		p.sendSystemMessage(Component.translatable(line, (int) Math.round(MEMORY_SHARE * 100)).withStyle(ChatFormatting.DARK_RED));
 		CultivationManager.markDirty(p.server);
 		Spells.sync(p);
 	}

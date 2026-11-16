@@ -116,7 +116,8 @@ public final class NpcAddress {
 			case PEER -> Component.translatable(ModLang.address("peer"));
 			case ABOVE -> Component.translatable(ModLang.address("above." + junior(voice)));
 			case FAR_ABOVE -> Component.translatable(ModLang.address("far_above." + junior(voice)));
-			case MORTAL -> Component.translatable(ModLang.address("mortal." + junior(voice)));
+			// One of the dead, to one of the dead with no qi: no "warm one" (NpcLines#DEAD_TO_DEAD).
+			case MORTAL -> Component.translatable(ModLang.address("mortal." + (npc.isGhost() && GhostSystem.isGhost(player) ? NpcLines.DEAD_TO_DEAD : junior(voice))));
 		};
 	}
 

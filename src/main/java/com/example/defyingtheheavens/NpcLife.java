@@ -1356,11 +1356,12 @@ public final class NpcLife {
 			return NpcLines.line("pass.stone", npc, held.getHoverName());
 		}
 		if (bold && held.getItem() instanceof CultivationFruitItem) return NpcLines.line("pass.fruit", npc, held.getHoverName());
-		if (regard <= -30) return bold ? NpcLines.line("pass.disliked", npc, name) : NpcLines.line("pass.disliked_senior", npc, address, name);
+		// (The dead to one of the dead in their own words, where they have them: NpcLines#lineTo.)
+		if (regard <= -30) return bold ? NpcLines.lineTo("pass.disliked", npc, player, name) : NpcLines.line("pass.disliked_senior", npc, address, name);
 		if (regard >= Regard.WARM) return rung.above() ? NpcLines.line("pass.liked_senior", npc, address, name) : NpcLines.line("pass.liked", npc, name);
 		// Something about them it would speak of, two times in three.
 		String seen = bold ? seen(npc, player, outsider) : null;
-		if (seen != null && NpcLines.has(seen, npc) && random.nextInt(3) != 0) return NpcLines.line(seen, npc, address, name);
+		if (seen != null && NpcLines.has(seen, npc) && random.nextInt(3) != 0) return NpcLines.lineTo(seen, npc, player, address, name);
 		// One of its own sect's disciples: now and then, the sect's missions (SectMissions: their deed of the day, the gate watch they have
 		// taken, the day's postings they haven't looked at).
 		if (NpcAddress.ofItsSect(player, npc) && random.nextInt(3) == 0) {
@@ -1380,7 +1381,7 @@ public final class NpcLife {
 				return NpcLines.line(random.nextBoolean() ? "pass.far_above" : "pass.junior", npc, address, name);
 			}
 			case MORTAL -> {
-				return NpcLines.line("pass.mortal", npc, address, name);
+				return NpcLines.lineTo("pass.mortal", npc, player, address, name);
 			}
 			default -> { }
 		}

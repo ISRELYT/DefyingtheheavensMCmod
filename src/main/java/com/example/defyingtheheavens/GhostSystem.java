@@ -106,6 +106,7 @@ public final class GhostSystem {
 	 */
 	public static boolean isKing(PlayerCultivation c) {
 		if (!c.netherworld().ghost()) return false;
+		if (Lingering.asSoul(c)) return false; // a nascent soul lingering among the living: no crown, no king's hands, until the Netherworld has it
 		if (c.hasPhysique(Physique.GHOST_DEVIL_BODY) && !c.isMortal()) return true; // a Ghost King from birth (Physique)
 		return TwoPaths.ghostRank(c, false) >= KING_RANK;
 	}
@@ -125,22 +126,30 @@ public final class GhostSystem {
 	 * with no flash of the bed or the world spawn; the player's own point is set aside (saved, so a crash can't lose it) and put
 	 * back the moment they respawn.
 	 */
-	public static void onDeath(ServerPlayer p) {
+	public static void onDeath(ServerPlayer p, net.minecraft.world.damagesource.DamageSource source, boolean byHeaven) {
 		if (!afterDeathOn(p) || state(p).ghost()) return;
 		ServerLevel netherworld = p.server.getLevel(ModDimensions.NETHERWORLD);
 		if (netherworld == null) return;
 		NetherworldState s = state(p);
-		s.setBoundBelow(true);
 		s.setDeathPlace(p.level().dimension().location().toString(), p.blockPosition());
 		if (s.savedRespawn() == null) s.setSavedRespawn(respawnTag(p));
-		p.setRespawnPosition(ModDimensions.NETHERWORLD, GhostGate.at(netherworld, GhostGate.ARRIVAL), 0.0f, true, false);
+		// A nascent soul (or one of the ghost path alone) lingers among the living first, rising where its body lies (Lingering, 2026-11-16).
+		if (Lingering.mayLinger(p, source, byHeaven)) {
+			Lingering.bind(p, s);
+		} else {
+			s.setBoundBelow(true);
+			p.setRespawnPosition(ModDimensions.NETHERWORLD, GhostGate.at(netherworld, GhostGate.ARRIVAL), 0.0f, true, false);
+		}
 		CultivationManager.markDirty(p.server);
 	}
 
-	/** AFTER_RESPAWN: a death's respawn wakes a ghost at the Gate; the Wheel's wakes the living. */
+	/** AFTER_RESPAWN: a death's respawn wakes a ghost at the Gate (or, lingering, where its body lies); the Wheel's wakes the living. */
 	public static void onRespawn(ServerPlayer p, boolean alive) {
 		NetherworldState s = state(p);
-		if (!alive && s.boundBelow()) {
+		if (!alive && s.lingering() && !s.ghost()) {
+			restoreRespawn(p, s);
+			Lingering.rise(p, s);
+		} else if (!alive && s.boundBelow()) {
 			restoreRespawn(p, s);
 			s.setBoundBelow(false);
 			if (!ModDimensions.isNetherworld(p.level().dimension())) toGate(p); // the Gate couldn't be had: go there now
@@ -309,6 +318,7 @@ public final class GhostSystem {
 			if (second) {
 				watchKing(p);
 				TwoPaths.watch(p); // the forms, and the spells of both paths
+				Lingering.second(p); // a soul lingering after its death: the Netherworld's pull (by its own record, in a body or not)
 			}
 			if (!isGhost(p)) continue;
 			p.setAirSupply(p.getMaxAirSupply());
@@ -366,6 +376,9 @@ public final class GhostSystem {
 	public static boolean allowDamage(ServerPlayer ghost, DamageSource source) {
 		if (DISPERSED.containsKey(ghost.getUUID())) return false; // nothing left to strike
 		if (ghost.isCreative()) return true; // a creative ghost: the look without the rules (vanilla's own then apply)
+		// A nascent soul lingering after its death (Lingering): anyone's blow lands on it, whoever strikes it, seeing it or not; what reaches the
+		// dead reaches it too. The world's own (falls, fire, drowning) still passes through it, as through the dead.
+		if (Lingering.asSoul(CultivationManager.get(ghost))) return source.getEntity() != null || reaches(source);
 		return reaches(source);
 	}
 
@@ -420,7 +433,8 @@ public final class GhostSystem {
 
 	/** How much of a blow on a ghost lands: all of a ghostly one, the living's by how clearly they see it. */
 	public static float scaleDamage(ServerPlayer ghost, DamageSource source, float amount) {
-		return ghost.isCreative() ? amount : scaled(source, amount);
+		if (ghost.isCreative() || Lingering.asSoul(CultivationManager.get(ghost))) return amount; // a lingering nascent soul: every blow whole
+		return scaled(source, amount);
 	}
 
 	/** The Netherworld's tribulation's harm (ModDamageTypes#YIN_LIGHTNING, #YIN_TRIBULATION): its own, it reaches the dead in full. */
@@ -478,6 +492,11 @@ public final class GhostSystem {
 	/** Whether the ghostly harm landing now is one of the dead's own blows, not a spell's (Physiques#outgoing). */
 	public static boolean isBlow() { return blow; }
 
+	/** Whether the ghost {@code id} is scattered now, reforming at the Gate. */
+	static boolean dispersed(UUID id) {
+		return DISPERSED.containsKey(id);
+	}
+
 	/** ALLOW_DEATH for a ghost: it doesn't die, it disperses. */
 	public static boolean allowDeath(ServerPlayer p) {
 		if (!isGhost(p)) return true;
@@ -492,6 +511,7 @@ public final class GhostSystem {
 	public static void disperse(ServerPlayer p) {
 		p.setHealth(1.0f);
 		if (DISPERSED.containsKey(p.getUUID())) return;
+		Lingering.struckDown(p); // a soul lingering among the living, struck down: torn away from them, to reform at the Gate as the dead do
 		// A Wheel turning for it stops (before the sweep of 2026-10-23 it went on: born again, then "reformed" at the Gate alive).
 		TURNING.remove(p.getUUID());
 		TribulationManager.onScattered(p); // the dead's tribulation is failed so, as the living's is by death
@@ -671,6 +691,7 @@ public final class GhostSystem {
 	 * reforming ghost's record to go with it (SCATTERED_TAG) is simply seen and touchable again.
 	 */
 	public static void onJoin(ServerPlayer p) {
+		Lingering.onJoin(p); // still lingering after a crash: taken down to reform at the Gate (#arrived), as on a logout
 		NetherworldState s = state(p);
 		if (p.getTags().contains(SCATTERED_TAG) && !(s.ghost() && s.reforming())) gatherBody(p);
 		TwoPaths.onJoin(p);

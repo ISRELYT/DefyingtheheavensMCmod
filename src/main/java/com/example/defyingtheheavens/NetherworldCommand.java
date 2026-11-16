@@ -146,22 +146,18 @@ public final class NetherworldCommand {
 	}
 
 	/**
-	 * /heavenmethod progress <amount>: that much settling (HeavenMethods#settleCost) on the practised heaven method, no further than
-	 * the realm has come (HeavenMethods#understoodTo).
+	 * /heavenmethod progress <amount>: nothing settles since 2026-11-16 (an art is understood as far as the realm at once): it only says where the
+	 * practised art stands.
 	 */
 	private static int progressHeaven(ServerPlayer p, double amount) {
-		PlayerCultivation c = CultivationManager.get(p);
-		HeavenState s = c.heaven();
+		HeavenState s = CultivationManager.get(p).heaven();
 		HeavenMethod active = s.activeMethod();
 		if (active == null) {
-			p.sendSystemMessage(Component.literal("No heaven method is being practised."));
+			p.sendSystemMessage(Component.literal("No heaven art is being followed."));
 			return 0;
 		}
-		int upTo = HeavenMethods.understoodTo(c, active);
-		HeavenMethods.settle(s, active, amount, upTo);
 		HeavenMethods.afterLayer(p);
-		p.sendSystemMessage(Component.literal(active.getId() + ": layer " + s.layer(active) + (s.layer(active) >= upTo ? ", understood as far as the realm."
-				: ", " + Math.round(s.progress(active)) + " / " + Math.round(HeavenMethods.settleCost(s.layer(active) + 1)) + " settling.")));
+		p.sendSystemMessage(Component.literal(active.getId() + ": layer " + s.layer(active) + ", understood as far as the realm (nothing settles)."));
 		return 1;
 	}
 
@@ -208,8 +204,7 @@ public final class NetherworldCommand {
 			return 0;
 		}
 		int before = GhostMethods.ghostRank(s);
-		GhostMethods.addCultivation(s, amount);
-		GhostMethods.meditate(p, amount, java.util.EnumSet.noneOf(GhostMethod.class));
+		GhostMethods.addCultivation(s, amount); // the arts' layers go with the path (NetherworldState#layer: nothing settles since 2026-11-16)
 		GhostMethods.afterRank(p, before);
 		changed(p);
 		int rank = GhostMethods.ghostRank(s);

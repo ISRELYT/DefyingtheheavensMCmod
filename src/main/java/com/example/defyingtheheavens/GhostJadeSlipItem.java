@@ -1,24 +1,17 @@
 package com.example.defyingtheheavens;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
-import java.util.List;
-
 /**
- * A Ghost Jade Slip (鬼玉简): a slip of dark jade holding a ghost method (its "Method" tag). Read (used), it teaches the method
- * (at the layer GhostMethods#startLayer gives), and isn't used up. The dead read them too (Incorporeal#mayUse), and take them up.
- * Dropped now and then by ghost cultivators, sold by ghost elders.
+ * A Ghost Jade Slip (鬼玉简) of a ghost method, from before 2026-11-16 (the user's ask: "remove all method jade slips from the game entirely"): no
+ * longer made anywhere. One still lying in a world (its "Method" tag) turns into an Art Manual of the same ghost art (TechniqueManualItem) the
+ * moment it is carried or read (the dead too); one of nothing, into an empty Art Manual. Kept registered only so old worlds' slips aren't lost.
  */
 public class GhostJadeSlipItem extends Item {
 	private static final String TAG = "Method";
@@ -27,41 +20,30 @@ public class GhostJadeSlipItem extends Item {
 		super(properties);
 	}
 
-	/** A slip holding {@code method}. */
+	/** What a slip of {@code method} is now: its Art Manual. */
 	public static ItemStack of(GhostMethod method) {
-		ItemStack stack = new ItemStack(ModItems.GHOST_JADE_SLIP);
-		stack.getOrCreateTag().putString(TAG, method.getId());
-		return stack;
+		return TechniqueManualItem.of(method);
 	}
 
 	public static GhostMethod method(ItemStack stack) {
 		return stack.hasTag() ? GhostMethod.byId(stack.getTag().getString(TAG)) : null;
 	}
 
+	/** {@code stack} (a slip from before) as what it is now: an Art Manual of its ghost art. */
+	static ItemStack converted(ItemStack stack) {
+		GhostMethod method = method(stack);
+		return method == null ? new ItemStack(ModItems.TECHNIQUE_MANUAL) : TechniqueManualItem.of(method);
+	}
+
+	@Override
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+		if (!level.isClientSide && entity instanceof Player player) TechniqueManualItem.swap(player, stack, converted(stack));
+	}
+
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-		ItemStack stack = player.getItemInHand(hand);
-		GhostMethod method = method(stack);
-		if (method == null) return InteractionResultHolder.pass(stack);
-		if (!(player instanceof ServerPlayer sp)) return InteractionResultHolder.success(stack);
-		if (CultivationManager.get(sp).netherworld().knows(method)) {
-			sp.displayClientMessage(Component.translatable(ModLang.MSG_SLIP_KNOWN, method.getDisplayName()), true);
-			return InteractionResultHolder.fail(stack);
-		}
-		// Not taken up (a mortal's meridians are closed): told why, and nothing read.
-		if (!GhostMethods.learn(sp, method)) return InteractionResultHolder.fail(stack);
-		level.playSound(null, sp.getX(), sp.getY(), sp.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.6f);
-		return InteractionResultHolder.consume(stack);
-	}
-
-	@Override
-	public Component getName(ItemStack stack) {
-		GhostMethod method = method(stack);
-		return method == null ? super.getName(stack) : Component.translatable(ModLang.ITEM_GHOST_JADE_SLIP_OF, method.getDisplayName());
-	}
-
-	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-		lines.add(Component.translatable(ModLang.TOOLTIP_GHOST_JADE_SLIP).withStyle(ChatFormatting.GRAY));
+		ItemStack manual = converted(player.getItemInHand(hand));
+		player.setItemInHand(hand, manual);
+		return manual.use(level, player, hand);
 	}
 }

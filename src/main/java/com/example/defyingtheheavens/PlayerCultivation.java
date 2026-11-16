@@ -120,8 +120,8 @@ public class PlayerCultivation {
 	private final List<Journal.Entry> journal = new ArrayList<>();
 	/** The Netherworld's hold on them: ghostly qi, yin corruption, the Soul River. Saved only when not at its defaults. */
 	private final NetherworldState netherworld = new NetherworldState();
-	/** The heaven methods known (see HeavenMethods). Saved only when one is. */
-	private final HeavenState heaven = new HeavenState();
+	/** The heaven arts known (see HeavenMethods), understood as far as this record's realm stands. Saved only when one is. */
+	private final HeavenState heaven = new HeavenState(this);
 	/** The Demon Path, the demon races' (DemonPath), and the blood the record is of. Saved when begun. */
 	private final DemonState demon = new DemonState();
 	/** The Body Path, the body's own (BodyPath, 2026-11-01). Saved when begun. */
@@ -1624,6 +1624,7 @@ public class PlayerCultivation {
 		CompoundTag lawsTag = laws.save();
 		if (!lawsTag.isEmpty()) tag.put("Laws", lawsTag);
 		tag.putInt("PathModel", PATH_MODEL);
+		tag.putInt("ManualsModel", MANUALS_MODEL);
 		return tag;
 	}
 
@@ -1780,7 +1781,30 @@ public class PlayerCultivation {
 		c.laws.load(tag.getCompound("Laws"));
 		// Saves from before: every method known understood as far as the realm, none behind it or past it.
 		if (tag.getInt("PathModel") < PATH_MODEL && !c.mortal) HeavenMethods.alignTo(c.heaven, rank(c.realm, c.stage));
+		// Saves from before every method came from its manual (2026-11-16): Qi Circulation's volumes went as far as the deepest heaven scripture known,
+		// Netherworld Breathing's as the deepest ghost foundation; so they still do (nobody loses what they could gather by: the scriptures and
+		// foundations teach only their arts from now on).
+		if (tag.getInt("ManualsModel") < MANUALS_MODEL) c.keepOrthodoxReach();
 		return c;
+	}
+
+	/**
+	 * Where Qi Circulation's and Netherworld Breathing's volumes are saved: 1 since their own manuals (2026-11-16), in {@link #methodReach} as every
+	 * manual's. Before it the scriptures and foundations known carried them, as far as the deepest went: such a save keeps that reach.
+	 */
+	private static final int MANUALS_MODEL = 1;
+
+	/** Qi Circulation's and Netherworld Breathing's reach raised to what the scriptures and foundations known carried (a save from before 2026-11-16). */
+	public void keepOrthodoxReach() {
+		Realm scripture = HeavenMethods.deepestRealm(heaven);
+		if (scripture != null) raiseReach(CultivationMethod.QI_CIRCULATION, CultivationMethod.QI_CIRCULATION.volumeFor(scripture));
+		Realm foundation = GhostMethods.foundationReach(netherworld);
+		if (foundation != null) raiseReach(CultivationMethod.NETHERWORLD_BREATHING, CultivationMethod.NETHERWORLD_BREATHING.volumeFor(foundation));
+	}
+
+	/** {@code method}'s volumes known as far as {@code realm} at least. */
+	public void raiseReach(CultivationMethod method, Realm realm) {
+		if (methodReach(method) < realm.ordinal()) methodReach.put(method, realm.ordinal());
 	}
 
 	/** The Netherworld's hold on this cultivator (see NetherworldState). */

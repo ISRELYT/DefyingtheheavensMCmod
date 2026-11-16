@@ -325,6 +325,11 @@ public final class SoulProjection {
 				player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
 				return;
 			}
+			// A soul lingering after its death is out of its body already, with no body to leave behind (Lingering).
+			if (Lingering.lingers(player)) {
+				player.displayClientMessage(Component.translatable(ModLang.MSG_LINGER_NO_PROJECTION), true);
+				return;
+			}
 			begin(player);
 			return;
 		}

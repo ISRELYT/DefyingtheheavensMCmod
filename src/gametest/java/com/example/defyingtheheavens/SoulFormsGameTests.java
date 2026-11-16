@@ -216,13 +216,13 @@ public class SoulFormsGameTests implements FabricGameTest {
 					.create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
 			int here = 0;
 			for (net.minecraft.world.item.ItemStack stack : table.getRandomItems(params)) {
-				if (!stack.is(ModItems.JADE_SLIP)) continue;
-				HeavenMethod method = JadeSlipItem.method(stack);
-				helper.assertTrue(method != null && method.realm().ordinal() <= Realm.CORE_FORMATION.ordinal(),
-						"A slip of a heaven method a sect's library keeps (" + method + ")");
+				helper.assertTrue(!stack.is(ModItems.JADE_SLIP), "No method jade slip since 2026-11-16");
+				HeavenMethod method = stack.is(ModItems.TECHNIQUE_MANUAL) ? TechniqueManualItem.heavenArt(stack) : null;
+				if (method == null) continue;
+				helper.assertTrue(method.realm().ordinal() <= Realm.CORE_FORMATION.ordinal(), "A scripture's Art Manual a sect's library keeps (" + method + ")");
 				here += stack.getCount();
 			}
-			helper.assertTrue(here >= 1, "Every library chest keeps a slip or two (" + here + ")");
+			helper.assertTrue(here >= 1, "Every library chest keeps a scripture's Art Manual or two (" + here + ")");
 			slips += here;
 		}
 		helper.assertTrue(slips >= 20 && slips <= 40, "One or two a chest (" + slips + " in 20)");

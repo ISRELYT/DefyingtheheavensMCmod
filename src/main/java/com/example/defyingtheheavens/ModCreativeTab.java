@@ -114,12 +114,12 @@ public final class ModCreativeTab {
 			for (Item pill : new Item[] {ModItems.YANG_PRESERVATION_PILL, ModItems.YIN_GATHERING_PILL}) {
 				for (PillGrade grade : PillGrade.values()) add(PillItem.create(pill, grade, 1));
 			}
-			for (GhostMethod method : GhostMethod.values()) add(GhostJadeSlipItem.of(method));
-			for (HeavenMethod method : HeavenMethod.values()) add(JadeSlipItem.of(method));
-			// The techniques' manuals, every spell's that can be written out (TechniqueManualItem#writable: all but both paths'), and
-			// the blank one a technique or spell is written out on
-			for (Technique technique : Technique.values()) add(TechniqueManualItem.of(technique));
+			// The Art Manuals (2026-11-16: the arts' own, the slips gone): every ghost art, every heaven art, every spell's that can be written out
+			// (TechniqueManualItem#writable: all but both paths'); the techniques' jade slips; and the blank one a technique or spell is written out on
+			for (GhostMethod method : GhostMethod.values()) add(TechniqueManualItem.of(method));
+			for (HeavenMethod method : HeavenMethod.values()) add(TechniqueManualItem.of(method));
 			for (Spell spell : Spell.values()) if (!spell.isDual()) add(TechniqueManualItem.of(spell));
+			for (Technique technique : Technique.values()) add(TechniqueSlipItem.of(technique));
 			add(ModItems.BLANK_MANUAL);
 			// Demon cores, one of each realm (formed at its Early stage)
 			for (Realm realm : Realm.values()) add(DemonCoreItem.of(PlayerCultivation.rank(realm, Stage.EARLY), null, null));

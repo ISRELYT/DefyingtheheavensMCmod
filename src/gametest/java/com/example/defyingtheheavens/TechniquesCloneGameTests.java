@@ -153,12 +153,18 @@ public class TechniquesCloneGameTests implements FabricGameTest {
 			PlayerCultivation l = CultivationManager.get(low), h = CultivationManager.get(high);
 			helper.assertTrue(!TechniqueManualItem.learn(low, Technique.CLONE) && !l.knowsTechnique(Technique.CLONE) && !Ability.CLONE.isUnlocked(l),
 					"Below Nascent Soul the Clone manual teaches nothing");
-			// Read from the manual itself: learned, and the manual kept.
+			// Read from its jade slip (the techniques' since 2026-11-16, the user's ask): learned, and the slip kept.
 			ItemStack manual = TechniqueManualItem.of(Technique.CLONE);
+			helper.assertTrue(manual.is(ModItems.TECHNIQUE_JADE_SLIP) && TechniqueSlipItem.technique(manual) == Technique.CLONE, "A technique comes on a jade slip");
 			high.setItemInHand(InteractionHand.MAIN_HAND, manual);
 			manual.use(high.level(), high, InteractionHand.MAIN_HAND);
 			helper.assertTrue(h.knowsTechnique(Technique.CLONE) && Ability.CLONE.isUnlocked(h), "At Nascent Soul it is learned, and Clone is theirs");
-			helper.assertTrue(high.getMainHandItem().is(ModItems.TECHNIQUE_MANUAL) && high.getMainHandItem().getCount() == 1, "The manual isn't used up");
+			helper.assertTrue(high.getMainHandItem().is(ModItems.TECHNIQUE_JADE_SLIP) && high.getMainHandItem().getCount() == 1, "The slip isn't used up");
+			// A technique manual of before is its jade slip now.
+			ItemStack old = new ItemStack(ModItems.TECHNIQUE_MANUAL);
+			old.getOrCreateTag().putString("Technique", Technique.SLEEVE.getId());
+			ItemStack now = TechniqueManualItem.converted(old);
+			helper.assertTrue(now.is(ModItems.TECHNIQUE_JADE_SLIP) && TechniqueSlipItem.technique(now) == Technique.SLEEVE, "An old technique manual becomes its slip");
 			helper.assertTrue(!TechniqueManualItem.learn(high, Technique.CLONE), "Not learned twice");
 			// Fallen below its realm (a spent life, a broken foundation), it is still known but not wielded.
 			h.setState(Realm.CORE_FORMATION, Stage.LATE, 0);
@@ -211,10 +217,10 @@ public class TechniquesCloneGameTests implements FabricGameTest {
 			if (unknown != null) TechniqueManualItem.inscribe(reader, 1, unknown.ordinal());
 			helper.assertTrue(reader.getMainHandItem().getCount() == 2, "Not what one doesn't know");
 			TechniqueManualItem.inscribe(reader, 0, Technique.CLONE.ordinal());
-			ItemStack written = find(reader, ModItems.TECHNIQUE_MANUAL);
+			ItemStack written = find(reader, ModItems.TECHNIQUE_JADE_SLIP);
 			helper.assertTrue(reader.getMainHandItem().is(ModItems.BLANK_MANUAL) && reader.getMainHandItem().getCount() == 1 && written != null
-					&& TechniqueManualItem.technique(written) == Technique.CLONE
-					&& "spell_reader".equals(written.getTag().getString("Author")), "One blank becomes Clone's manual, signed");
+					&& TechniqueSlipItem.technique(written) == Technique.CLONE
+					&& "spell_reader".equals(written.getTag().getString("Author")), "One blank becomes Clone's jade slip, signed");
 			ItemStack brush = reader.getOffhandItem();
 			helper.assertTrue(!brush.isDamageableItem() || brush.getDamageValue() == 1, "The brush a use more worn");
 			TechniqueManualItem.inscribe(reader, 1, spell.ordinal());
@@ -237,22 +243,25 @@ public class TechniquesCloneGameTests implements FabricGameTest {
 		// (Universe in a Sleeve's manual beside Clone's since 2026-10-27, as often.)
 		int inHall = 0, inLibrary = 0, sleeves = 0, other = 0;
 		for (int i = 0; i < 1000; i++) {
+			// The techniques' jade slips since 2026-11-16 (the Art Manuals there hold scriptures and arts).
 			for (ItemStack stack : hall.getRandomItems(new LootParams.Builder(helper.getLevel()).withParameter(LootContextParams.ORIGIN, at).create(LootContextParamSets.CHEST))) {
-				if (!stack.is(ModItems.TECHNIQUE_MANUAL)) continue;
-				Technique technique = TechniqueManualItem.technique(stack);
+				if (stack.is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.technique(stack) != null) other++;
+				if (!stack.is(ModItems.TECHNIQUE_JADE_SLIP)) continue;
+				Technique technique = TechniqueSlipItem.technique(stack);
 				if (technique == Technique.CLONE) inHall++;
 				else if (technique == Technique.SLEEVE) sleeves++;
 				else other++;
 			}
 			for (ItemStack stack : library.getRandomItems(new LootParams.Builder(helper.getLevel()).withParameter(LootContextParams.ORIGIN, at).create(LootContextParamSets.CHEST))) {
-				if (!stack.is(ModItems.TECHNIQUE_MANUAL)) continue;
-				Technique technique = TechniqueManualItem.technique(stack);
+				if (stack.is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.technique(stack) != null) other++;
+				if (!stack.is(ModItems.TECHNIQUE_JADE_SLIP)) continue;
+				Technique technique = TechniqueSlipItem.technique(stack);
 				if (technique == Technique.CLONE) inLibrary++;
 				else if (technique == Technique.SLEEVE) sleeves++;
 				else other++;
 			}
 		}
-		helper.assertTrue(other == 0, "Every manual found holds a technique (" + other + " didn't)");
+		helper.assertTrue(other == 0, "Every technique slip found holds a technique, and no Art Manual one (" + other + " didn't)");
 		helper.assertTrue(inHall >= 40 && inHall <= 130, "A master's hall chest keeps one now and then (" + inHall + " in 1000)");
 		helper.assertTrue(inLibrary >= 20 && inLibrary <= 90, "A library chest, rarer (" + inLibrary + " in 1000)");
 		helper.assertTrue(sleeves >= 60 && sleeves <= 200, "Universe in a Sleeve's as often as Clone's (" + sleeves + " in both, 2000 chests)");

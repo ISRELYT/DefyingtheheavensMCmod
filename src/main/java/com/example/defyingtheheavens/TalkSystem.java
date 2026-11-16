@@ -237,7 +237,8 @@ public final class TalkSystem {
 	/** A right-click from up to {@link #REACH} blocks (C2S talk_request, the client finding a cultivator past arm's length). */
 	public static void request(ServerPlayer player, int entityId) {
 		if (!(player.level().getEntity(entityId) instanceof CultivatorNpc npc) || player.isSpectator() || !player.isAlive()) return;
-		if (SoulProjection.isSoul(player) || player.isPassenger()) return;
+		if (!npc.isPickable()) return; // a body set aside by the soul in it (its own possessor's above all): nothing to talk to, nothing said
+		if (SoulProjection.isSoul(player) || Lingering.isSoul(player) || player.isPassenger()) return; // a soul's right-click takes a body
 		if (npc.distanceToSqr(player.getEyePosition()) > (REACH + 1.5) * (REACH + 1.5) || !player.hasLineOfSight(npc)) return;
 		open(player, npc);
 	}
@@ -447,11 +448,15 @@ public final class TalkSystem {
 			return w;
 		}
 		if (stack.getItem() instanceof CultivationFruitItem) return Math.max(2, CultivationFruitItem.age(stack) / 30.0);
-		// The Netherworld's: Yin Jade, a Ghost-Quelling Talisman, and a Ghost Jade Slip (a whole method); a heaven method's Jade Slip.
+		// The Netherworld's: Yin Jade, a Ghost-Quelling Talisman. The writings: a ghost art's or a heaven art's Art Manual (a whole art; a slip
+		// from before as the manual it becomes), a Method Manual (its volumes' worth).
 		if (stack.is(ModItems.YIN_JADE)) return 4;
 		if (stack.is(ModItems.GHOST_QUELLING_TALISMAN)) return 5;
-		if (stack.is(ModItems.GHOST_JADE_SLIP)) return CultivatorTrades.slipPrice(GhostJadeSlipItem.method(stack)) / 1.5;
-		if (stack.is(ModItems.JADE_SLIP)) return CultivatorTrades.heavenSlipPrice(JadeSlipItem.method(stack)) / 1.5;
+		GhostMethod ghostArt = stack.is(ModItems.GHOST_JADE_SLIP) ? GhostJadeSlipItem.method(stack) : stack.is(ModItems.TECHNIQUE_MANUAL) ? TechniqueManualItem.ghostArt(stack) : null;
+		if (ghostArt != null) return CultivatorTrades.slipPrice(ghostArt) / 1.5;
+		HeavenMethod heavenArt = stack.is(ModItems.JADE_SLIP) ? JadeSlipItem.method(stack) : stack.is(ModItems.TECHNIQUE_MANUAL) ? TechniqueManualItem.heavenArt(stack) : null;
+		if (heavenArt != null) return CultivatorTrades.heavenSlipPrice(heavenArt) / 1.5;
+		if (stack.is(ModItems.METHOD_MANUAL) && MethodManualItem.method(stack) != null) return CultivatorTrades.manualPrice(MethodManualItem.realm(stack)) / 1.5;
 		// The Artifact Forge's artifacts, by grade and work.
 		return Artifacts.worth(stack);
 	}
@@ -854,8 +859,9 @@ public final class TalkSystem {
 	public static final double TEACHING_PROGRESS = 10 * 60;
 
 	/**
-	 * A ghost teaches its method (once a day, to one it is Warm to): the method to one who doesn't know it; to one who does, its
-	 * layers still settling in settled at once, and ten minutes' worth ({@link #TEACHING_PROGRESS}) on the ghost path's bar.
+	 * A ghost teaches its art (once a day, to one it is Warm to): the art to one who doesn't know it, and with a foundation the Netherworld
+	 * Breathing it cultivates by, as far as that foundation's realm (2026-11-16: the arts carry none of its volumes: CultivationMethods#teach);
+	 * to one who knows the art, ten minutes' worth ({@link #TEACHING_PROGRESS}) on the ghost path's bar.
 	 */
 	static Component teach(ServerPlayer player, GhostCultivatorNpc ghost) {
 		GhostMethod method = ghost.method();
@@ -867,14 +873,14 @@ public final class TalkSystem {
 		Component refusal = GhostMethods.refusal(CultivationManager.get(player), method);
 		if (refusal != null) return refusal;
 		entry.guidanceDay = today;
+		// The method it lives by, as far as its foundation reaches.
+		if (method.isFoundation()) CultivationMethods.teach(player, CultivationMethod.NETHERWORLD_BREATHING, method.realm());
 		if (!s.knows(method)) {
 			GhostMethods.learn(player, method);
 			return Component.translatable(ModLang.TALK_TEACH_LEARN, method.getDisplayName());
 		}
 		int ghostPathBefore = GhostMethods.ghostRank(s);
-		int upTo = GhostMethods.understoodTo(s, method);
-		if (s.layer(method) < upTo) s.setMethod(method, upTo, 0);
-		// No method, no gain: without Breathing's volume for the path's realm the guidance settles what is held, and carries nothing.
+		// No method, no gain: without Breathing's volume for the path's realm the guidance carries nothing.
 		boolean gains = GhostMethods.canGain(CultivationManager.get(player));
 		if (gains) GhostMethods.addCultivation(s, TEACHING_PROGRESS);
 		GhostMethods.afterLayer(player, s);
@@ -888,9 +894,10 @@ public final class TalkSystem {
 	}
 
 	/**
-	 * A living cultivator teaches its heaven method (once a day, sharing the day's guidance): the method to one who doesn't know
-	 * it; to one who does, its layers still settling in, settled at once, and ten minutes of their own meditation's worth of
-	 * cultivation ({@link HeavenMethods#teachingProgress}). A mortal or one of the dead is told why not, and the day isn't spent.
+	 * A living cultivator teaches its heaven art (once a day, sharing the day's guidance): the art to one who doesn't know it; to one who does,
+	 * ten minutes of their own meditation's worth of cultivation ({@link HeavenMethods#teachingProgress}). Either way it teaches the Qi
+	 * Circulation it cultivates by as far as its art's realm (CultivationMethods#teach: since 2026-11-16 the arts carry none of its volumes, its
+	 * manual does, but a teacher passes on the method it lives by). A mortal or one of the dead is told why not, and the day isn't spent.
 	 */
 	static Component teachHeaven(ServerPlayer player, CultivatorNpc npc) {
 		HeavenMethod method = npc.heavenMethod();
@@ -905,13 +912,13 @@ public final class TalkSystem {
 		if (refusal != null) return refusal;
 		entry.guidanceDay = today;
 		HeavenState s = c.heaven();
+		// The method it cultivates by, as far as its art reaches.
+		CultivationMethods.teach(player, CultivationMethod.QI_CIRCULATION, method.realm());
 		if (!s.knows(method)) {
 			HeavenMethods.learn(player, method);
 			return Component.translatable(ModLang.TALK_TEACH_HEAVEN, method.getDisplayName(), method.element().getDisplayName());
 		}
-		int upTo = HeavenMethods.understoodTo(c, method);
-		if (s.layer(method) < upTo) s.setMethod(method, upTo, 0);
-		// No method, no gain: without Circulation's volume for the realm the guidance settles what is held, and carries nothing.
+		// No method, no gain: without Circulation's volume for the realm the guidance carries nothing.
 		boolean gains = HeavenMethods.canGain(c);
 		boolean advanced = gains && c.addCultivation(HeavenMethods.teachingProgress(c));
 		CultivationManager.refresh(player);
@@ -926,31 +933,41 @@ public final class TalkSystem {
 	}
 
 	/**
-	 * Whether {@code npc} offers {@code player} the basics ({@link #teachBasics}): any living cultivator (one with a heaven method of its
-	 * own: CultivatorNpc#heavenMethod), to one of the living whose meridians are open and who knows no heaven scripture yet.
+	 * Whether {@code npc} offers {@code player} the basics ({@link #teachBasics}): any living cultivator (one with a heaven art of its own:
+	 * CultivatorNpc#heavenMethod), to one of the living whose meridians are open and who has no Qi Circulation, or no heaven art, yet.
 	 */
 	private static boolean offersBasics(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
-		return npc.heavenMethod() != null && !GhostSystem.isGhost(player) && HeavenMethods.canLearn(c) && !c.heaven().knowsAny();
+		return npc.heavenMethod() != null && !GhostSystem.isGhost(player) && HeavenMethods.canLearn(c)
+				&& (!CultivationMethods.knows(c, CultivationMethod.QI_CIRCULATION) || !c.heaven().knowsAny());
 	}
 
 	/**
-	 * The basics (the user's overhaul, 2026-10-31: a first method on every path, guaranteed): any living cultivator teaches one who
-	 * knows no heaven scripture the Qi Refining scripture of its own element, Qi Circulation's first volume in it; where the learner's roots
-	 * can't read that element (Physique), the first element they can. Free, and no day's guidance spent: a beginner is no burden.
+	 * The basics (the user's overhaul, 2026-10-31: a first method on every path, guaranteed): any living cultivator teaches one who has no Qi
+	 * Circulation its first volume (Qi Refining's: its own manual's since 2026-11-16), and, to one who knows no heaven art yet, the Qi Refining art
+	 * of its own element for its first spells; where the learner's roots can't read that element (Physique), the first element they can. Free, and
+	 * no day's guidance spent: a beginner is no burden.
 	 */
 	static Component teachBasics(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
 		Component refusal = HeavenMethods.refusal(c);
 		if (refusal != null) return refusal;
-		HeavenMethod own = npc.heavenMethod();
-		QiElement element = own != null && c.rootsAllow(own.element()) ? own.element() : null;
-		for (QiElement root : QiElement.five()) if (element == null && c.rootsAllow(root)) element = root;
-		if (element == null) return line("guidance.again", npc);
-		HeavenMethod basics = HeavenMethod.of(element, Realm.QI_REFINING);
-		if (!HeavenMethods.learn(player, basics)) return line("guidance.again", npc);
+		boolean circulation = CultivationMethods.teach(player, CultivationMethod.QI_CIRCULATION, Realm.QI_REFINING);
+		HeavenMethod basics = null;
+		QiElement element = null;
+		if (!c.heaven().knowsAny()) {
+			HeavenMethod own = npc.heavenMethod();
+			element = own != null && c.rootsAllow(own.element()) ? own.element() : null;
+			for (QiElement root : QiElement.five()) if (element == null && c.rootsAllow(root)) element = root;
+			if (element != null) {
+				basics = HeavenMethod.of(element, Realm.QI_REFINING);
+				if (!HeavenMethods.learn(player, basics)) basics = null;
+			}
+		}
+		if (!circulation && basics == null) return line("guidance.again", npc);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.2f);
-		return Component.translatable(ModLang.TALK_TEACH_BASICS, basics.getDisplayName(), element.getDisplayName());
+		return basics == null ? Component.translatable(ModLang.TALK_TEACH_BASICS_PLAIN)
+				: Component.translatable(ModLang.TALK_TEACH_BASICS, basics.getDisplayName(), element.getDisplayName());
 	}
 
 	private static Component aboutSect(CultivatorNpc npc) {
@@ -1168,7 +1185,8 @@ public final class TalkSystem {
 	 */
 	static Component lineFor(String kind, CultivatorNpc npc, ServerPlayer player, Standing standing) {
 		String situation = "talk." + kind + "." + NpcAddress.rung(player, npc).id();
-		if (NpcLines.has(situation, npc)) return NpcLines.line(situation, npc, NpcAddress.address(player, npc), NpcAddress.name(player));
+		// The dead to one of the dead in their own words for it (NpcLines#lineTo: no "still warm").
+		if (NpcLines.has(situation, npc)) return NpcLines.lineTo(situation, npc, player, NpcAddress.address(player, npc), NpcAddress.name(player));
 		return line(kind, npc, standing);
 	}
 

@@ -15,10 +15,10 @@ import java.util.IdentityHashMap;
  * yet is shown crossed out with the regard it wants (CultivatorTrades#locked), so one can see early what they have.
  */
 public class LockedGoodsGameTests implements FabricGameTest {
-	/** The offer selling a Ghost Jade Slip of {@code method}, or null. */
+	/** The offer selling the Art Manual of the ghost foundation {@code method} (a Ghost Jade Slip before 2026-11-16), or null. */
 	private static MerchantOffer slipOffer(Iterable<MerchantOffer> offers, GhostMethod method) {
 		for (MerchantOffer offer : offers) {
-			if (offer.getResult().getItem() instanceof GhostJadeSlipItem && GhostJadeSlipItem.method(offer.getResult()) == method) return offer;
+			if (offer.getResult().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.ghostArt(offer.getResult()) == method) return offer;
 		}
 		return null;
 	}

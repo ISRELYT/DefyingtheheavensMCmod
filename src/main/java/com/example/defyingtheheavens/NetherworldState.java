@@ -39,8 +39,19 @@ public final class NetherworldState {
 	private boolean memoryCleansed;
 	/** Has been a Ghost King among the dead (GhostSystem#isKing): its form stays theirs, alive again too (TwoPaths#hasKingForm). */
 	private boolean reignedKing;
+	/**
+	 * Dead, and lingering among the living as its soul (Lingering, 2026-11-16): bound for it at the death's respawn (not yet a ghost), then
+	 * one of the dead held up there until the Netherworld's pull ({@link #pull}) takes it down.
+	 */
+	private boolean lingering;
+	/** How far the Netherworld's pull on a lingering soul has gone, 0 to 1 (Lingering#second). */
+	private double pull;
 
 	public boolean ghost() { return ghost; }
+	public boolean lingering() { return lingering; }
+	public void setLingering(boolean lingering) { this.lingering = lingering; }
+	public double pull() { return pull; }
+	public void setPull(double pull) { this.pull = Math.max(0, Math.min(1, pull)); }
 	public void setGhost(boolean ghost) { this.ghost = ghost; }
 	public boolean boundBelow() { return boundBelow; }
 	public void setBoundBelow(boolean bound) { this.boundBelow = bound; }
@@ -124,13 +135,28 @@ public final class NetherworldState {
 
 	public java.util.Map<Spell, Long> spellReady() { return spellReady; }
 
-	/** The layer reached in {@code method}: 0 if it isn't known. */
+	/**
+	 * The layer understood in {@code method}: 0 if it isn't known; else as far as the ghost path stands (GhostMethods#understoodTo: since 2026-11-16,
+	 * the user's ask, nothing settles: "get rid of the whole layer system besides laws"), at least the first.
+	 */
 	public int layer(GhostMethod method) {
+		if (!methods.containsKey(method)) return 0;
+		return Math.max(1, GhostMethods.understoodAt(method, Math.max(0, pathRank)));
+	}
+
+	/** Settling toward the next layer: none since 2026-11-16. */
+	public double progress(GhostMethod method) {
+		return 0;
+	}
+
+	/** {@code method}'s layer as saved (0 unknown): read only to carry a save from before the ghost path's own bar over (see {@link #load}). */
+	int savedLayer(GhostMethod method) {
 		double[] entry = methods.get(method);
 		return entry == null ? 0 : (int) entry[0];
 	}
 
-	public double progress(GhostMethod method) {
+	/** {@code method}'s settling as saved: read only as {@link #savedLayer} is. */
+	double savedProgress(GhostMethod method) {
 		double[] entry = methods.get(method);
 		return entry == null ? 0 : entry[1];
 	}
@@ -242,6 +268,10 @@ public final class NetherworldState {
 		if (ghost) tag.putBoolean("Ghost", true);
 		if (boundBelow) tag.putBoolean("BoundBelow", true);
 		if (reforming) tag.putBoolean("Reforming", true);
+		if (lingering) {
+			tag.putBoolean("Lingering", true);
+			tag.putDouble("Pull", pull);
+		}
 		if (memoryCleansed) tag.putBoolean("MemoryCleansed", true);
 		if (reignedKing) {
 			tag.putBoolean("ReignedKing", true);
@@ -303,6 +333,8 @@ public final class NetherworldState {
 		ghost = tag.getBoolean("Ghost");
 		boundBelow = tag.getBoolean("BoundBelow");
 		reforming = tag.getBoolean("Reforming");
+		lingering = tag.getBoolean("Lingering");
+		setPull(tag.getDouble("Pull"));
 		memoryCleansed = tag.getBoolean("MemoryCleansed");
 		reignedKing = tag.getBoolean("ReignedKing");
 		CompoundTag place = tag.getCompound("DeathPlace");
@@ -345,12 +377,13 @@ public final class NetherworldState {
 			setPath(tag.getInt("PathRank"), tag.getDouble("PathCultivation"));
 		} else {
 			// Saved before the ghost path had its own bar (2026-10-19): it stood where its deepest foundation's layers carried it,
-			// as far through the stage as they had come; every method's settling starts afresh (the deepest's went into the bar).
-			GhostMethod deepest = GhostMethods.deepestFoundation(this);
-			int rank = deepest == null ? -1 : GhostMethods.floor(deepest, layer(deepest));
+			// as far through the stage as they had come; every method's settling starts afresh (the deepest's went into the bar). The
+			// layers as saved (since 2026-11-16 #layer follows the path, which this sets).
+			GhostMethod deepest = GhostMethods.savedDeepestFoundation(this);
+			int rank = deepest == null ? -1 : GhostMethods.floor(deepest, savedLayer(deepest));
 			setPath(rank, rank < 0 ? 0 : GhostMethods.layeredStageProgress(this) * GhostMethods.required(rank));
 			for (GhostMethod method : java.util.List.copyOf(methods.keySet())) {
-				if (method.isFoundation()) setMethod(method, layer(method), 0);
+				if (method.isFoundation()) setMethod(method, savedLayer(method), 0);
 			}
 		}
 		// Until 2026-10-19 one dead at Core Formation on the heaven path alone was crowned too, and kept the King's form born again;

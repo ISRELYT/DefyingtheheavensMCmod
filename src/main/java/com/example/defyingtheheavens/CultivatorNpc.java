@@ -462,6 +462,18 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return !isVacant() && super.isPickable();
 	}
 
+	/**
+	 * A nascent soul lingering after its death (Lingering) may be taken for prey by a cultivator who sees it (a Nascent Soul or beyond, as players
+	 * see souls), though the living world's mobs and the rest don't (it is one of the dead to them: SoulPlayerMixin); anyone else as ever.
+	 */
+	@Override
+	public boolean canAttack(net.minecraft.world.entity.LivingEntity target) {
+		if (target instanceof ServerPlayer soul && Lingering.isSoul(soul) && !isMortal() && sustainedRank() >= Lingering.NASCENT) {
+			return level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL && !soul.getAbilities().invulnerable;
+		}
+		return super.canAttack(target);
+	}
+
 	@Override
 	public boolean isPushable() {
 		return !isVacant() && super.isPushable();
@@ -2191,12 +2203,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
 		winnings.clear();
-		// Its heaven method's slip: never a True Immortal's, the Immortal Realm's (Realm#taughtInTheWorld). A body cultivator's manual of
-		// the body's way it walks, as often.
+		// Its heaven art's manual (a jade slip before 2026-11-16): never a True Immortal's, the Immortal Realm's (Realm#taughtInTheWorld). As often,
+		// rolled apart, the Qi Circulation manual it cultivates by, written as far as its art's realm (no art carries its volumes). A body
+		// cultivator's manual of the body's way it walks, as often.
 		HeavenMethod method = heavenMethod();
 		float slipChance = isSectMember() ? HEAVEN_SLIP_CHANCE_SECT : HEAVEN_SLIP_CHANCE;
 		if (method != null && method.realm().taughtInTheWorld() && random.nextFloat() < slipChance) {
-			spawnAtLocation(JadeSlipItem.of(method));
+			spawnAtLocation(TechniqueManualItem.of(method));
+		}
+		if (method != null && method.realm().taughtInTheWorld() && random.nextFloat() < slipChance) {
+			spawnAtLocation(MethodManualItem.of(CultivationMethod.QI_CIRCULATION, method.realm()));
 		}
 		ItemStack manual = bodyManual();
 		if (!manual.isEmpty() && random.nextFloat() < slipChance) spawnAtLocation(manual);

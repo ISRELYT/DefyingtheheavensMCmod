@@ -160,7 +160,7 @@ public final class ModAdvancements {
 		realm(Realm.NASCENT_SOUL, "cultivation/core_formation", ModItems.SPIRIT_LOTUS, FrameType.GOAL, "Nascent Soul", "Give birth to your nascent soul");
 		realm(Realm.HEAVENLY_BEING, "cultivation/nascent_soul", ModItems.SPIRIT_DEW, FrameType.TASK, "Heavenly Being", "Rise above the mortal and the mundane");
 		realm(Realm.FOUR_AXIS, "cultivation/heavenly_being", ModItems.JADE, FrameType.GOAL, "Four Axis", "Stand upon the four axes of heaven and earth");
-		realm(Realm.DAO_INTEGRATION, "cultivation/four_axis", ModItems.JADE_SLIP, FrameType.TASK, "Dao Integration", "Become one with the Dao");
+		realm(Realm.DAO_INTEGRATION, "cultivation/four_axis", ModItems.TECHNIQUE_MANUAL, FrameType.TASK, "Dao Integration", "Become one with the Dao");
 		realm(Realm.VOID_SHATTERING, "cultivation/dao_integration", Items.ENDER_EYE, FrameType.GOAL, "Void Shattering",
 				"Shatter the void: the lower realms hold you no longer");
 		realm(Realm.SACRED_VESSEL, "cultivation/void_shattering", ModItems.NINE_PROVINCES_DING, FrameType.TASK, "Sacred Vessel",
@@ -221,7 +221,7 @@ public final class ModAdvancements {
 				milestone(Milestones.SOUL_PROJECTION));
 		add("arts/possession", "arts/soul_projection", Items.ARMOR_STAND, FrameType.GOAL, "Another's Body", "Take another being's body as your own",
 				milestone(Milestones.POSSESSION));
-		add("arts/clone", "arts/root", ModItems.TECHNIQUE_MANUAL, FrameType.GOAL, "Two Bodies, One Dao", "Make a Clone of yourself", milestone(Milestones.CLONE));
+		add("arts/clone", "arts/root", ModItems.TECHNIQUE_JADE_SLIP, FrameType.GOAL, "Two Bodies, One Dao", "Make a Clone of yourself", milestone(Milestones.CLONE));
 		secret("arts/core_detonation", "arts/root", Items.TNT, FrameType.GOAL, "A Core Shattered", "Detonate your own golden core",
 				milestone(Milestones.CORE_DETONATION));
 		// Its id kept from the Storage Rings' days, so who earned it keeps it (the storage formations took the rings' place, 2026-10-28).
@@ -326,7 +326,7 @@ public final class ModAdvancements {
 				"Climb where the Netherworld's ghostly qi is thickest", standing("peaks", LocationPredicate.inBiome(ModBiomes.NINE_NETHER_PEAKS)));
 		add("springs/hungry_ghost", "springs/root", ModItems.PEACH_WOOD_SWORD, FrameType.TASK, "Hungry No More", "Slay a Hungry Ghost",
 				one("hungry_ghost", KilledTrigger.TriggerInstance.playerKilledEntity(EntityPredicate.Builder.entity().of(ModEntities.HUNGRY_GHOST))));
-		add("springs/ghost_path", "springs/root", ModItems.GHOST_JADE_SLIP, FrameType.TASK, "The Ghost Path", "Begin the ghost path",
+		add("springs/ghost_path", "springs/root", ModItems.METHOD_MANUAL, FrameType.TASK, "The Ghost Path", "Begin the ghost path",
 				milestone(Milestones.GHOST_PATH));
 		add("springs/ghost_spell", "springs/ghost_path", Items.SOUL_TORCH, FrameType.TASK, "An Art of the Dead", "Cast a ghost art",
 				milestone(Milestones.SPELL_GHOST));

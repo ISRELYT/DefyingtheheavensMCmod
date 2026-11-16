@@ -51,13 +51,12 @@ public final class CultivationMethods {
 	// --- What is held of it ---
 
 	/**
-	 * Whether {@code c} knows {@code method} at all: the orthodox ways by what their paths teach (a heaven scripture, a ghost foundation,
-	 * a demon core), the Heavenly Thunder Body's by its body, the rest by a Method Manual read (PlayerCultivation#methodReach).
+	 * Whether {@code c} knows {@code method} at all: the Demon Path's and the Body Path's own by the path begun, the Heavenly Thunder Body's by its
+	 * body, every other (Qi Circulation and Netherworld Breathing too, since 2026-11-16) by a Method Manual read, a stele or a teacher
+	 * (PlayerCultivation#methodReach).
 	 */
 	public static boolean knows(PlayerCultivation c, CultivationMethod method) {
 		return switch (method) {
-			case QI_CIRCULATION -> c.heaven().knowsAny();
-			case NETHERWORLD_BREATHING -> GhostMethods.foundationReach(c.netherworld()) != null;
 			case BLOODLINE_PURIFICATION -> DemonPath.rank(c) >= 0;
 			case BODY_TEMPERING -> BodyPath.rank(c) >= 0;
 			case FOUR_AXES -> true;
@@ -67,8 +66,9 @@ public final class CultivationMethods {
 	}
 
 	/**
-	 * Whether {@code c} holds {@code method}'s volume for {@code realm}: the orthodox ways' by what their paths teach (HeavenMethods#hasVolume,
-	 * GhostMethods#hasVolume, DemonPath#hasVolume); the demon methods' by its blood, as Purification's (the user's rule: a demon's blood is
+	 * Whether {@code c} holds {@code method}'s volume for {@code realm}: Qi Circulation's and Netherworld Breathing's by their manuals' reach
+	 * (HeavenMethods#hasVolume, GhostMethods#hasVolume: past True Immortal the Laws carry them); the Demon Path's by its blood (DemonPath#hasVolume);
+	 * the demon methods' by its blood, as Purification's (the user's rule: a demon's blood is
 	 * its volume, every demon method it knows working in every realm it has reached); the Heavenly Thunder Body's whole; the rest as far
 	 * as their manuals reach. None outside the method's own realms, nor of Four Axis but the axes.
 	 */
@@ -99,8 +99,6 @@ public final class CultivationMethods {
 	public static Realm reach(PlayerCultivation c, CultivationMethod method) {
 		if (!knows(c, method)) return null;
 		Realm deepest = switch (method) {
-			case QI_CIRCULATION -> HeavenMethods.deepestRealm(c.heaven());
-			case NETHERWORLD_BREATHING -> GhostMethods.foundationReach(c.netherworld());
 			case BLOODLINE_PURIFICATION, KIN_BLOOD, CORE_DEVOURING, TERRITORIAL_DOMINION, BEAST_DEITY, ANCESTRAL_COMMUNION, BLOODLINE_NIRVANA, PRIMORDIAL_RETURN ->
 					Realm.byIndex(Math.min(method.last().ordinal(), Math.max(DemonPath.realm(DemonPath.rank(c)).ordinal(), c.demon().bloodRealm())));
 			case THUNDER_TEMPERING, FOUR_AXES, BODY_TEMPERING -> method.last();
@@ -111,7 +109,7 @@ public final class CultivationMethods {
 
 	/**
 	 * Why meditation gathers nothing on {@code path} of {@code p} now, or null if it gathers: Four Axis (the axes are the method there);
-	 * no volume of the realm in the method practised (no scripture at all, on the heaven path); a method that doesn't gather by meditation
+	 * no volume of the realm in the method practised (no Qi Circulation or Netherworld Breathing at all); a method that doesn't gather by meditation
 	 * (its own way told); Turtle Breath out of deep seclusion; Territorial Dominion out of the territory; a place's way away from its place
 	 * (MethodGrounds: the Dao field of the stage, the primeval dragon's bones, a primordial beast; the Immortal Realm, with essence to burn).
 	 */
@@ -121,9 +119,10 @@ public final class CultivationMethods {
 		CultivationMethod method = practised(c, path);
 		if (realm == Realm.FOUR_AXIS) return Component.translatable(ModLang.MSG_AXES_ARE_THE_METHOD);
 		if (!hasVolume(c, method, realm)) {
-			if (method == CultivationMethod.QI_CIRCULATION) return c.heaven().knowsAny()
+			if (method == CultivationMethod.QI_CIRCULATION) return knows(c, method)
 					? Component.translatable(ModLang.MSG_HEAVEN_NO_VOLUME, realm.getDisplayName()) : Component.translatable(ModLang.MSG_HEAVEN_NONE_KNOWN);
-			if (method == CultivationMethod.NETHERWORLD_BREATHING) return Component.translatable(ModLang.MSG_GHOST_NO_VOLUME, realm.getDisplayName());
+			if (method == CultivationMethod.NETHERWORLD_BREATHING) return knows(c, method)
+					? Component.translatable(ModLang.MSG_GHOST_NO_VOLUME, realm.getDisplayName()) : Component.translatable(ModLang.MSG_GHOST_NONE_KNOWN);
 			return Component.translatable(ModLang.MSG_METHOD_NO_VOLUME, method.getDisplayName(), realm.getDisplayName());
 		}
 		if (!method.meditates()) {
@@ -214,15 +213,23 @@ public final class CultivationMethods {
 	 * a demon method to one with no demon core, the Heavenly Thunder Body's to another body, or nothing new in it. @return whether learned
 	 */
 	public static boolean learn(ServerPlayer player, CultivationMethod method, Realm realm) {
+		return learn(player, method, realm, true);
+	}
+
+	/**
+	 * {@link #learn(ServerPlayer, CultivationMethod, Realm)}; {@code tellKnown}: whether one who holds it as far already is told so (a manual read
+	 * is; a stele sat by, again and again, isn't). A ghost-path method begins a ghost path not yet begun (Qi Refining Early), as a foundation does.
+	 */
+	public static boolean learn(ServerPlayer player, CultivationMethod method, Realm realm, boolean tellKnown) {
 		PlayerCultivation c = CultivationManager.own(player);
 		Component refusal = refusal(c, method);
 		if (refusal != null) {
 			player.displayClientMessage(refusal.copy().withStyle(ChatFormatting.GRAY), true);
 			return false;
 		}
-		int to = method.path() == TwoPaths.Path.DEMON ? method.last().ordinal() : Math.min(method.last().ordinal(), realm.ordinal());
+		int to = method.path() == TwoPaths.Path.DEMON ? method.last().ordinal() : method.volumeFor(realm).ordinal();
 		if (c.methodReach(method) >= to) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_METHOD_KNOWN, method.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
+			if (tellKnown) player.displayClientMessage(Component.translatable(ModLang.MSG_METHOD_KNOWN, method.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
 			return false;
 		}
 		c.setMethodReach(method, to);
@@ -232,24 +239,72 @@ public final class CultivationMethods {
 		player.playNotifySound(SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1.0f, 1.0f);
 		Journal.note(player, "cultivation_method:" + method.getId(), ModLang.JOURNAL_CULTIVATION_METHOD,
 				Component.translatable(ModLang.JOURNAL_CULTIVATION_METHOD_TEXT, method.getDisplayName(), method.getDescription()));
+		beginsGhostPath(player, c, method);
 		CultivationManager.markDirty(player.server);
 		Spells.sync(player);
 		return true;
 	}
 
 	/**
+	 * {@code method}'s volumes taught {@code player} up to {@code realm}'s (CultivationMethod#volumeFor) by a cultivator rather than a manual (the
+	 * basics, a teacher's method, the dead taught Netherworld Breathing at the Gate), told only how far they now reach. Nothing where it would be
+	 * refused ({@link #refusal}), nor to one whose volumes already reach so far. @return whether they reach further now
+	 */
+	public static boolean teach(ServerPlayer player, CultivationMethod method, Realm realm) {
+		PlayerCultivation c = CultivationManager.own(player);
+		if (refusal(c, method) != null) return false;
+		int to = method.volumeFor(realm).ordinal();
+		if (c.methodReach(method) >= to) return false;
+		c.setMethodReach(method, to);
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_METHOD_VOLUMES_TAUGHT, method.getDisplayName(), FourAxis.volumeReach(Realm.byIndex(to)).getDisplayName())
+				.withStyle(method.path() == TwoPaths.Path.GHOST ? ChatFormatting.AQUA : ChatFormatting.GOLD));
+		beginsGhostPath(player, c, method);
+		CultivationManager.markDirty(player.server);
+		Spells.sync(player);
+		return true;
+	}
+
+	/**
+	 * Netherworld Breathing learned with no ghost path begun begins it (Qi Refining Early), as a foundation art does (GhostMethods#give): the
+	 * path's own method, its volumes the foundations' before 2026-11-16. The ghost path's other ways begin nothing, as ever.
+	 */
+	private static void beginsGhostPath(ServerPlayer player, PlayerCultivation c, CultivationMethod method) {
+		if (method != CultivationMethod.NETHERWORLD_BREATHING || GhostMethods.ghostRank(c.netherworld()) >= 0) return;
+		c.netherworld().setPath(0, 0);
+		GhostMethods.afterRank(player, -1);
+		NetherworldManager.refresh(player);
+	}
+
+	/**
 	 * Why {@code c} can't take up {@code method} from a manual, or null if it can: a mortal's meridians are sealed to every path's but the
-	 * body's (its ways are the flesh's: a mortal on the Body Path reads them), which wants the Body Path begun.
+	 * body's (its ways are the flesh's: a mortal on the Body Path reads them), which wants the Body Path begun; a body born against it
+	 * ({@link #barredBy}, the user's pick of 2026-11-16).
 	 */
 	public static Component refusal(PlayerCultivation c, CultivationMethod method) {
 		if (c.isMortal() && method.path() != TwoPaths.Path.BODY) return Component.translatable(ModLang.MSG_HEAVEN_METHOD_MERIDIANS);
 		if (!method.fromManual()) return Component.translatable(ModLang.MSG_METHOD_NOT_TAUGHT, method.getDisplayName());
+		Physique against = barredBy(c, method);
+		if (against != null) return Component.translatable(ModLang.MSG_PHYSIQUE_BARS_METHOD, against.getDisplayName(), method.getDisplayName());
 		return switch (method.path()) {
 			case HEAVEN -> HeavenMethods.refusal(c);
 			case GHOST -> null;
 			case DEMON -> DemonPath.rank(c) < 0 ? Component.translatable(ModLang.MSG_METHOD_NEEDS_CORE, method.getDisplayName()) : null;
 			case BODY -> BodyPath.rank(c) < 0 ? Component.translatable(ModLang.MSG_METHOD_NEEDS_BODY_PATH, method.getDisplayName()) : null;
 		};
+	}
+
+	/**
+	 * The body {@code c} was born with that bars {@code method} (the user's pick, 2026-11-16: "being born with certain physiques limits what methods
+	 * you can cultivate"), or null: roots of fewer than five elements can't cycle all five (Five Elements Cycling); the rest by Physique#bars.
+	 */
+	public static Physique barredBy(PlayerCultivation c, CultivationMethod method) {
+		if (method == CultivationMethod.FIVE_ELEMENTS) {
+			for (QiElement element : QiElement.five()) {
+				if (!c.rootsAllow(element)) return c.hasPhysique(Physique.TRUE_ELEMENT_ROOT) ? Physique.TRUE_ELEMENT_ROOT : Physique.THREE_ELEMENT_ROOTS;
+			}
+		}
+		for (Physique physique : Physique.values()) if (physique.bars(method) && c.hasPhysique(physique)) return physique;
+		return null;
 	}
 
 	// --- A gain won its own way ---

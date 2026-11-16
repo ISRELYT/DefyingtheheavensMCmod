@@ -387,7 +387,8 @@ public class LawDomainsGameTests implements FabricGameTest {
 		ServerPlayer p = survivor(helper, Realm.GOLDEN_IMMORTAL, "test-domain-g"), q = survivor(helper, Realm.HEAVENLY_BEING, "test-domain-h");
 		CultivationManager.get(p).laws().setLevel(Law.SPACE, 1);
 		NetherworldState s = CultivationManager.get(q).netherworld();
-		s.setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, GhostMethod.NINE_NETHER_SOUL_SUTRA.layers(), 0);
+		s.setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, 1, 0);
+		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.GRAND_PERFECTION)); // understood as far as its ghost path (2026-11-16)
 		s.setGhostQi(1000);
 		q.setLastHurtByMob(p);
 		unfurl(p, Ability.SPACE_DOMAIN);

@@ -117,9 +117,12 @@ public class MethodsPhaseTwoGameTests implements FabricGameTest {
 		ItemStack rites = MethodManualItem.of(CultivationMethod.HEAVEN_RITES, Realm.DAO_INTEGRATION);
 		helper.assertTrue(MethodManualItem.method(turtle) == CultivationMethod.TURTLE_BREATH && MethodManualItem.realm(turtle) == Realm.FOUNDATION_BUILDING
 				&& MethodManualItem.realm(rites) == Realm.HEAVENLY_BEING, "Written within its method's own realms");
-		helper.assertTrue(MethodManualItem.method(MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.CORE_FORMATION)) == null
-						&& MethodManualItem.method(MethodManualItem.of(CultivationMethod.THUNDER_TEMPERING, Realm.CORE_FORMATION)) == null,
-				"No manual of the orthodox ways, nor of the Thunder Body's own");
+		ItemStack circulation = MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.CORE_FORMATION);
+		helper.assertTrue(MethodManualItem.method(circulation) == CultivationMethod.QI_CIRCULATION && MethodManualItem.realm(circulation) == Realm.CORE_FORMATION
+						&& MethodManualItem.method(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.QI_REFINING)) == CultivationMethod.NETHERWORLD_BREATHING
+						&& MethodManualItem.method(MethodManualItem.of(CultivationMethod.THUNDER_TEMPERING, Realm.CORE_FORMATION)) == null
+						&& MethodManualItem.method(MethodManualItem.of(CultivationMethod.BODY_TEMPERING, Realm.CORE_FORMATION)) == null,
+				"The orthodox ways' own manuals (since 2026-11-16); none of the Thunder Body's own, nor of the body's own tempering");
 		PlayerCultivation mortal = new PlayerCultivation();
 		helper.assertTrue(key(CultivationMethods.refusal(mortal, CultivationMethod.TURTLE_BREATH)).equals(ModLang.MSG_HEAVEN_METHOD_MERIDIANS), "A mortal's meridians are sealed");
 		PlayerCultivation c = new PlayerCultivation();

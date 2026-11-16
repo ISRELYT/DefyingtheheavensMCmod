@@ -26,17 +26,12 @@ public final class ModLang {
 	public static final String CULTIVATION = k("cultivation");
 	public static final String CULTIVATION_MAX = k("cultivation_max");
 	/**
-	 * Under the cultivation bar: the heaven method practised, its layer, and what meditating here gathers a second with it; where
-	 * that won't fit, the method and the rate, else the layer and the rate.
+	 * Among the Cultivation tab's details: the heaven scripture practised (or "no scripture", the plain pace) and what meditating here
+	 * gathers a second with it; the practised method holding no volume of the realm, nothing (HeavenMethods#canGain).
 	 */
 	public static final String METHOD_LINE = k("method_line");
-	public static final String METHOD_LINE_NAME = k("method_line.name");
-	public static final String METHOD_LINE_SHORT = k("method_line.short");
 	public static final String METHOD_LINE_NONE = k("method_line.none");
-	/** The scripture practised, with no Qi Circulation volume of the realm among those known: nothing gathered (HeavenMethods#canGain). */
 	public static final String METHOD_LINE_NO_VOLUME = k("method_line.no_volume");
-	/** A heaven method's layer settling in (HeavenMethods#settle), and how far. */
-	public static final String SETTLING_LINE = k("settling_line");
 	/** The Upper Realm's dense qi, among the Cultivation tab's details. */
 	public static final String UPPER_REALM_LINE = k("upper_realm_line");
 	public static final String HUD_QI = k("hud.qi");
@@ -1079,6 +1074,13 @@ public final class ModLang {
 	public static final String DEATH_GHOSTLY = "death.attack." + DefyingTheHeavens.MOD_ID + ".ghostly";
 	public static final String GAMERULE_AFTER_DEATH = "gamerule.netherworldAfterDeath";
 	public static final String MSG_GHOST_WAKE = k("message.ghost.wake");
+	// The soul after death (Lingering, 2026-11-16): risen as a nascent soul or a ghost, the pull's last quarter, taken down, struck down, no projecting.
+	public static final String MSG_LINGER_RISE_SOUL = k("message.linger.rise_soul");
+	public static final String MSG_LINGER_RISE_GHOST = k("message.linger.rise_ghost");
+	public static final String MSG_LINGER_WANING = k("message.linger.waning");
+	public static final String MSG_LINGER_PULLED = k("message.linger.pulled");
+	public static final String MSG_LINGER_STRUCK = k("message.linger.struck");
+	public static final String MSG_LINGER_NO_PROJECTION = k("message.linger.no_projection");
 	public static final String MSG_YIN_OVERTAKEN = k("message.ghost.yin_overtaken");
 	public static final String MSG_GHOST_DISPERSED = k("message.ghost.dispersed");
 	public static final String MSG_GHOST_REFORMED = k("message.ghost.reformed");
@@ -1110,29 +1112,25 @@ public final class ModLang {
 	public static final String GHOST_QI_FAINT = k("netherworld.ghost_qi.faint");
 	public static final String HUD_GHOST_QI_LABEL = k("hud.ghost_qi_label");
 	public static final String HUD_YIN_CORRUPTION_LABEL = k("hud.yin_corruption_label");
+	/** The Netherworld's pull on a soul lingering after its death (Lingering), on the HUD. */
+	public static final String HUD_PULL_LABEL = k("hud.pull_label");
 	public static final String HUD_PERCENT = k("hud.percent");
 	public static final String TOOLTIP_YANG_FIRE_TALISMAN = k("tooltip.yang_fire_talisman");
 	// The ghost methods and their spells (see GhostMethods, Spells)
 	public static String methodKey(String id) { return "ghost_method." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static String spellKey(String id) { return "spell." + DefyingTheHeavens.MOD_ID + "." + id; }
-	/** A heaven method's name; and with ".description" and ".gains" its lore and what its layers bring (HeavenMethod). */
+	/** A heaven scripture's name; and with ".description" and ".gains" its lore and what it brings as the realm climbs (HeavenMethod). */
 	public static String heavenMethodKey(String id) { return "heaven_method." + DefyingTheHeavens.MOD_ID + "." + id; }
-	// The heaven methods (HeavenMethods): learning, cultivating, the Dao Steles, the jade slips, the Methods tab's heaven page
+	// The heaven scriptures (HeavenMethods): learning, practising, the art manuals, the Methods tab's heaven page
 	public static final String MSG_HEAVEN_METHOD_MERIDIANS = k("message.heaven_method.meridians");
 	public static final String MSG_HEAVEN_METHOD_DEAD = k("message.heaven_method.dead");
-	public static final String MSG_HEAVEN_LEARNED = k("message.heaven_method.learned");
 	public static final String MSG_HEAVEN_PRACTISED = k("message.heaven_method.practised");
-	/** A layer settled in (HeavenMethods#settle); with the spell it brings. */
-	public static final String MSG_HEAVEN_LAYER = k("message.heaven_method.layer");
-	public static final String MSG_HEAVEN_LAYER_SPELL = k("message.heaven_method.layer_spell");
 	/** Meditating with no heaven scripture known (MeditationManager#tellNoGain), once a login: no method, no gain. */
 	public static final String MSG_HEAVEN_NONE_KNOWN = k("message.heaven_method.none_known");
 	/** Meditating in a realm no scripture known carries Qi Circulation's volume of (HeavenMethods#canGain): nothing gathered. */
 	public static final String MSG_HEAVEN_NO_VOLUME = k("message.heaven_method.no_volume");
 	/** The realm ahead, which no scripture known carries Circulation's volume of, will gather nothing (HeavenMethods#gateLine). */
 	public static final String HEAVEN_GATE_NONE = k("heaven_method.gate.none");
-	/** A scripture learned carries Qi Circulation's volumes further (HeavenMethods#give). */
-	public static final String MSG_CIRCULATION_VOLUMES = k("message.method.circulation_volumes");
 	/** The realm ahead is Four Axis, whose axes are every path's method (HeavenMethods#gateLine, GhostMethods#gateLine). */
 	public static final String METHOD_GATE_AXES = k("method.gate.axes");
 	/** Meditating at Four Axis on any path (MeditationManager#tellNoGain): the axes fill its stages, not meditation (FourAxis#fillBars). */
@@ -1618,14 +1616,29 @@ public final class ModLang {
 	public static final String MSG_CURRENT_LANDED = k("message.void_current.landed");
 	/** A blood pool's elder rises (BloodPools). */
 	public static final String MSG_ELDER_RISES = k("message.blood_pool.elder_rises");
-	public static final String MSG_DAO_STELE_TEACHES = k("message.dao_stele.teaches");
-	public static final String MSG_DAO_STELE_KNOWN = k("message.dao_stele.known");
-	public static final String MSG_DAO_STELE_READING = k("message.dao_stele.reading");
 	/** A stele carved, before the user's rule of 2026-10-25, with a method the worlds don't teach (Realm#taughtInTheWorld): unreadable. */
 	public static final String MSG_STELE_SEALED = k("message.stele.sealed");
-	public static final String ITEM_JADE_SLIP_OF = "item." + DefyingTheHeavens.MOD_ID + ".jade_slip.of";
-	public static final String TOOLTIP_JADE_SLIP = k("tooltip.jade_slip");
-	public static final String TOOLTIP_JADE_SLIP_ELEMENT = k("tooltip.jade_slip.element");
+	// Methods from manuals, arts at once, steles teaching methods (2026-11-16: SteleTeachings, CultivationMethods, HeavenMethods, GhostMethods).
+	/** A stele touched: the method carved, its path; then its volumes and what it is, and where the toucher stands with it. */
+	public static final String MSG_STELE_HOLDS = k("message.stele.holds");
+	public static final String MSG_STELE_HELD = k("message.stele.held");
+	public static final String MSG_STELE_MEDITATE = k("message.stele.meditate");
+	/** A body born against a method (Physique#bars, CultivationMethods#barredBy): the body, the method. */
+	public static final String MSG_PHYSIQUE_BARS_METHOD = k("message.physique.bars_method");
+	/** A method's volumes passed on by a cultivator (the basics, a teacher, the dead's first breath): the method, how far. */
+	public static final String MSG_METHOD_VOLUMES_TAUGHT = k("message.method.volumes_taught");
+	/** The ghost path practising Netherworld Breathing with none of it known. */
+	public static final String MSG_GHOST_NONE_KNOWN = k("message.ghost.none_known");
+	/** A heaven art read: its name, how many arts it holds. */
+	public static final String MSG_ART_LEARNED = k("message.art.learned");
+	/** A ghost art read: its name. */
+	public static final String MSG_GHOST_ART_LEARNED = k("message.ghost_art.learned");
+	/** The realm (or the ghost path) reached opens arts known that waited on it: their names. */
+	public static final String MSG_ARTS_OPENED = k("message.arts.opened");
+	/** A scripture's or ghost foundation's arts on the Methods tab: all of them (how many); how many of all, the next, where it opens; dormant. */
+	public static final String METHODS_ARTS_ALL = k("methods.arts.all");
+	public static final String METHODS_ARTS_NEXT = k("methods.arts.next");
+	public static final String METHODS_ARTS_DORMANT = k("methods.arts.dormant");
 	public static final String METHODS_PAGE_GHOST = k("methods.page.ghost");
 	public static final String METHODS_PAGE_HEAVEN = k("methods.page.heaven");
 	public static final String METHODS_HEAVEN_KNOWN = k("methods.heaven.known");
@@ -1633,12 +1646,6 @@ public final class ModLang {
 	public static final String METHODS_HEAVEN_HINT = k("methods.heaven.hint");
 	public static final String METHODS_HEAVEN_DEAD = k("methods.heaven.dead");
 	public static final String METHODS_HEAVEN_SEALED = k("methods.heaven.sealed");
-	public static final String METHODS_HEAVEN_RATE = k("methods.heaven.rate");
-	/** The practised method understood as far as the realm: where its next layer opens. */
-	public static final String METHODS_HEAVEN_NEXT = k("methods.heaven.next");
-	/** A method's next layer, waiting on the realm (in short where that won't fit). */
-	public static final String METHODS_HEAVEN_OPENS = k("methods.heaven.opens");
-	public static final String METHODS_HEAVEN_OPENS_SHORT = k("methods.heaven.opens.short");
 	public static final String METHODS_HEAVEN_SHARE = k("methods.heaven.share");
 	public static final String METHODS_HEAVEN_UNKNOWN = k("methods.heaven.unknown");
 	public static final String METHODS_HEAVEN_PASSIVE = k("methods.heaven.passive");
@@ -1648,16 +1655,10 @@ public final class ModLang {
 	public static String passiveKey(QiElement element) { return "passive." + DefyingTheHeavens.MOD_ID + "." + element.name().toLowerCase(java.util.Locale.ROOT); }
 	public static final String KEY_SPELL_WHEEL = "key." + DefyingTheHeavens.MOD_ID + ".spell_wheel";
 	public static final String KEY_CAST_SPELL = "key." + DefyingTheHeavens.MOD_ID + ".cast_spell";
-	public static final String MSG_METHOD_LEARNED = k("message.method.learned");
-	public static final String MSG_METHOD_LEARNED_AT = k("message.method.learned_at");
 	public static final String MSG_METHOD_PRACTISED = k("message.method.practised");
 	public static final String MSG_GHOST_QI_SPENT = k("message.method.ghost_qi_spent");
-	public static final String MSG_STELE_TEACHES = k("message.stele.teaches");
-	public static final String MSG_STELE_KNOWN = k("message.stele.known");
 	public static final String MSG_STELE_READING = k("message.stele.reading");
 	public static final String MSG_SLIP_KNOWN = k("message.slip.known");
-	public static final String ITEM_GHOST_JADE_SLIP_OF = "item." + DefyingTheHeavens.MOD_ID + ".ghost_jade_slip.of";
-	public static final String TOOLTIP_GHOST_JADE_SLIP = k("tooltip.ghost_jade_slip");
 	public static final String MSG_SPELL_NONE_READY = k("message.spell.none_ready");
 	public static final String MSG_SPELL_NOT_HERE = k("message.spell.not_here");
 	public static final String MSG_SPELL_COOLING = k("message.spell.cooling");
@@ -1666,17 +1667,12 @@ public final class ModLang {
 	public static final String MSG_GHOST_FIRE_ARMED = k("message.spell.ghost_fire_armed");
 	// The Methods tab
 	public static final String METHODS_KNOWN = k("methods.known");
-	public static final String METHODS_LAYER = k("methods.layer");
-	public static final String METHODS_LAYER_REALM = k("methods.layer_realm");
-	public static final String METHODS_PERFECTED = k("methods.perfected");
 	public static final String METHODS_GHOST_PATH = k("methods.ghost_path");
 	public static final String METHODS_GHOST_PATH_NONE = k("methods.ghost_path_none");
 	public static final String METHODS_UNKNOWN_DEEP = k("methods.unknown_deep");
 	public static final String METHODS_ACTIVE = k("methods.active");
 	public static final String METHODS_UNKNOWN = k("methods.unknown");
-	public static final String METHODS_GAINS = k("methods.gains");
 	public static final String BTN_PRACTISE = k("methods.practise");
-	public static final String METHODS_NO_QI = k("methods.no_qi");
 	public static final String BTN_SPELL_LIST = k("spells.list");
 	/** The Spells tab's switch for whether spells change the land for good (ModGameRules#SPELL_GRIEFING), its tooltips, and the word to all. */
 	public static final String BTN_GRIEFING_ON = k("spells.griefing_on");
@@ -1705,10 +1701,8 @@ public final class ModLang {
 	public static final String SPELLS_NO_COOLDOWN = k("spells.no_cooldown");
 	/** How many times as hard a known spell strikes as its caster stands (Spell#harmFor). */
 	public static final String SPELLS_HARM = k("spells.harm");
+	/** An art known not yet wielded: what teaches it, and the realm and stage its path must reach (Spell#realmNeeded, GhostMethods#opensAt). */
 	public static final String SPELLS_LOCKED = k("spells.locked");
-	public static final String SPELLS_LOCKED_REALM = k("spells.locked_realm");
-	/** A heaven spell not yet known: the realm and stage one's cultivation must reach for it, as well as its layer (Spell#realmNeeded). */
-	public static final String SPELLS_LOCKED_STAGE = k("spells.locked_stage");
 	public static final String SPELLS_READY = k("spells.ready");
 	public static final String SPELLS_READIED = k("spells.readied");
 	public static final String SPELLS_COOLING = k("spells.cooling");
@@ -1735,16 +1729,15 @@ public final class ModLang {
 	public static final String EFFECTIVE_BEYOND = k("two_paths.effective.beyond");
 	/** A Quasi- name and how far toward it ("%s (%s%%)"). */
 	public static final String EFFECTIVE_TOWARD = k("two_paths.effective.toward");
-	/** The heaven method practised at the very peak, on the Cultivation tab's bar: its name and layer (in short where that won't fit). */
+	/** The heaven scripture practised at the very peak, among the Cultivation tab's details: its name (in short where that won't fit). */
 	public static final String METHOD_BAR = k("method_bar");
 	public static final String METHOD_BAR_SHORT = k("method_bar.short");
 	/**
 	 * The Cultivation tab on both paths, each path a column of its own (half the width): the bars' shortest words (the cultivation
-	 * without its label, the layer without the method's name), and the ghost path's column's line when there is no ghostly qi.
+	 * without its label), and the ghost path's column's line when there is no ghostly qi.
 	 */
 	public static final String CULTIVATION_SHORT = k("cultivation.short");
 	public static final String CULTIVATION_MAX_SHORT = k("cultivation_max.short");
-	public static final String METHOD_BAR_LAYERS = k("method_bar.layers");
 	public static final String GHOST_COLUMN_NO_QI = k("two_paths.ghost.no_qi");
 	/**
 	 * The ghost path's own bar (2026-10-19, GhostMethods): its column's pace line, what stands next on it, the Cultivation tab's switch
@@ -1765,14 +1758,10 @@ public final class ModLang {
 	public static final String MSG_PATH_HEAVEN = k("message.path.heaven");
 	public static final String MSG_PATH_GHOST = k("message.path.ghost");
 	public static final String MSG_PATH_NO_GHOST = k("message.path.no_ghost");
-	public static final String MSG_GHOST_LAYER = k("message.ghost_method.layer");
-	public static final String MSG_GHOST_LAYER_SPELL = k("message.ghost_method.layer_spell");
 	public static final String MSG_GHOST_PATH_RISES = k("message.ghost_path.rises");
-	/** One of the dead with no foundation is taught Netherworld Breathing's first volume (GhostMethods#teachTheDead). */
+	/** One of the dead with no foundation is taught Netherworld Breathing's first volume and its art (GhostMethods#teachTheDead). */
 	public static final String MSG_GHOST_TAUGHT_BREATHING = k("message.ghost_path.taught_breathing");
-	/** A foundation learned carries Netherworld Breathing's volumes further (GhostMethods#give). */
-	public static final String MSG_BREATHING_VOLUMES = k("message.method.breathing_volumes");
-	/** Meditating on a ghost path whose realm no foundation known carries Breathing's volume of (GhostMethods#canGain): nothing gathered. */
+	/** Meditating on a ghost path whose realm Netherworld Breathing's volumes don't reach (GhostMethods#canGain): nothing gathered. */
 	public static final String MSG_GHOST_NO_VOLUME = k("message.ghost_method.no_volume");
 	public static final String MSG_GHOST_BOTTLENECK = k("message.ghost_path.bottleneck");
 	public static final String MSG_GHOST_TRIB_START = k("message.ghost_tribulation.start");
@@ -1781,9 +1770,6 @@ public final class ModLang {
 	public static final String MSG_GHOST_TRIB_FALL = k("message.ghost_tribulation.fall");
 	public static final String MSG_GHOST_TRIB_FLED = k("message.ghost_tribulation.fled");
 	public static final String TRIB_HUD_GHOST = k("hud.ghost_tribulation");
-	public static final String METHODS_GHOST_RESTING = k("methods.ghost_resting");
-	public static final String METHODS_GHOST_NEXT = k("methods.ghost_next");
-	public static final String METHODS_GHOST_REACH = k("methods.ghost_reach");
 	/** The Netherworld's tribulation's yin lightning (ModDamageTypes): its bolt, and the yin that goes through armour. */
 	public static final String DEATH_YIN_LIGHTNING = "death.attack." + DefyingTheHeavens.MOD_ID + ".yin_lightning";
 	public static final String DEATH_YIN_TRIBULATION = "death.attack." + DefyingTheHeavens.MOD_ID + ".yin_tribulation";
@@ -1856,8 +1842,9 @@ public final class ModLang {
 	public static final String TALK_TEACH_PROGRESS = k("talk.teach.progress");
 	/** A teacher's guidance on a method one holds no volume of for one's realm: its layers settled, no cultivation (TalkSystem). */
 	public static final String TALK_TEACH_NO_VOLUME = k("talk.teach.no_volume");
-	/** The basics (TalkSystem#teachBasics): a first heaven scripture from any living cultivator. */
+	/** The basics (TalkSystem#teachBasics): Qi Circulation's first volume and a first heaven art from any living cultivator; the method alone. */
 	public static final String TALK_TEACH_BASICS = k("talk.teach.basics");
+	public static final String TALK_TEACH_BASICS_PLAIN = k("talk.teach.basics_plain");
 	// The Ghost-Quelling Talisman
 	public static final String TOOLTIP_GHOST_QUELLING_TALISMAN = k("tooltip.ghost_quelling_talisman");
 	public static final String MSG_QUELLED = k("message.quelled");
@@ -1883,14 +1870,23 @@ public final class ModLang {
 	/** A planet's kind, as told (verdant, volcanic, ...). */
 	public static String astralKind(AstralPlanets.Kind kind) { return k("astral.kind." + kind.getId()); }
 
-	// Techniques (Technique) and their manuals (TechniqueManualItem; written out with the Inscription Brush)
+	// Techniques (Technique) and their jade slips (TechniqueSlipItem), the arts' manuals (TechniqueManualItem); written out with the Inscription Brush
 	public static String techniqueKey(String id) { return "technique." + DefyingTheHeavens.MOD_ID + "." + id; }
-	public static final String ITEM_TECHNIQUE_MANUAL_OF = "item." + DefyingTheHeavens.MOD_ID + ".technique_manual.of";
 	public static final String ITEM_SPELL_MANUAL_OF = "item." + DefyingTheHeavens.MOD_ID + ".technique_manual.spell_of";
 	public static final String TOOLTIP_MANUAL = k("tooltip.technique_manual");
 	public static final String TOOLTIP_MANUAL_REALM = k("tooltip.technique_manual.realm");
 	public static final String TOOLTIP_MANUAL_AUTHOR = k("tooltip.technique_manual.author");
 	public static final String TOOLTIP_MANUAL_GHOST = k("tooltip.technique_manual.ghost");
+	// The techniques' jade slips and the arts' manuals (TechniqueSlipItem, TechniqueManualItem: 2026-11-16).
+	public static final String ITEM_TECHNIQUE_SLIP_OF = "item." + DefyingTheHeavens.MOD_ID + ".technique_jade_slip.of";
+	public static final String TOOLTIP_TECHNIQUE_SLIP = k("tooltip.technique_jade_slip");
+	/** A heaven art's manual: its element, how many arts, the realm it reaches. */
+	public static final String TOOLTIP_ART_HEAVEN = k("tooltip.art_manual.heaven");
+	public static final String TOOLTIP_ART_READ = k("tooltip.art_manual.read");
+	/** A ghost foundation's manual: the realm it reaches; the fire's or the steps', an art of its own. */
+	public static final String TOOLTIP_ART_GHOST = k("tooltip.art_manual.ghost");
+	public static final String TOOLTIP_ART_GHOST_OWN = k("tooltip.art_manual.ghost_own");
+	public static final String TOOLTIP_ART_READ_GHOST = k("tooltip.art_manual.read_ghost");
 	public static final String TOOLTIP_BLANK_MANUAL = k("tooltip.blank_manual");
 	public static final String MSG_MANUAL_LEARNED = k("message.manual.learned");
 	public static final String MSG_MANUAL_KNOWN = k("message.manual.known");

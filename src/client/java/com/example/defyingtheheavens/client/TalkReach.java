@@ -23,14 +23,18 @@ public final class TalkReach {
 	public static boolean tryTalk(Minecraft mc) {
 		if (mc.player == null || mc.level == null || mc.gameMode == null || mc.player.isSpectator() || mc.player.isPassenger()) return false;
 		if (ClientSoul.isOut()) return false; // a projected soul's right-click is for possessing
+		if (ClientGhosts.lingeringSoul(mc.player)) return false; // and a nascent soul's lingering after its death (Lingering)
 		HitResult hit = mc.hitResult;
 		if (hit != null && hit.getType() == HitResult.Type.ENTITY) return false; // within arm's length: vanilla's interaction
 		Vec3 eye = mc.player.getEyePosition();
 		Vec3 look = mc.player.getViewVector(1.0f);
 		Vec3 end = eye.add(look.scale(TalkSystem.REACH));
 		AABB box = mc.player.getBoundingBox().expandTowards(look.scale(TalkSystem.REACH)).inflate(1.0);
+		// Only one the crosshair could pick: never a body set aside by the soul in it (CultivatorNpc#isPickable), which stands where its soul
+		// does and so was found at once, the click spent on it ("doesn't seem to hear you") and no block or item ever used (the user's
+		// report, 2026-11-16: possessing, a right-click tried to talk to the body one was in).
 		EntityHitResult found = ProjectileUtil.getEntityHitResult(mc.player, eye, end, box,
-				entity -> entity instanceof CultivatorNpc && entity.isAlive() && !entity.isSpectator(), TalkSystem.REACH * TalkSystem.REACH);
+				entity -> entity instanceof CultivatorNpc && entity.isAlive() && !entity.isSpectator() && entity.isPickable(), TalkSystem.REACH * TalkSystem.REACH);
 		if (found == null) return false;
 		// Something solid nearer than it (a wall, the block being looked at) takes the click instead.
 		if (hit != null && hit.getType() == HitResult.Type.BLOCK && hit.getLocation().distanceToSqr(eye) < found.getLocation().distanceToSqr(eye)) return false;

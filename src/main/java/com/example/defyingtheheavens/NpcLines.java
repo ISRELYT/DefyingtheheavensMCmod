@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 
 import java.util.ArrayList;
@@ -48,6 +49,20 @@ public final class NpcLines {
 		if (!LINES.containsKey(key) && npc.isMortal()) key = situation + ".neutral";
 		return line(key, npc.getRandom(), args);
 	}
+
+	/**
+	 * {@code situation} in {@code npc}'s voice, said to {@code listener}: one of the dead speaking to one of the dead uses its own words for
+	 * it where it has them (a "ghost_dead" line: no warmth, breath or heartbeat in it), else it speaks as to anyone ({@link #line}).
+	 */
+	public static Component lineTo(String situation, CultivatorNpc npc, ServerPlayer listener, Object... args) {
+		if (listener != null && npc.isGhost() && GhostSystem.isGhost(listener) && LINES.containsKey(situation + "." + DEAD_TO_DEAD)) {
+			return line(situation + "." + DEAD_TO_DEAD, npc.getRandom(), args);
+		}
+		return line(situation, npc, args);
+	}
+
+	/** The voice the dead speak in to one of the dead ({@link #lineTo}): "ghost_dead". */
+	public static final String DEAD_TO_DEAD = "ghost_dead";
 
 	/** Whether there is a line {@code situation} in {@code npc}'s voice. */
 	public static boolean has(String situation, CultivatorNpc npc) {
@@ -669,6 +684,19 @@ public final class NpcLines {
 		lines("pass.fruit.ghost", "That fruit is alive. I can hear it breathing.", "Put it away. Hunger never dies down here.");
 		lines("pass.living.ghost", "You're warm. You're so warm.", "Your heart is still beating. Go home before it stops.",
 				"The yin is in you already. I can see it on your breath.", "The living should not linger by the Springs.");
+		// The dead to one of the dead (lineTo, NpcAddress#address): their own words for it, with no warmth, breath or heartbeat in them (the
+		// user's report, 2026-11-16: the wardens and Meng Po called one long dead "still warm"). Their placeholders as the lines they stand for.
+		lines("talk.greet.mortal.ghost_dead", "Newly dead, %1$s? The cold takes some getting used to.", "Greetings, %1$s. Your thread was cut short, then.");
+		lines("talk.greet.senior.ghost_dead", "This soul greets %1$s.", "Even among the dead you stand tall, %1$s.");
+		lines("talk.greet.liked.esteemed.ghost_dead", "The dead are glad of your return, %1$s.", "Even here your soul burns bright, %1$s.");
+		lines("talk.greet.liked.mortal.ghost_dead", "%2$s. You found your way down. I'm glad of the company.", "Ah, %2$s. Sit by the lantern a while.");
+		lines("talk.ask.mortal.ghost_dead", "What would one so newly dead want to know? Ask, %1$s.", "Ask, %1$s. We have nothing but time.");
+		lines("pass.mortal.ghost_dead", "A new face among the lanterns.", "Mind the cold, %1$s. It never lets go.", "Stay close to the lanterns, little shade.",
+				"You still smell of rice and rain. I miss rain.");
+		lines("pass.flying.ghost_dead", "You float like one of us, %1$s.", "From up there, %1$s, the lanterns must look like stars.");
+		lines("pass.meditating.ghost_dead", "Still as the dead, %1$s. You learn quickly.", "Drink in the yin, %1$s. Slowly.", "Shh. Let them sink.");
+		lines("pass.disliked.ghost_dead", "You again. The dead have long memories.", "Go on, %s. Even dead, you walk past us.",
+				"I counted your steps last time, %s. I'm counting again.");
 		lines("spar.begin.ghost", "%s. Shall we see what death left us?", "Fight me, %s. I want to remember how.");
 		lines("spar.win.ghost", "You flicker, %s. Hold yourself together.", "Again tomorrow, %s. We have nothing but tomorrows.");
 		lines("spar.lose.ghost", "I yield, %s. I came apart a little.", "Well struck, %s. It almost hurt.");

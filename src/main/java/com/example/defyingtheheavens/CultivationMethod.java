@@ -6,10 +6,11 @@ import net.minecraft.network.chat.Component;
  * The methods of cultivation (the user's overhaul, 2026-10-31: "you need a method to cultivate at all"): HOW a path gathers, apart from
  * the arts its scriptures, foundations and blood teach. A method comes in volumes, one a realm, across its own realms ({@link #first} to
  * {@link #last}, never Four Axis), and a path gathers only in a realm whose volume it holds (CultivationMethods#hasVolume). Each path
- * cultivates by one at a time (CultivationMethods#practised): its orthodox method ({@link #orthodox}), whose volumes are in what the path is
- * taught (the heaven scriptures, the ghost foundations, the blood), or another, learned from a Method Manual (MethodManualItem). Switching
- * costs the path its stages in its realm, never the realm (CultivationMethods#practise). At Four Axis the four axes are everyone's method
- * ({@link #FOUR_AXES}, FourAxis#fillBars).
+ * cultivates by one at a time (CultivationMethods#practised): its orthodox method ({@link #orthodox}) or another. Every method is learned from
+ * a Method Manual (MethodManualItem), a stele or a teacher (the user's ask, 2026-11-16: "have all methods come from method manuals"; the heaven
+ * scriptures and ghost foundations are arts now, carrying no volumes), but the two the body holds itself: the Demon Path's in its blood, the
+ * Body Path's in the body. Switching costs the path its stages in its realm, never the realm (CultivationMethods#practise). At Four Axis the
+ * four axes are everyone's method ({@link #FOUR_AXES}, FourAxis#fillBars).
  * <p>
  * <b>Talent.</b> Talent divides the years a gain costs (Lifespan#seclusionYears), and a method's {@link Weight} says how much of it does:
  * the whole (the orthodox ways and Turtle Breath: the geniuses' road), its square root, or none; and every method costs its own share of
@@ -39,6 +40,11 @@ import net.minecraft.network.chat.Component;
  * vessels, the Shore of Nirvana, the springs, the Wheel, ghosts slain; the Body Path's bath, beasts' blood, weights and spars).
  */
 public enum CultivationMethod {
+	/**
+	 * The heaven path's orthodox way: the heavens' qi drawn in by meditation, its volumes in its own Method Manual (2026-11-16; the heaven
+	 * scriptures carried them before), plain: no arts in it. It runs by the element of the art it follows (HeavenMethods#cultivationFactor),
+	 * at the plain pace with none.
+	 */
 	QI_CIRCULATION("qi_circulation", TwoPaths.Path.HEAVEN, Realm.QI_REFINING, Realm.TRUE_IMMORTAL, Weight.FULL, 1.0, true),
 	/** At a Heaven Altar, at the right hour, a quarter of the stage a rite (HeavenRites). Every path's leave is the first volume. */
 	HEAVEN_RITES("heaven_rites", TwoPaths.Path.HEAVEN, Realm.QI_REFINING, Realm.HEAVENLY_BEING, Weight.NONE, 1 / 16.0, false),
@@ -46,6 +52,7 @@ public enum CultivationMethod {
 	TURTLE_BREATH("turtle_breath", TwoPaths.Path.HEAVEN, Realm.FOUNDATION_BUILDING, Realm.SACRED_VESSEL, Weight.FULL, 1 / 3.0, true),
 	/** The Heavenly Thunder Body's alone, known from birth: lightning called down on oneself (ThunderTempering). */
 	THUNDER_TEMPERING("thunder_tempering", TwoPaths.Path.HEAVEN, Realm.CORE_FORMATION, Realm.TRUE_IMMORTAL, Weight.HALF, 1 / 12.0, false),
+	/** The ghost path's orthodox way: ghostly qi drawn in by meditation, its volumes in its own Method Manual (2026-11-16; the foundations carried them before). */
 	NETHERWORLD_BREATHING("netherworld_breathing", TwoPaths.Path.GHOST, Realm.QI_REFINING, Realm.TRUE_IMMORTAL, Weight.FULL, 1.0, true),
 	/** A corpse's yin drawn out, once a corpse (CorpseYin). */
 	CORPSE_YIN("corpse_yin", TwoPaths.Path.GHOST, Realm.QI_REFINING, Realm.HEAVENLY_BEING, Weight.HALF, 1 / 12.0, false),
@@ -187,14 +194,28 @@ public enum CultivationMethod {
 		return realm.ordinal() >= first.ordinal() && realm.ordinal() <= last.ordinal();
 	}
 
-	/** One of the four orthodox methods, whose volumes are in what its path is taught (the Body Path's in the body itself). */
+	/**
+	 * One of the four orthodox methods, each path's own and the geniuses' road: Qi Circulation's and Netherworld Breathing's volumes in their own
+	 * manuals (since 2026-11-16), the Demon Path's in the blood, the Body Path's in the body itself.
+	 */
 	public boolean isOrthodox() {
 		return this == QI_CIRCULATION || this == NETHERWORLD_BREATHING || this == BLOODLINE_PURIFICATION || this == BODY_TEMPERING;
 	}
 
-	/** Learned from a Method Manual (not orthodox, not the axes, not the Heavenly Thunder Body's own). */
+	/**
+	 * Learned from a Method Manual (or a stele, a teacher): every method (the user's ask, 2026-11-16: "have all methods come from method manuals"),
+	 * Qi Circulation and Netherworld Breathing among them, but the two the body holds itself (Bloodline Purification, Body Tempering), the axes and
+	 * the Heavenly Thunder Body's own.
+	 */
 	public boolean fromManual() {
-		return !isOrthodox() && this != FOUR_AXES && this != THUNDER_TEMPERING;
+		return this != BLOODLINE_PURIFICATION && this != BODY_TEMPERING && this != FOUR_AXES && this != THUNDER_TEMPERING;
+	}
+
+	/** The realm a manual of it written to {@code realm} holds volumes to: within its own realms, Four Axis's none (the one before), past True Immortal its last. */
+	public Realm volumeFor(Realm realm) {
+		if (realm.isPastTrueImmortal()) realm = Realm.TRUE_IMMORTAL;
+		if (realm == Realm.FOUR_AXIS) realm = Realm.HEAVENLY_BEING;
+		return Realm.byIndex(Math.max(first.ordinal(), Math.min(last.ordinal(), realm.ordinal())));
 	}
 
 	public Component getDisplayName() { return Component.translatable(ModLang.cultivationMethodKey(id)); }

@@ -41,15 +41,16 @@ public final class MeditationManager {
 		/** Begun in the air, held up by flight ({@link #steady}). */
 		boolean airborne;
 
-		// The ghost methods (see GhostMethods): the Method Steles near, re-read every few seconds; seconds spent by the stele of
-		// each method not yet known.
-		java.util.Set<GhostMethod> stelesNear = java.util.EnumSet.noneOf(GhostMethod.class);
-		java.util.Set<GhostMethod> stelesInReach = java.util.EnumSet.noneOf(GhostMethod.class);
-		final Map<GhostMethod, Double> steleSeconds = new java.util.EnumMap<>(GhostMethod.class);
-		// The heaven methods (see HeavenMethods), the same way: the Dao Steles near, and seconds by each.
-		java.util.Set<HeavenMethod> daoStelesNear = java.util.EnumSet.noneOf(HeavenMethod.class);
-		java.util.Set<HeavenMethod> daoStelesInReach = java.util.EnumSet.noneOf(HeavenMethod.class);
-		final Map<HeavenMethod, Double> daoSteleSeconds = new java.util.EnumMap<>(HeavenMethod.class);
+		// The steles (SteleTeachings, Dao Steles and Method Steles alike since 2026-11-16): what those in reach to learn from teach, and those
+		// near enough to quicken, re-read every few seconds; seconds spent by each not yet held (-infinity: refused, told once).
+		java.util.Set<SteleTeachings.Teaching> stelesInReach = java.util.Set.of(), stelesNear = java.util.Set.of();
+		final Map<SteleTeachings.Teaching, Double> steleSeconds = new java.util.HashMap<>();
+
+		/** Whether a stele near teaches {@code method} (a path practising it gathers SteleTeachings#BONUS times as fast). */
+		boolean steleNear(CultivationMethod method) {
+			for (SteleTeachings.Teaching teaching : stelesNear) if (teaching.method() == method) return true;
+			return false;
+		}
 
 		Session(double x, double y, double z) {
 			this.x = x;
@@ -371,6 +372,9 @@ public final class MeditationManager {
 			if (InnerRealm.isInside(p)) sendBodyPlace(p, session);
 		}
 		if (session.ticks >= BOOST_ANNOUNCE_DELAY) announceBoost(p, session);
+		// The steles near, whatever the meditation draws in (the user's ask, 2026-11-16: "you dont need to be drawing in from that path for
+		// steles to work"): a mortal's too, which learns only what its sealed meridians allow (told why not).
+		if (tick % 10 == 0) readSteles(p, session, tick);
 		if (c.isMortal()) { // no qi to circulate: blood instead, tempering the Body Path (BodyPath), or Shattered Meridians' mortal body below Peak
 			if (tick % 10 == 0) {
 				if (TwoPaths.cultivatesBody(c)) bodyPath(p, c, session);
@@ -393,8 +397,8 @@ public final class MeditationManager {
 		}
 
 		// A meditation draws in one qi or the other, never both (TwoPaths#cultivatesGhost: the Cultivation tab's switch; the dead's
-		// always the ghost path's): the ghost path's as often, its steles read either way (ghostMethods); the heaven path's below. A
-		// living Primordial Chaos Body draws in both at once, each at its full pace (Physique).
+		// always the ghost path's): the ghost path's as often (ghostMethods); the heaven path's below. A living Primordial Chaos Body draws
+		// in both at once, each at its full pace (Physique).
 		if (tick % 10 == 0) ghostMethods(p, c, session, tick);
 		boolean ghostQi = TwoPaths.cultivatesGhost(c);
 		// The Demon Path drawn in (TwoPaths#cultivatesDemon: the switch), the heaven path rests.
@@ -404,8 +408,6 @@ public final class MeditationManager {
 		boolean bodyBlood = TwoPaths.cultivatesBody(c);
 		if (tick % 10 == 0 && bodyBlood) bodyPath(p, c, session);
 		boolean heavenQi = !GhostSystem.isGhost(p) && !demonQi && !bodyBlood && (!ghostQi || drawsBoth(p, c));
-		// Drawing in ghostly qi only, a Dao Stele still teaches the living what it carves (learning isn't cultivating).
-		if (tick % 10 == 0 && ghostQi && !heavenQi && HeavenMethods.canLearn(c)) learnFromDaoSteles(p, c, session, tick);
 		// Gain cultivation twice a second so the menu bar moves smoothly. The dead's meditation feeds only their ghost path.
 		if (tick % 10 == 0 && heavenQi) {
 			boolean wasBottleneck = c.isAtBottleneck();
@@ -592,34 +594,24 @@ public final class MeditationManager {
 	}
 
 	private static void ghostMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick) {
-		if (c.isMortal()) return; // a mortal's meridians are closed: nothing learned, nothing cultivated (it can't sit down to it either)
+		if (c.isMortal()) return; // a mortal's meridians are closed: nothing cultivated (it can't sit down to it either)
 		NetherworldState s = c.netherworld();
-		if (tick % 40 == 0 || session.ticks <= 10) {
-			session.stelesInReach = stelesWithin(p, GhostMethods.STELE_LEARN_RADIUS);
-			session.stelesNear = stelesWithin(p, GhostMethods.STELE_BONUS_RADIUS);
-		}
-		for (GhostMethod method : session.stelesInReach) {
-			if (s.knows(method) || !GhostMethods.canLearn(c, method) || !method.taughtInTheWorld()) continue; // one carved before the rule unread
-			double seconds = session.steleSeconds.merge(method, 0.5, Double::sum);
-			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_STELE_READING, method.getDisplayName()), true);
-			if (seconds >= GhostMethods.STELE_LEARN_SECONDS) {
-				session.steleSeconds.remove(method);
-				GhostMethods.learn(p, method);
-			}
-		}
 		boolean both = drawsBoth(p, c) && GhostMethods.ghostRank(s) >= 0; // a Primordial Chaos Body's ghost path, begun, drawn in too
 		if (!TwoPaths.cultivatesGhost(c) && !both || s.density() <= 0) return;
-		// One of the dead with no foundation is taught Netherworld Breathing, which begins the path (GhostMethods#teachTheDead: at the
-		// Ghost Gate, and here for a world saved before 2026-10-31, when the dead began it with none); the path is kept if born again. The
-		// living begin it with a foundation learned (GhostMethods#give).
-		if (s.ghost() && GhostMethods.deepestFoundation(s) == null) GhostMethods.teachTheDead(p);
+		// One of the dead without Netherworld Breathing or its art is taught them, which begins the path (GhostMethods#teachTheDead: at the
+		// Ghost Gate, and here for a world saved before, when the dead began it with none); the path is kept if born again. The living begin it
+		// with a ghost art or a ghost-path method learned (GhostMethods#give, CultivationMethods#learn).
+		if (s.ghost() && (GhostMethods.deepestFoundation(s) == null || !CultivationMethods.knows(c, CultivationMethod.NETHERWORLD_BREATHING))) {
+			GhostMethods.teachTheDead(p);
+		}
 		if (GhostMethods.ghostRank(s) < 0) return;
-		GhostMethod active = s.activeMethod();
 		CultivationMethod method = CultivationMethods.practised(c, TwoPaths.Path.GHOST);
+		// A stele of the method practised near (SteleTeachings): faster, and its years the fewer.
+		boolean stele = session.steleNear(method);
 		// A Yin-Gathering Formation thickens the yin about it, for Netherworld Breathing alone (GatheringFormations): faster, its years as they were.
 		double formation = method == CultivationMethod.NETHERWORLD_BREATHING ? GatheringFormations.factor(p, GatheringFormations.Kind.YIN) : 1.0;
 		double steady = GhostMethods.ratePerSecond(c, s.density()) * formation * circulationMultiplier(session, session.ticks)
-				* (active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0)
+				* (stele ? SteleTeachings.BONUS : 1.0)
 				* (1 + (p.hasEffect(ModEffects.YIN_GATHERING) ? s.methodBoost() : 0)) // a Yin Gathering Pill
 				* (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0) // turned inward, as the heaven path is (the body's ghostly qi)
 				* Possession.guidance(p); // a soul in another's body, by how far it stands above it
@@ -637,8 +629,7 @@ public final class MeditationManager {
 		double was = s.pathCultivation();
 		boolean wasBottleneck = GhostMethods.atBottleneck(c);
 		// No method, no gain: without the volume of the path's realm in the method practised (CultivationMethods#whyNoGain; at Four Axis
-		// the axes fill it; Corpse Yin Refining its own way) the bar gains nothing, though the foundations' layers behind the path still
-		// settle in on what is drawn.
+		// the axes fill it; Corpse Yin Refining its own way) the bar gains nothing.
 		Component why = CultivationMethods.whyNoGain(p, c, TwoPaths.Path.GHOST);
 		boolean gains = why == null;
 		if (!gains) tellNoGain(p, TwoPaths.Path.GHOST, GhostMethods.ghostRealm(s), why);
@@ -646,9 +637,8 @@ public final class MeditationManager {
 		// What it won costs years, as the heaven path's does (Lifespan#seclude: the talent race): its boost, its method's stele, the
 		// denser yin of the Peaks and the Great Void's battlefields, and a stone in hand saving them.
 		Lifespan.seclude(p, before, was, GhostMethods.ghostRank(s), s.pathCultivation(), GhostMethods::required,
-				Lifespan.saving(yearsBoost(p, session), active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0,
+				Lifespan.saving(yearsBoost(p, session), stele ? SteleTeachings.BONUS : 1.0,
 						Lifespan.ghostPlaceSaving(s.density()), SpiritStoneItem.meditationMultiplier(p)), gained <= 0 ? 0 : 1 - bonus / gained, method);
-		boolean settled = GhostMethods.meditate(p, gained, session.stelesNear);
 		if (stages > 0) {
 			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.7f);
 			GhostMethods.afterRank(p, before); // told, the body refreshed
@@ -662,15 +652,13 @@ public final class MeditationManager {
 					: Component.translatable(ModLang.MSG_GHOST_BOTTLENECK).withStyle(net.minecraft.ChatFormatting.AQUA));
 		}
 		CultivationManager.markDirty(p.server);
-		if (tick % 20 == 0 || stages > 0 || settled) Spells.sync(p); // the Cultivation tab's ghost bar, the Methods tab's layers
+		if (tick % 20 == 0 || stages > 0) Spells.sync(p); // the Cultivation tab's ghost bar
 	}
 
 	/**
-	 * Half a second of the heaven methods (see HeavenMethods), the living's: by a Dao Stele of a method not yet known, a step toward
-	 * learning it; the layers of every method known that lag behind the realm settle in on the cultivation {@code gathered} this half
-	 * second (every boost to meditation in it) by their own elements' share of the qi here, the {@code refined} pill and fruit qi on
-	 * top (HeavenMethods#meditate). Returns what {@code gathered} is multiplied by for the cultivation bar: the method practised's
-	 * factor here (by its stele, more: HeavenMethods#cultivationFactor), or a cultivator's with none, who is told so once a login.
+	 * Half a second of the heaven path's method and arts (see HeavenMethods), the living's. Returns what {@code gathered} is multiplied by for
+	 * the cultivation bar: Qi Circulation run by the art it follows, by that art's element's share of the qi here (HeavenMethods#cultivationFactor;
+	 * with no art, the plain pace), and by a stele of the method practised near (SteleTeachings); one gathering nothing is told why once a login.
 	 */
 	private static double heavenMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick, double gathered, double refined) {
 		if (!HeavenMethods.canLearn(c)) {
@@ -678,27 +666,50 @@ public final class MeditationManager {
 			return HeavenMethods.cultivationFactor(c, null, 0, false);
 		}
 		HeavenState s = c.heaven();
-		learnFromDaoSteles(p, c, session, tick);
-		java.util.Set<QiElement> byStele = java.util.EnumSet.noneOf(QiElement.class);
-		for (HeavenMethod near : session.daoStelesNear) byStele.add(near.element());
 		HeavenMethod practised = HeavenMethods.practised(s);
-		// Meditation gathering nothing here (CultivationMethods#whyNoGain): no scripture at all, no volume of the realm in the method
+		// Meditation gathering nothing here (CultivationMethods#whyNoGain): no Qi Circulation at all, no volume of the realm in the method
 		// practised, Four Axis's axes, a method of its own way, Turtle Breath out of seclusion.
 		Component why = CultivationMethods.whyNoGain(p, c, TwoPaths.Path.HEAVEN);
 		if (why != null && !c.isSuppressed()) tellNoGain(p, TwoPaths.Path.HEAVEN, c.getRealm(), why);
-		boolean settling = false;
-		for (HeavenMethod method : s.known()) settling |= HeavenMethods.settling(c, method);
-		if (settling) {
-			boolean settled = HeavenMethods.meditate(p, gathered, refined, byStele);
-			CultivationManager.markDirty(p.server);
-			if (tick % 20 == 0 && !settled) Spells.sync(p); // the Methods tab's bars (a layer settled has synced already)
-		}
 		double share = practised == null ? 0 : HeavenMethods.shareAt(p, practised.element());
-		boolean stele = practised != null && byStele.contains(practised.element());
-		// What the method saves of the years (Lifespan#saving, the user's call, 2026-10-22): its own part of the gain, by its element's
+		boolean stele = session.steleNear(CultivationMethods.practised(c, TwoPaths.Path.HEAVEN));
+		// What the method saves of the years (Lifespan#saving, the user's call, 2026-10-22): its own part of the gain, by its art's element's
 		// share of the qi here and its stele (not a pill's nor the clothing's part).
-		session.methodSaving = practised == null ? 1 : HeavenMethods.elementFactor(share) * (stele ? HeavenMethods.STELE_BONUS : 1);
+		session.methodSaving = (practised == null ? 1 : HeavenMethods.elementFactor(share)) * (stele ? SteleTeachings.BONUS : 1);
 		return HeavenMethods.cultivationFactor(c, practised, share, stele);
+	}
+
+	/**
+	 * Half a second by the steles in reach (SteleTeachings, Dao and Method Steles alike), whatever the meditation draws in: a step toward each
+	 * method one doesn't yet hold as far as its stele takes it; {@link SteleTeachings#LEARN_SECONDS} learns it (CultivationMethods#learn). One
+	 * barred from it (a mortal's meridians, a body born against it, a path not begun) is told why once, and reads on no further.
+	 */
+	private static void readSteles(ServerPlayer p, Session session, int tick) {
+		if (tick % 40 == 0 || session.ticks <= 10) {
+			session.stelesInReach = SteleTeachings.within(p, SteleTeachings.LEARN_RADIUS);
+			session.stelesNear = SteleTeachings.within(p, SteleTeachings.BONUS_RADIUS);
+		}
+		PlayerCultivation own = CultivationManager.own(p); // a soul in another's body learns for itself
+		// The reads come on the server's own tens of ticks: the first, up to half a second after sitting down, counts nothing yet, so the
+		// seventh second sat is the one that teaches (never sooner).
+		if (session.ticks < 10) return;
+		for (SteleTeachings.Teaching teaching : session.stelesInReach) {
+			if (SteleTeachings.holds(own, teaching)) continue;
+			double seconds = session.steleSeconds.merge(teaching, 0.5, Double::sum);
+			if (seconds == 0.5) {
+				Component refusal = CultivationMethods.refusal(own, teaching.method());
+				if (refusal != null) {
+					p.displayClientMessage(refusal.copy().withStyle(net.minecraft.ChatFormatting.GRAY), true);
+					session.steleSeconds.put(teaching, Double.NEGATIVE_INFINITY); // told once
+					continue;
+				}
+				p.displayClientMessage(Component.translatable(ModLang.MSG_STELE_READING, teaching.method().getDisplayName()), true);
+			}
+			if (seconds >= SteleTeachings.LEARN_SECONDS) {
+				session.steleSeconds.remove(teaching);
+				CultivationMethods.learn(p, teaching.method(), teaching.realm(), false);
+			}
+		}
 	}
 
 	/**
@@ -710,50 +721,6 @@ public final class MeditationManager {
 		p.sendSystemMessage(line.copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 	}
 
-	/** Half a second by the Dao Steles in reach: a step toward learning each heaven method not yet known that one's roots can read. */
-	private static void learnFromDaoSteles(ServerPlayer p, PlayerCultivation c, Session session, int tick) {
-		HeavenState s = c.heaven();
-		if (tick % 40 == 0 || session.ticks <= 10) {
-			session.daoStelesInReach = daoStelesWithin(p, HeavenMethods.STELE_LEARN_RADIUS);
-			session.daoStelesNear = daoStelesWithin(p, HeavenMethods.STELE_BONUS_RADIUS);
-		}
-		for (HeavenMethod method : session.daoStelesInReach) {
-			// Roots of other elements can't read it (Physique); nor anyone a True Immortal method carved before the worlds stopped teaching them.
-			if (s.knows(method) || !c.rootsAllow(method.element()) || !method.realm().taughtInTheWorld()) continue;
-			double seconds = session.daoSteleSeconds.merge(method, 0.5, Double::sum);
-			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_DAO_STELE_READING, method.getDisplayName()), true);
-			if (seconds >= HeavenMethods.STELE_LEARN_SECONDS) {
-				session.daoSteleSeconds.remove(method);
-				HeavenMethods.learn(p, method);
-			}
-		}
-	}
-
-	/** The heaven methods whose Dao Steles stand within {@code radius} of {@code p} (by their middle stone). */
-	private static java.util.Set<HeavenMethod> daoStelesWithin(ServerPlayer p, double radius) {
-		java.util.Set<HeavenMethod> found = java.util.EnumSet.noneOf(HeavenMethod.class);
-		int r = (int) Math.ceil(radius);
-		net.minecraft.core.BlockPos at = p.blockPosition();
-		for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(at.offset(-r, -2, -r), at.offset(r, 3, r))) {
-			var state = p.level().getBlockState(pos);
-			if (!state.is(ModBlocks.DAO_STELE) || state.getValue(DaoSteleBlock.PART) != MethodSteleBlock.Part.MIDDLE) continue;
-			if (pos.distToCenterSqr(p.getX(), p.getY() + 1, p.getZ()) <= radius * radius) found.add(state.getValue(DaoSteleBlock.METHOD));
-		}
-		return found;
-	}
-
-	/** The methods whose steles stand within {@code radius} of {@code p} (by their middle stone). */
-	private static java.util.Set<GhostMethod> stelesWithin(ServerPlayer p, double radius) {
-		java.util.Set<GhostMethod> found = java.util.EnumSet.noneOf(GhostMethod.class);
-		int r = (int) Math.ceil(radius);
-		net.minecraft.core.BlockPos at = p.blockPosition();
-		for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(at.offset(-r, -2, -r), at.offset(r, 3, r))) {
-			var state = p.level().getBlockState(pos);
-			if (!state.is(ModBlocks.METHOD_STELE) || state.getValue(MethodSteleBlock.PART) != MethodSteleBlock.Part.MIDDLE) continue;
-			if (pos.distToCenterSqr(p.getX(), p.getY() + 1, p.getZ()) <= radius * radius) found.add(state.getValue(MethodSteleBlock.METHOD));
-		}
-		return found;
-	}
 
 	/**
 	 * Tells the player what their surroundings add whenever it changes (sitting down with a boost, a fruit set on a

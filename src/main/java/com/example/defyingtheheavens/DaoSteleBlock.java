@@ -22,10 +22,10 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A Dao Stele (道碑): a tall tablet of pale stone, three blocks high, carved with one heaven method and standing where its
- * element's qi runs thick (DaoSteleFeature): meditating beside it for 15 seconds teaches the method (HeavenMethods), and beside a
- * stele of the element one practises, meditation on it goes faster. Unbreakable; a touch tells what it teaches. Shaped as a
- * Method Stele is (MethodSteleBlock, whose parts it shares).
+ * A Dao Stele (道碑): a tall tablet of pale stone, three blocks high, carved after one heaven art (its look, its element's heart-stone, and the
+ * realm of what it teaches) and standing where its element's qi runs thick (DaoSteleFeature). Since 2026-11-16 it teaches a method, any a manual
+ * holds, drawn by its place (SteleTeachings): a touch tells which, its path and its volumes; meditating beside it for 7 seconds teaches it, and
+ * beside it a path practising that method gathers faster. Unbreakable. Shaped as a Method Stele is (MethodSteleBlock, whose parts it shares).
  */
 public class DaoSteleBlock extends HorizontalDirectionalBlock {
 	public static final EnumProperty<HeavenMethod> METHOD = EnumProperty.create("method", HeavenMethod.class);
@@ -65,17 +65,8 @@ public class DaoSteleBlock extends HorizontalDirectionalBlock {
 	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
 		if (level.isClientSide) return InteractionResult.SUCCESS;
-		if (player instanceof ServerPlayer sp) {
-			HeavenMethod method = state.getValue(METHOD);
-			// One carved before True Immortal's were kept for the Immortal Realm (Realm#taughtInTheWorld) can't be read.
-			if (!method.realm().taughtInTheWorld()) {
-				sp.displayClientMessage(Component.translatable(ModLang.MSG_STELE_SEALED, method.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
-				return InteractionResult.CONSUME;
-			}
-			boolean known = CultivationManager.get(sp).heaven().knows(method);
-			sp.displayClientMessage(Component.translatable(known ? ModLang.MSG_DAO_STELE_KNOWN : ModLang.MSG_DAO_STELE_TEACHES, method.getDisplayName(),
-					method.element().getDisplayName(), method.realm().getDisplayName()).withStyle(ChatFormatting.GOLD), true);
-		}
+		// What it teaches, its path and volumes, and where the toucher stands with it (one carved too deep for this world can't be read).
+		if (player instanceof ServerPlayer sp) SteleTeachings.tell(sp, state, pos);
 		return InteractionResult.CONSUME;
 	}
 }

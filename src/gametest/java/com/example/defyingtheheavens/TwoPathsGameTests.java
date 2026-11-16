@@ -81,12 +81,16 @@ public class TwoPathsGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
-	/** {@link #ghostPath} for a bare cultivation, no player: the foundations to the realm's own known, deeper ones not. */
+	/**
+	 * {@link #ghostPath} for a bare cultivation, no player: the foundations to the realm's own known, deeper ones not, and Netherworld
+	 * Breathing's volumes to it (its own manuals' since 2026-11-16; before, the foundations carried them).
+	 */
 	private static void ghostPath(PlayerCultivation c, Realm realm, Stage stage) {
 		NetherworldState s = c.netherworld();
 		for (GhostMethod method : GhostMethod.values()) {
 			if (method.isFoundation()) s.setMethod(method, method.realm().ordinal() <= realm.ordinal() ? 1 : 0, 0);
 		}
+		c.raiseReach(CultivationMethod.NETHERWORLD_BREATHING, CultivationMethod.NETHERWORLD_BREATHING.volumeFor(realm));
 		GhostMethods.setPath(s, PlayerCultivation.rank(realm, stage));
 	}
 
@@ -109,7 +113,7 @@ public class TwoPathsGameTests implements FabricGameTest {
 		helper.assertTrue(!s.cultivatingGhost(), "...and no turning to a ghost path not begun");
 		ghostPath(player, Realm.QI_REFINING, Stage.EARLY);
 		helper.assertTrue(TwoPaths.walksBoth(c) && !TwoPaths.cultivatesGhost(c), "On both paths, the heaven path's qi until switched");
-		c.heaven().setMethod(HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING), 2, 0); // a scripture to gather by (no method, no gain: 2026-10-31)
+		c.raiseReach(CultivationMethod.QI_CIRCULATION, Realm.QI_REFINING); // Qi Circulation's first volume to gather by (no method, no gain: 2026-10-31)
 		player.setOnGround(true);
 		MeditationManager.start(player);
 		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "Sat down to meditate");

@@ -135,7 +135,9 @@
       "com.example.defyingtheheavens.SectListGameTests",
       "com.example.defyingtheheavens.PersonalDiscipleGameTests",
       "com.example.defyingtheheavens.SectErrandsGameTests",
-      "com.example.defyingtheheavens.SpellMightGameTests"
+      "com.example.defyingtheheavens.SpellMightGameTests",
+      "com.example.defyingtheheavens.LingeringGameTests",
+      "com.example.defyingtheheavens.ManualsGameTests"
     ]
   }
 }

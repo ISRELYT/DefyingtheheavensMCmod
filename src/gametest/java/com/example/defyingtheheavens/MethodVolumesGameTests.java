@@ -52,16 +52,19 @@ public class MethodVolumesGameTests implements FabricGameTest {
 		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING);
 		s.setMethod(fire, fire.layers(), 0);
 		s.setActiveMethod(fire);
+		c.raiseReach(CultivationMethod.QI_CIRCULATION, Realm.QI_REFINING);
 		c.setMedicinalQi(50);
 		helper.assertTrue(!HeavenMethods.canGain(c) && HeavenMethods.canGain(withRealm(c, Realm.QI_REFINING)),
-				"Broken into Foundation Building with a Qi Refining scripture alone: no volume of it");
+				"Broken into Foundation Building with Qi Circulation's Qi Refining volume alone: no volume of it");
 		MeditationManager.start(player);
 		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "It sits down to meditate all the same");
 		helper.runAfterDelay(40, () -> {
 			helper.assertTrue(c.getCultivation() == 0 && near(c.getMedicinalQi(), 50),
 					"Nothing gathered, and the pill's qi waits unrefined (" + c.getCultivation() + ", " + c.getMedicinalQi() + ")");
 			HeavenMethods.give(player, HeavenMethod.of(QiElement.WOOD, Realm.FOUNDATION_BUILDING));
-			helper.assertTrue(HeavenMethods.canGain(c), "A Foundation Building scripture of any element carries its volume");
+			helper.assertTrue(!HeavenMethods.canGain(c), "A Foundation Building scripture carries no volume (since 2026-11-16 it is arts alone)");
+			CultivationMethods.teach(player, CultivationMethod.QI_CIRCULATION, Realm.FOUNDATION_BUILDING);
+			helper.assertTrue(HeavenMethods.canGain(c), "Qi Circulation's Foundation Building volume does");
 		});
 		helper.runAfterDelay(80, () -> {
 			try {
@@ -86,16 +89,19 @@ public class MethodVolumesGameTests implements FabricGameTest {
 		ServerPlayer player = sitter(helper);
 		PlayerCultivation c = CultivationManager.get(player);
 		NetherworldState s = c.netherworld();
-		GhostSystem.makeGhost(player); // taught Netherworld Breathing
+		GhostSystem.makeGhost(player); // taught Netherworld Breathing's first volume and the Breathing Art
 		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY));
 		s.setDensity(GhostQi.NETHERWORLD);
-		helper.assertTrue(s.knows(GhostMethod.NETHERWORLD_BREATHING) && !GhostMethods.canGain(c) && GhostMethods.opensWay(c, Realm.CORE_FORMATION),
-				"A ghost path in Foundation Building with only the Breathing Art: no volume of it (its way on open all the same)");
+		helper.assertTrue(s.knows(GhostMethod.NETHERWORLD_BREATHING) && c.methodReach(CultivationMethod.NETHERWORLD_BREATHING) == Realm.QI_REFINING.ordinal()
+						&& !GhostMethods.canGain(c) && GhostMethods.opensWay(c, Realm.CORE_FORMATION),
+				"A ghost path in Foundation Building with only Breathing's first volume: no volume of it (its way on open all the same)");
 		MeditationManager.start(player);
 		helper.runAfterDelay(40, () -> {
 			helper.assertTrue(s.pathCultivation() == 0, "The ghost path gathers nothing (" + s.pathCultivation() + ")");
 			GhostMethods.give(player, GhostMethod.YELLOW_SPRINGS_MARROW);
-			helper.assertTrue(GhostMethods.canGain(c), "The Marrow Art carries Foundation Building's volume");
+			helper.assertTrue(!GhostMethods.canGain(c), "The Marrow Art carries no volume (since 2026-11-16 a foundation is arts alone)");
+			CultivationMethods.teach(player, CultivationMethod.NETHERWORLD_BREATHING, Realm.FOUNDATION_BUILDING);
+			helper.assertTrue(GhostMethods.canGain(c), "Breathing's Foundation Building volume does");
 		});
 		helper.runAfterDelay(80, () -> {
 			try {
@@ -144,7 +150,7 @@ public class MethodVolumesGameTests implements FabricGameTest {
 		FourAxis.fillBars(c);
 		helper.assertTrue(c.getCultivation() == 5 && s.pathCultivation() == 7, "Dao Integration's and Heavenly Being's bars untouched");
 		helper.assertTrue(FourAxis.volumeReach(Realm.FOUR_AXIS) == Realm.HEAVENLY_BEING && FourAxis.volumeReach(Realm.DAO_INTEGRATION) == Realm.DAO_INTEGRATION,
-				"A Four Axis scripture's volumes reach Heavenly Being");
+				"Volumes said to reach Four Axis reach Heavenly Being (none has one of Four Axis)");
 		helper.succeed();
 	}
 
@@ -178,11 +184,12 @@ public class MethodVolumesGameTests implements FabricGameTest {
 		npc.becomeRogue(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 0, helper.getLevel().getRandom());
 		try {
 			HeavenMethod own = npc.heavenMethod();
-			helper.assertTrue(own != null && !c.heaven().knowsAny() && !HeavenMethods.canGain(c), "A beginner with no scripture gathers nothing");
+			helper.assertTrue(own != null && !c.heaven().knowsAny() && !HeavenMethods.canGain(c), "A beginner with no method gathers nothing");
 			TalkSystem.teachBasics(player, npc);
 			HeavenMethod basics = HeavenMethod.of(own.element(), Realm.QI_REFINING);
-			helper.assertTrue(c.heaven().knows(basics) && c.heaven().known().size() == 1 && HeavenMethods.canGain(c),
-					"Taught the Qi Refining scripture of the teacher's own element: Qi Circulation's first volume (" + basics.getId() + ")");
+			helper.assertTrue(c.heaven().knows(basics) && c.heaven().known().size() == 1 && HeavenMethods.canGain(c)
+							&& c.methodReach(CultivationMethod.QI_CIRCULATION) == Realm.QI_REFINING.ordinal(),
+					"Taught Qi Circulation's first volume, and the Qi Refining scripture of the teacher's own element (" + basics.getId() + ")");
 			// Roots that can't read the teacher's element are taught the first element they can.
 			QiElement other = own.element() == QiElement.WATER ? QiElement.EARTH : QiElement.WATER;
 			r.setPhysique(Physique.TRUE_ELEMENT_ROOT); // a single root (PhysiqueGameTests#rootsHoldOtherElementsBack)

@@ -379,6 +379,9 @@ public class SectPiece extends StructurePiece {
 		RandomSource manualRandom = rand(x, z, y + 211);
 		if (body && (library || hall)) manuals.addAll(MethodManualItem.keptBody(faction, upper, hall, manualRandom));
 		else if (library || hall) manuals.add(MethodManualItem.kept(faction, race, upper, hall, manualRandom));
+		// And every library of the heaven path's sects its orthodox method's manual (2026-11-16: the arts carry none of Qi Circulation's volumes),
+		// written to one of the realms its world's arts are of (the lower realms' to Core Formation, the Upper Realm's from it to Sacred Vessel).
+		if (library && !body && (race == null || !race.isBeast())) manuals.add(MethodManualItem.circulation(upper, manualRandom));
 		if (level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
 			for (ItemStack manual : manuals) {
 				if (manual.isEmpty()) continue;

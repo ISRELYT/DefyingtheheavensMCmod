@@ -75,6 +75,8 @@ public final class CultivationEvents {
 		// One of the dead in a body by its own possession gives it back first (GhostPossession: a body of the dead lain down, a living one its
 		// owner's again; a projected soul's goes with SoulProjection's, below).
 		GhostPossession.onDisconnect(player);
+		// A soul lingering among the living after its death, logging out: the Netherworld's pull takes it (Lingering), to the Gate on its return.
+		Lingering.onDisconnect(player);
 		CorpseWalk.onDisconnect(player);
 		// One whose body is held doesn't take it with them: it plays on under the soul, and they watch again as they come back (Possession).
 		Possession.onDisconnect(player);
@@ -571,6 +573,8 @@ public final class CultivationEvents {
 				// A death under the lifespan tribulation, of anything, ends the life whole (made anew at the respawn): first, so a
 				// breakthrough's tribulation under way goes with it unremarked.
 				boolean spent = LifespanTribulation.onDeath(sp);
+				// Struck down by the heavens (a tribulation under way, the Five Decays' judgement): soul and body both, nothing lingers (Lingering).
+				boolean byHeaven = TribulationManager.isActive(sp.getUUID()) || FiveDecays.isStriking(sp);
 				TribulationManager.onDeath(sp); // dying mid-tribulation fails the breakthrough
 				Sleeves.onDeath(sp); // those in a sleeve cast out where its bearer fell: before the gap's or a climb's own reckoning
 				SpatialTrialHandler.onDeath(sp); // dying in the Spatial Gap ends the trial
@@ -580,7 +584,7 @@ public final class CultivationEvents {
 				SecretRealms.onDeath(sp); // and in a secret realm: out of it (the body stays sealed in), and the tales tell of it
 				// Bound for the Netherworld (the gamerule on): the respawn will be the Ghost Gate's. Not a spent life's (LifespanTribulation):
 				// it is born again at its own spawn point, a living mortal (the user's ask, 2026-10-20).
-				if (!spent && !source.is(ModDamageTypes.OLD_AGE)) GhostSystem.onDeath(sp);
+				if (!spent && !source.is(ModDamageTypes.OLD_AGE)) GhostSystem.onDeath(sp, source, byHeaven);
 				SoulProjection.onDeath(sp); // nothing of a soul's journey outlives a death
 				Clones.onDeath(sp); // nor a clone: it dissolves where it stands
 				SparSystem.abandon(sp); // killed mid-spar by something else: the spar is forfeit
@@ -639,6 +643,13 @@ public final class CultivationEvents {
 		// A spirit herb used on a water cauldron steeps a Medicinal Bath (MedicinalBath#use), not eaten.
 		UseBlockCallback.EVENT.register(MedicinalBath::use);
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
+			// A nascent soul lingering after its death (Lingering): its one act is to take a body, a person's or a cultivator's (GhostPossession).
+			if (Lingering.isSoul(player)) {
+				if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
+				if (world.isClientSide) return InteractionResult.SUCCESS; // the server decides
+				return player instanceof ServerPlayer sp && entity instanceof net.minecraft.world.entity.LivingEntity living
+						? GhostPossession.enter(sp, living) : InteractionResult.FAIL;
+			}
 			// Nothing to ride or use; only cultivators to talk with, the living and the dead (TalkSystem keeps the talk to what the
 			// dead may do).
 			if (Incorporeal.isRuledGhost(player)) return entity instanceof CultivatorNpc ? InteractionResult.PASS : InteractionResult.FAIL;

@@ -176,13 +176,19 @@ public final class ModItems {
 	public static final Item QI_SEALING_TALISMAN = register("qi_sealing_talisman",
 			new TalismanItem(TalismanPattern.QI_SEALING, new Item.Properties().stacksTo(16)));
 	public static final Item REVEALING_TALISMAN = register("revealing_talisman", new TalismanItem(TalismanPattern.REVEALING, new Item.Properties().stacksTo(16)));
-	/** Holds a ghost method; read, it teaches it, and isn't used up (see GhostJadeSlipItem). */
+	/** A ghost method's slip from before 2026-11-16: made nowhere now; one carried or read becomes its Art Manual (see GhostJadeSlipItem). */
 	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
-	/** Holds a heaven method; read, it teaches it, and isn't used up (see JadeSlipItem). */
+	/** A heaven method's slip from before 2026-11-16: made nowhere now; one carried or read becomes its Art Manual (see JadeSlipItem). */
 	public static final Item JADE_SLIP = register("jade_slip", new JadeSlipItem(new Item.Properties().stacksTo(1)));
-	/** Holds a technique or a spell; read, it teaches it at its realm, and isn't used up (see TechniqueManualItem). */
+	/**
+	 * The Art Manual (the old Technique Manual's id): holds a heaven art, a ghost art or one spell; read, every art in it is learned at once, each
+	 * wielded as the realm reaches it, and it isn't used up (see TechniqueManualItem).
+	 */
 	public static final Item TECHNIQUE_MANUAL = register("technique_manual",
 			new TechniqueManualItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE)));
+	/** Holds a technique; read, it teaches it at its realm, and isn't used up (see TechniqueSlipItem, since 2026-11-16). */
+	public static final Item TECHNIQUE_JADE_SLIP = register("technique_jade_slip",
+			new TechniqueSlipItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE)));
 	/** Written on with the Inscription Brush, it becomes a manual of what one knows (see BlankManualItem). */
 	public static final Item BLANK_MANUAL = register("blank_manual", new BlankManualItem(new Item.Properties().stacksTo(16)));
 	/** The exorcist's weapon: a stone sword to the living, every blow landing twice over on the dead (see PeachWoodSwordItem). */

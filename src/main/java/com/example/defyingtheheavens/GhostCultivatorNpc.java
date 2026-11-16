@@ -326,14 +326,20 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	/** One of the dead's own foundations past the Breathing Art falls when it is struck down this often (a king's, always). */
 	public static final float FOUNDATION_SLIP_CHANCE = 0.15f;
 
-	/** Struck down, it may leave the slip of the foundation it knew (its loot table holds only the first three methods'). */
+	/**
+	 * Struck down, it may leave the Art Manual of the foundation it knew (a jade slip before 2026-11-16; its loot table holds only the first three
+	 * arts'), and, rolled apart, Netherworld Breathing's manual as far as that foundation's realm (no art carries its volumes now).
+	 */
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
 		GhostMethod method = method();
 		// Never True Immortal's foundation, the Immortal Realm's (GhostMethod#taughtInTheWorld).
 		if (method == null || method.tier() <= 1 || !method.taughtInTheWorld()) return;
-		if (getRole() == Role.GHOST_KING || random.nextFloat() < FOUNDATION_SLIP_CHANCE) spawnAtLocation(GhostJadeSlipItem.of(method));
+		if (getRole() == Role.GHOST_KING || random.nextFloat() < FOUNDATION_SLIP_CHANCE) spawnAtLocation(TechniqueManualItem.of(method));
+		if (getRole() == Role.GHOST_KING || random.nextFloat() < FOUNDATION_SLIP_CHANCE) {
+			spawnAtLocation(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, method.realm()));
+		}
 	}
 
 	/** How it died, as a key under {@code npc.death.} (see {@link #DEATHS}); Meng Po and the wardens have their own. */

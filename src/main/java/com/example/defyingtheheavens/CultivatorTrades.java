@@ -225,11 +225,16 @@ public final class CultivatorTrades {
 		if (ModDimensions.isImmortalRealm(npc.level().dimension()) && (npc.getTitle().isElderOrAbove() && npc.isSectMember())) {
 			goods.addAll(immortalBlood(random, Regard.WARM));
 		}
-		// Last, the slip of its heaven method (CultivatorNpc#heavenMethod): an elder's (its sect's own) only to one it is Warm to, a
-		// rogue's to the courteous; a disciple keeps its own. Never a True Immortal's (Realm#taughtInTheWorld).
+		// Last, the Art Manual of its heaven art (CultivatorNpc#heavenMethod; a jade slip before 2026-11-16): an elder's (its sect's own) only to
+		// one it is Warm to, a rogue's to the courteous; a disciple keeps its own. Never a True Immortal's (Realm#taughtInTheWorld). With it, on
+		// the same terms and at the same price, the Qi Circulation manual it cultivates by, written as far as its art's realm (the arts carry none
+		// of its volumes since 2026-11-16).
 		HeavenMethod heaven = npc.heavenMethod();
 		if (heaven != null && heaven.realm().taughtInTheWorld() && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE)) {
-			goods.add(new Goods(JadeSlipItem.of(heaven), heavenSlipPrice(heaven), 1, npc.getTitle().isElderOrAbove() ? Regard.WARM : Regard.COURTEOUS));
+			int regard = npc.getTitle().isElderOrAbove() ? Regard.WARM : Regard.COURTEOUS;
+			goods.add(new Goods(TechniqueManualItem.of(heaven), heavenSlipPrice(heaven), 1, regard));
+			ItemStack circulation = MethodManualItem.of(CultivationMethod.QI_CIRCULATION, heaven.realm());
+			goods.add(new Goods(circulation, manualPrice(MethodManualItem.realm(circulation)), 1, regard));
 		}
 		// A body cultivator's, in its place: the manual of the body's way it walks (CultivatorNpc#bodyManual), on the same terms.
 		ItemStack manual = npc.bodyManual();
@@ -259,8 +264,16 @@ public final class CultivatorTrades {
 		switch (npc.getTitle()) {
 			case GHOST_ELDER, GHOST_KING, GHOST_RETAINER -> {
 				GhostMethod method = npc instanceof GhostCultivatorNpc ghost ? ghost.method() : null;
-				// The Breathing Art, the fire, the steps and the Marrow Art to the courteous; a king's own canon only to one it is Warm to.
-				if (method != null && method.taughtInTheWorld()) goods.add(new Goods(GhostJadeSlipItem.of(method), slipPrice(method), 1, method.tier() <= 2 ? Regard.COURTEOUS : Regard.WARM));
+				// The Breathing Art, the fire, the steps and the Marrow Art to the courteous; a king's own canon only to one it is Warm to: their Art
+				// Manuals now (2026-11-16), and with a foundation's, on the same terms, Netherworld Breathing's manual as far as its realm.
+				if (method != null && method.taughtInTheWorld()) {
+					int regard = method.tier() <= 2 ? Regard.COURTEOUS : Regard.WARM;
+					goods.add(new Goods(TechniqueManualItem.of(method), slipPrice(method), 1, regard));
+					if (method.isFoundation()) {
+						ItemStack breathing = MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, method.realm());
+						goods.add(new Goods(breathing, manualPrice(MethodManualItem.realm(breathing)), 1, regard));
+					}
+				}
 				goods.add(herb(random, 100, 300, Regard.PER_PIP, ModItems.NETHERWORLD_LOTUS));
 				goods.add(pill(ModItems.YIN_GATHERING_PILL, PillGrade.MID, 2, Regard.WARM));
 			}
@@ -298,11 +311,14 @@ public final class CultivatorTrades {
 		goods.add(artifact(random, ArtifactGrade.HEAVEN, npc, 0));
 		goods.add(new Goods(new ItemStack(ModItems.sacredVessel(element)), 30 * JADE, 1, Regard.WARM));
 		goods.add(artifact(random, ArtifactGrade.IMMORTAL, npc, Regard.WARM));
+		// The arts' manuals, and the True Immortal volume of the method they go with (sold nowhere in the worlds below: 2026-11-16, no art carries one).
 		if (Math.floorMod(npc.getUUID().getMostSignificantBits(), 5L) == 0) {
-			goods.add(new Goods(GhostJadeSlipItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), slipPrice(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 1, Regard.COURTEOUS));
+			goods.add(new Goods(TechniqueManualItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), slipPrice(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 1, Regard.COURTEOUS));
+			goods.add(new Goods(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.TRUE_IMMORTAL), manualPrice(Realm.TRUE_IMMORTAL), 1, Regard.COURTEOUS));
 		} else {
 			HeavenMethod method = HeavenMethod.of(element, Realm.TRUE_IMMORTAL);
-			goods.add(new Goods(JadeSlipItem.of(method), heavenSlipPrice(method), 1, Regard.COURTEOUS));
+			goods.add(new Goods(TechniqueManualItem.of(method), heavenSlipPrice(method), 1, Regard.COURTEOUS));
+			goods.add(new Goods(MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.TRUE_IMMORTAL), manualPrice(Realm.TRUE_IMMORTAL), 1, Regard.COURTEOUS));
 		}
 		goods.addAll(immortalBlood(random, Regard.COURTEOUS));
 	}

@@ -1180,11 +1180,16 @@ public final class Possession {
 		return moved;
 	}
 
-	/** An NPC's body knows its own heaven method (CultivatorNpc#heavenMethod), as far as its cultivation goes, its spells on the wheel. */
+	/**
+	 * An NPC's body knows its own heaven art (CultivatorNpc#heavenMethod), as far as its cultivation goes, its spells on the wheel; and the Qi
+	 * Circulation it lives by, as far as its art's realm (since 2026-11-16 an art carries none of its volumes: its own manual does).
+	 */
 	static void knowOwnMethod(CultivatorNpc npc, PlayerCultivation record) {
 		HeavenMethod method = npc.heavenMethod();
-		if (method == null || record.isMortal() || record.heaven().knows(method)) return;
-		record.heaven().setMethod(method, Math.max(1, HeavenMethods.understoodTo(record, method)), 0);
+		if (method == null || record.isMortal()) return;
+		record.raiseReach(CultivationMethod.QI_CIRCULATION, CultivationMethod.QI_CIRCULATION.volumeFor(method.realm()));
+		if (record.heaven().knows(method)) return;
+		record.heaven().setMethod(method, 1, 0);
 		record.heaven().setActiveMethod(method);
 		for (Spell spell : Spell.values()) if (spell.isHeaven() && spell.isKnown(record)) record.netherworld().addToWheel(spell);
 	}

@@ -7,6 +7,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,37 +19,60 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A Technique Manual (the user's ask, 2026-10-23): a bound manual holding one technique (its "Technique" tag: Technique) or one spell
- * (its "Spell" tag), and who wrote it out ("Author"), if anyone did. Read (used), it teaches what it holds to one who stands at its
- * realm, and isn't used up; one below it is told what realm it wants. A spell learned from one is the reader's apart from any method
- * (Spell#byManual), wielded only at its realm (and, an element's, by roots that take its element).
+ * An Art Manual (the user's asks of 2026-11-16: "arts can still be found from art manuals"; the heaven scriptures and the ghost foundations made
+ * Art Manuals; "i want you to learn spells immediately upon using the arts manual"): a bound manual holding one art, of three kinds:
+ * <ul>
+ *   <li>a heaven art (its "HeavenMethod" tag: a scripture, HeavenMethod): its element's arts of every realm it spans and the element's passive,
+ *   and the element Qi Circulation runs by while it follows it (HeavenMethods#cultivationFactor); no method's volumes (Method Manuals hold those);</li>
+ *   <li>a ghost art (its "GhostMethod" tag: GhostMethod): its spells, abilities and gains on the ghost path;</li>
+ *   <li>one spell (its "Spell" tag), the reader's apart from any art (Spell#byManual), wielded only at its realm.</li>
+ * </ul>
+ * Read (used), everything in it is learned at once, each spell wielded as the realm (the ghost path, a ghost art's) reaches it (Spell#isKnown), and
+ * it isn't used up. Who wrote one out ("Author"), if anyone did. Its id is the old Technique Manual's: one of a technique from before turns into
+ * that technique's jade slip as it is carried or read (TechniqueSlipItem, {@link #of(Technique)}), as the old Jade Slips and Ghost Jade Slips turn
+ * into Art Manuals (JadeSlipItem, GhostJadeSlipItem).
  * <p>
- * The sects keep the techniques' manuals in their masters' halls and their libraries (loot_tables/chests/sect_master_hall.json,
- * sect_library.json). Anyone who knows a technique, or can cast a spell of an element or a ghost method, may write it out again on a
- * Blank Manual ({@link #offerInscription}: the Inscription Brush in one hand, the blank in the other), for whoever has lost theirs.
+ * The sects keep them in their libraries and masters' halls; cultivators sell and drop their own art's. Anyone who knows a technique, or can cast a
+ * spell of an element or a ghost art, may write it out again on a Blank Manual ({@link #offerInscription}: the Inscription Brush in one hand, the
+ * blank in the other), for whoever has lost theirs: a spell as its Art Manual, a technique as its slip.
  */
 public class TechniqueManualItem extends Item {
-	private static final String TECHNIQUE = "Technique", SPELL = "Spell", AUTHOR = "Author";
+	private static final String TECHNIQUE = TechniqueSlipItem.TECHNIQUE, SPELL = "Spell", HEAVEN = "HeavenMethod", GHOST = "GhostMethod",
+			AUTHOR = TechniqueSlipItem.AUTHOR;
 
 	public TechniqueManualItem(Properties properties) {
 		super(properties);
 	}
 
-	/** A manual of {@code technique}. */
+	/** A slip of {@code technique} (the techniques are slips since 2026-11-16: TechniqueSlipItem). */
 	public static ItemStack of(Technique technique) {
-		ItemStack stack = new ItemStack(ModItems.TECHNIQUE_MANUAL);
-		stack.getOrCreateTag().putString(TECHNIQUE, technique.getId());
-		return stack;
+		return TechniqueSlipItem.of(technique);
 	}
 
-	/** A manual of {@code spell}. */
+	/** An Art Manual of {@code spell} alone. */
 	public static ItemStack of(Spell spell) {
 		ItemStack stack = new ItemStack(ModItems.TECHNIQUE_MANUAL);
 		stack.getOrCreateTag().putString(SPELL, spell.getId());
 		return stack;
 	}
 
+	/** An Art Manual of the heaven art {@code method} (a scripture). */
+	public static ItemStack of(HeavenMethod method) {
+		ItemStack stack = new ItemStack(ModItems.TECHNIQUE_MANUAL);
+		stack.getOrCreateTag().putString(HEAVEN, method.getId());
+		return stack;
+	}
+
+	/** An Art Manual of the ghost art {@code method}. */
+	public static ItemStack of(GhostMethod method) {
+		ItemStack stack = new ItemStack(ModItems.TECHNIQUE_MANUAL);
+		stack.getOrCreateTag().putString(GHOST, method.getId());
+		return stack;
+	}
+
+	/** The technique a technique's slip holds, or a manual of one from before. */
 	public static Technique technique(ItemStack stack) {
+		if (stack.is(ModItems.TECHNIQUE_JADE_SLIP)) return TechniqueSlipItem.technique(stack);
 		return stack.hasTag() && stack.getTag().contains(TECHNIQUE) ? Technique.byId(stack.getTag().getString(TECHNIQUE)) : null;
 	}
 
@@ -55,22 +80,86 @@ public class TechniqueManualItem extends Item {
 		return stack.hasTag() && stack.getTag().contains(SPELL) ? Spell.byId(stack.getTag().getString(SPELL)) : null;
 	}
 
+	public static HeavenMethod heavenArt(ItemStack stack) {
+		return stack.hasTag() && stack.getTag().contains(HEAVEN) ? HeavenMethod.byId(stack.getTag().getString(HEAVEN)) : null;
+	}
+
+	public static GhostMethod ghostArt(ItemStack stack) {
+		return stack.hasTag() && stack.getTag().contains(GHOST) ? GhostMethod.byId(stack.getTag().getString(GHOST)) : null;
+	}
+
+	/** A manual of a technique from before as its slip now (its author kept); null for any other stack. */
+	static ItemStack converted(ItemStack stack) {
+		if (!stack.is(ModItems.TECHNIQUE_MANUAL)) return null;
+		Technique technique = technique(stack);
+		if (technique == null) return null;
+		ItemStack slip = TechniqueSlipItem.of(technique);
+		if (stack.getTag().contains(AUTHOR)) slip.getOrCreateTag().putString(AUTHOR, stack.getTag().getString(AUTHOR));
+		return slip;
+	}
+
+	/** {@code stack}, carried by {@code player}, swapped where it lies for {@code into}. */
+	static void swap(Player player, ItemStack stack, ItemStack into) {
+		Inventory inventory = player.getInventory();
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			if (inventory.getItem(i) == stack) {
+				inventory.setItem(i, into);
+				return;
+			}
+		}
+	}
+
+	/** A technique's manual from before turns into its slip as it is carried. */
+	@Override
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+		if (level.isClientSide || !(entity instanceof Player player)) return;
+		ItemStack slip = converted(stack);
+		if (slip != null) swap(player, stack, slip);
+	}
+
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
 		ItemStack stack = player.getItemInHand(hand);
 		Technique technique = technique(stack);
 		Spell spell = spell(stack);
-		if (technique == null && spell == null) return InteractionResultHolder.pass(stack);
+		HeavenMethod heaven = heavenArt(stack);
+		GhostMethod ghost = ghostArt(stack);
+		if (technique == null && spell == null && heaven == null && ghost == null) return InteractionResultHolder.pass(stack);
 		if (!(player instanceof ServerPlayer sp)) return InteractionResultHolder.success(stack);
-		if (!(technique != null ? learn(sp, technique) : learn(sp, spell))) return InteractionResultHolder.fail(stack);
-		level.playSound(null, sp.getX(), sp.getY(), sp.getZ(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0f, 0.8f);
-		level.playSound(null, sp.getX(), sp.getY(), sp.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8f, 1.2f);
+		if (technique != null) { // one from before: its slip now, read
+			ItemStack slip = converted(stack);
+			player.setItemInHand(hand, slip);
+			if (!learn(sp, technique)) return InteractionResultHolder.fail(slip);
+			read(sp, 1.0f);
+			return InteractionResultHolder.consume(slip);
+		}
+		boolean learned;
+		if (heaven != null) {
+			learned = !known(sp, CultivationManager.get(sp).heaven().knows(heaven), heaven.getDisplayName()) && HeavenMethods.learn(sp, heaven);
+		} else if (ghost != null) {
+			learned = !known(sp, CultivationManager.get(sp).netherworld().knows(ghost), ghost.getDisplayName()) && GhostMethods.learn(sp, ghost);
+		} else {
+			learned = learn(sp, spell);
+		}
+		if (!learned) return InteractionResultHolder.fail(stack);
+		read(sp, ghost != null ? 0.6f : 1.2f);
 		return InteractionResultHolder.consume(stack);
 	}
 
+	/** Whether the art is {@code known} already (told so). */
+	private static boolean known(ServerPlayer p, boolean known, Component name) {
+		if (known) p.displayClientMessage(Component.translatable(ModLang.MSG_SLIP_KNOWN, name), true);
+		return known;
+	}
+
+	private static void read(ServerPlayer p, float pitch) {
+		p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0f, 0.8f);
+		p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8f, pitch);
+	}
+
 	/**
-	 * {@code p} reads a manual of {@code technique}: learned, at its realm (a clone learns it for its maker: it plays their record,
-	 * Clones). @return whether it was (else they are told why not)
+	 * {@code p} reads a slip (or a manual from before) of {@code technique}: learned, at its realm (a clone learns it for its maker: it plays
+	 * their record, Clones). @return whether it was (else they are told why not)
 	 */
 	public static boolean learn(ServerPlayer p, Technique technique) {
 		PlayerCultivation c = CultivationManager.get(p);
@@ -90,7 +179,7 @@ public class TechniqueManualItem extends Item {
 		return true;
 	}
 
-	/** {@code p} reads a manual of {@code spell}: learned apart from any method, at its realm (Spell#manualReach). @return whether it was */
+	/** {@code p} reads a manual of {@code spell}: learned apart from any art, at its realm (Spell#manualReach). @return whether it was */
 	public static boolean learn(ServerPlayer p, Spell spell) {
 		PlayerCultivation c = CultivationManager.get(p);
 		if (spell.isKnown(c) || c.knowsByManual(spell)) {
@@ -112,7 +201,7 @@ public class TechniqueManualItem extends Item {
 		return true;
 	}
 
-	/** The realm and stage {@code spell}'s manual wants, as named ("Nascent Soul - Mid"; a ghost method's on the ghost path). */
+	/** The realm and stage {@code spell}'s manual wants, as named ("Nascent Soul - Mid"; a ghost art's on the ghost path). */
 	private static Component needs(Spell spell) {
 		int rank = Math.max(0, spell.realmNeeded()), stages = Stage.values().length;
 		Component name = PlayerCultivation.rankName(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages));
@@ -145,8 +234,8 @@ public class TechniqueManualItem extends Item {
 
 	/**
 	 * C2S inscribe: {@code p} writes out what they picked ({@code kind} 0 a technique, 1 a spell; {@code index} its ordinal) on the Blank
-	 * Manual in one hand with the brush in the other: the blank (one of them) becomes its manual, signed with their name, and the brush
-	 * a use more worn. Nothing happens unless they hold both and may write it ({@link #writable}).
+	 * Manual in one hand with the brush in the other: the blank (one of them) becomes its Art Manual (a technique's slip), signed with their
+	 * name, and the brush a use more worn. Nothing happens unless they hold both and may write it ({@link #writable}).
 	 */
 	public static void inscribe(ServerPlayer p, int kind, int index) {
 		InteractionHand blankHand = p.getMainHandItem().is(ModItems.BLANK_MANUAL) ? InteractionHand.MAIN_HAND
@@ -179,7 +268,11 @@ public class TechniqueManualItem extends Item {
 	@Override
 	public Component getName(ItemStack stack) {
 		Technique technique = technique(stack);
-		if (technique != null) return Component.translatable(ModLang.ITEM_TECHNIQUE_MANUAL_OF, technique.getDisplayName());
+		if (technique != null) return Component.translatable(ModLang.ITEM_TECHNIQUE_SLIP_OF, technique.getDisplayName());
+		HeavenMethod heaven = heavenArt(stack);
+		if (heaven != null) return Component.translatable(ModLang.ITEM_SPELL_MANUAL_OF, heaven.getDisplayName());
+		GhostMethod ghost = ghostArt(stack);
+		if (ghost != null) return Component.translatable(ModLang.ITEM_SPELL_MANUAL_OF, ghost.getDisplayName());
 		Spell spell = spell(stack);
 		return spell == null ? super.getName(stack) : Component.translatable(ModLang.ITEM_SPELL_MANUAL_OF, spell.getDisplayName());
 	}
@@ -187,16 +280,26 @@ public class TechniqueManualItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
 		Technique technique = technique(stack);
+		HeavenMethod heaven = heavenArt(stack);
+		GhostMethod ghost = ghostArt(stack);
 		Spell spell = spell(stack);
 		if (technique != null) {
 			lines.add(Component.translatable(ModLang.TOOLTIP_MANUAL_REALM, PlayerCultivation.rankName(technique.realm(), Stage.EARLY)).withStyle(ChatFormatting.GOLD));
 			Tooltips.add(lines, technique.getDescription().copy().withStyle(ChatFormatting.GRAY));
+		} else if (heaven != null) {
+			lines.add(Component.translatable(ModLang.TOOLTIP_ART_HEAVEN, heaven.element().getDisplayName(), HeavenMethods.artsOf(heaven), heaven.realm().getDisplayName())
+					.withStyle(ChatFormatting.GOLD));
+			lines.add(Component.translatable(ModLang.TOOLTIP_ART_READ).withStyle(ChatFormatting.GRAY));
+		} else if (ghost != null) {
+			lines.add((ghost.realm() == null ? Component.translatable(ModLang.TOOLTIP_ART_GHOST_OWN)
+					: Component.translatable(ModLang.TOOLTIP_ART_GHOST, ghost.realm().getDisplayName())).withStyle(ChatFormatting.AQUA));
+			lines.add(Component.translatable(ModLang.TOOLTIP_ART_READ_GHOST).withStyle(ChatFormatting.GRAY));
 		} else if (spell != null) {
 			lines.add(Component.translatable(ModLang.TOOLTIP_MANUAL_REALM, needs(spell)).withStyle(ChatFormatting.GOLD));
 		}
 		if (stack.hasTag() && stack.getTag().contains(AUTHOR)) {
 			lines.add(Component.translatable(ModLang.TOOLTIP_MANUAL_AUTHOR, stack.getTag().getString(AUTHOR)).withStyle(ChatFormatting.DARK_GRAY));
 		}
-		lines.add(Component.translatable(ModLang.TOOLTIP_MANUAL).withStyle(ChatFormatting.GRAY));
+		if (heaven == null && ghost == null) lines.add(Component.translatable(ModLang.TOOLTIP_MANUAL).withStyle(ChatFormatting.GRAY));
 	}
 }

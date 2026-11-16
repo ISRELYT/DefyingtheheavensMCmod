@@ -400,9 +400,12 @@ public class MethodsPhaseFourGameTests implements FabricGameTest {
 					&& MethodManualItem.method(ti).first() == Realm.TRUE_IMMORTAL, "The ancients' vaults: Entering Nirvana's ways, True Immortal's");
 		}
 		helper.assertTrue(MethodManualItem.ancient(Realm.FOUR_AXIS, random).isEmpty(), "No way begins at Four Axis");
-		// Every way of phase 4 is somewhere to be found: a sect's kind, or the ancients' vaults.
+		// Every way of phase 4 is somewhere to be found: a sect's kind, or the ancients' vaults; the orthodox two (manuals of their own since
+		// 2026-11-16) in every library (MethodManualItem#circulation) and with the ghosts who keep their foundations.
+		helper.assertTrue(MethodManualItem.method(MethodManualItem.circulation(false, random)) == CultivationMethod.QI_CIRCULATION,
+				"Every library keeps Qi Circulation's volumes");
 		for (CultivationMethod method : CultivationMethod.values()) {
-			if (!method.fromManual()) continue;
+			if (!method.fromManual() || method == CultivationMethod.QI_CIRCULATION || method == CultivationMethod.NETHERWORLD_BREATHING) continue;
 			boolean kept = method.first().ordinal() >= Realm.ENTERING_NIRVANA.ordinal();
 			for (Alignment.Faction faction : factions) kept |= MethodManualItem.kinds(faction, null).contains(method) || MethodManualItem.kinds(faction, Bloodline.FOX).contains(method);
 			helper.assertTrue(kept, "Somewhere to be found: " + method.getId());

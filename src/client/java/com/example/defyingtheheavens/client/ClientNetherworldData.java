@@ -14,18 +14,23 @@ public final class ClientNetherworldData {
 	private static int trend;
 	/** Seconds a Yang Preservation Pill still holds it still. */
 	private static int heldSeconds;
+	/** The Netherworld's pull on the local player's soul lingering after its death (Lingering), 0 to 1, or -1 for none; seconds left of it. */
+	private static float pull = -1;
+	private static int pullSeconds;
 
-	static void set(double ghostQi, double ghostQiMax, double density, float corruption, int trend, int heldSeconds) {
+	static void set(double ghostQi, double ghostQiMax, double density, float corruption, int trend, int heldSeconds, float pull, int pullSeconds) {
 		ClientNetherworldData.ghostQi = ghostQi;
 		ClientNetherworldData.ghostQiMax = ghostQiMax;
 		ClientNetherworldData.density = density;
 		ClientNetherworldData.corruption = corruption;
 		ClientNetherworldData.trend = trend;
 		ClientNetherworldData.heldSeconds = heldSeconds;
+		ClientNetherworldData.pull = pull;
+		ClientNetherworldData.pullSeconds = pullSeconds;
 	}
 
 	static void reset() {
-		set(0, 0, 0, -1, 0, 0);
+		set(0, 0, 0, -1, 0, 0, -1, 0);
 	}
 
 	public static double ghostQi() { return ghostQi; }
@@ -34,6 +39,8 @@ public final class ClientNetherworldData {
 	public static float corruption() { return corruption; }
 	public static int trend() { return trend; }
 	public static int heldSeconds() { return heldSeconds; }
+	public static float pull() { return pull; }
+	public static int pullSeconds() { return pullSeconds; }
 
 	private ClientNetherworldData() {}
 }

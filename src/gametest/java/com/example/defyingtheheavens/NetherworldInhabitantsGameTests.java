@@ -215,12 +215,18 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 		GhostCultivatorNpc elder = ghost(helper, Realm.FOUNDATION_BUILDING); // a Ghost Elder (from Core Formation, a king: its canon isn't sold)
 		GhostCultivatorNpc young = ghost(helper, Realm.QI_REFINING);
 		RandomSource random = RandomSource.create(1);
-		boolean slip = CultivatorTrades.goodsFor(elder, random).stream().anyMatch(g -> g.item().is(ModItems.GHOST_JADE_SLIP));
-		boolean youngSlip = CultivatorTrades.goodsFor(young, random).stream().anyMatch(g -> g.item().is(ModItems.GHOST_JADE_SLIP));
-		helper.assertTrue(slip && !youngSlip, "A Ghost Elder sells its method's slip; a Wandering Ghost doesn't");
+		// Its foundation's Art Manual since 2026-11-16 (the ghost jade slips are gone), and Netherworld Breathing's Method Manual with it.
+		boolean slip = CultivatorTrades.goodsFor(elder, random).stream().anyMatch(g -> g.item().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.ghostArt(g.item()) != null);
+		boolean breathing = CultivatorTrades.goodsFor(elder, RandomSource.create(1)).stream().anyMatch(g -> g.item().is(ModItems.METHOD_MANUAL)
+				&& MethodManualItem.method(g.item()) == CultivationMethod.NETHERWORLD_BREATHING);
+		boolean youngSlip = CultivatorTrades.goodsFor(young, random).stream().anyMatch(g -> g.item().is(ModItems.TECHNIQUE_MANUAL) && TechniqueManualItem.ghostArt(g.item()) != null);
+		GhostMethod own = elder.method();
+		helper.assertTrue(slip && breathing == (own != null && own.isFoundation()) && !youngSlip,
+				"A Ghost Elder sells its own art's Art Manual, and with a foundation's Breathing's Method Manual (" + own + "); a Wandering Ghost doesn't");
+		helper.assertTrue(CultivatorTrades.goodsFor(young, random).stream().noneMatch(g -> g.item().is(ModItems.GHOST_JADE_SLIP)), "No ghost jade slip, ever");
 		helper.assertTrue(CultivatorTrades.goodsFor(young, random).stream().anyMatch(g -> g.item().is(ModItems.YIN_JADE)), "The dead sell Yin Jade");
-		helper.assertTrue(TalkSystem.worth(new ItemStack(ModItems.YIN_JADE)) > 0 && TalkSystem.worth(GhostJadeSlipItem.of(GhostMethod.NETHERWORLD_BREATHING)) > 0
-				&& TalkSystem.worth(GinsengItem.create(ModItems.OTHER_SHORE_FLOWER, 50)) > 0, "Yin Jade, slips and the herbs are worth something");
+		helper.assertTrue(TalkSystem.worth(new ItemStack(ModItems.YIN_JADE)) > 0 && TalkSystem.worth(TechniqueManualItem.of(GhostMethod.NETHERWORLD_BREATHING)) > 0
+				&& TalkSystem.worth(GinsengItem.create(ModItems.OTHER_SHORE_FLOWER, 50)) > 0, "Yin Jade, Art Manuals and the herbs are worth something");
 		// A stele the world placed: only the dead tell of it.
 		CultivatorNpc living = ModEntities.CULTIVATOR.create(helper.getLevel());
 		living.moveTo(elder.position());
@@ -310,6 +316,7 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 		float whole;
 		try {
 			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 5, 0);
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE)); // the wail's (understood as far as the path, 2026-11-16)
 			s.setGhostQi(100);
 			player.teleportTo(wailed.getX() + 2, wailed.getY(), wailed.getZ());
 			whole = wailed.getHealth();

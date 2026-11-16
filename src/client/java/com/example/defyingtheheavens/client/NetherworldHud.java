@@ -32,6 +32,9 @@ import org.joml.Matrix4f;
 public final class NetherworldHud {
 	private static final QiHud.Pool GHOST = new QiHud.Pool(HallHud.GHOST, HallHud.GHOST_LIGHT);
 	private static final QiHud.Pool CORRUPTION = new QiHud.Pool(HallHud.YIN, HallHud.YIN_LIGHT);
+	/** The Netherworld's pull on a soul lingering after its death (Lingering): a soul's violet, one of the ghost path alone's in the yin's blue. */
+	private static final QiHud.Pool PULL = new QiHud.Pool(HallHud.SOUL, HallHud.SOUL_LIGHT);
+	private static final QiHud.Pool PULL_GHOST = new QiHud.Pool(HallHud.YIN, HallHud.YIN_LIGHT);
 
 	/** The frost starts at this corruption and is thickest at full. */
 	private static final float FROST_FROM = 0.25f;
@@ -69,8 +72,21 @@ public final class NetherworldHud {
 				if (corruption >= 0) {
 					String percent = Component.translatable(ModLang.HUD_PERCENT, Math.round(corruption * 100)).getString() + trend();
 					CORRUPTION.draw(graphics, y, corruption, Component.translatable(ModLang.HUD_YIN_CORRUPTION_LABEL).getString() + " " + percent, false);
+					y += QiHud.ROW;
 				} else {
 					CORRUPTION.reset();
+				}
+				// The Netherworld's pull, filling: the time left at its pace now (a third as fast in a body).
+				float pull = ClientNetherworldData.pull();
+				if (pull >= 0) {
+					int left = ClientNetherworldData.pullSeconds();
+					String time = String.format(java.util.Locale.ROOT, "%d:%02d", left / 60, left % 60);
+					// A soul's violet; one of the ghost path alone, lingering as one of the dead (in their cyan), in the yin's blue.
+					boolean ghostly = com.example.defyingtheheavens.GhostSystem.isGhost(mc.player) && !ClientGhosts.lingeringSoul(mc.player);
+					(ghostly ? PULL_GHOST : PULL).draw(graphics, y, pull, Component.translatable(ModLang.HUD_PULL_LABEL).getString() + " " + time, false);
+				} else {
+					PULL.reset();
+					PULL_GHOST.reset();
 				}
 			} finally {
 				HallArt.end(graphics);
@@ -80,7 +96,8 @@ public final class NetherworldHud {
 
 	/** The rows it draws itself, under the qi bars (TribulationHud's lines go below them all). */
 	static int rows() {
-		return (ClientNetherworldData.ghostQiMax() > 0 ? 1 : 0) + (ClientNetherworldData.corruption() >= 0 ? 1 : 0);
+		return (ClientNetherworldData.ghostQiMax() > 0 ? 1 : 0) + (ClientNetherworldData.corruption() >= 0 ? 1 : 0)
+				+ (ClientNetherworldData.pull() >= 0 ? 1 : 0);
 	}
 
 	/** Which way the corruption goes, after its percentage: up while it rises, down while it ebbs, a bar while a pill holds it still. */

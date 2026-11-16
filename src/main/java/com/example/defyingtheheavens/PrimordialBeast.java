@@ -1127,7 +1127,7 @@ public class PrimordialBeast extends DemonBeast {
 		Bloodline kin = DemonBlood.kin(kind());
 		if (kin != null) spawnAtLocation(DemonBloodItem.of(kin, Realm.TRUE_IMMORTAL));
 		spawnAtLocation(new ItemStack(ModItems.IMMORTAL_JADE, JADE + random.nextInt(JADE_MORE + 1)));
-		if (kind() == BeastKind.KUN_PENG) spawnAtLocation(JadeSlipItem.of(HeavenMethod.of(element, Realm.TRUE_IMMORTAL)));
+		if (kind() == BeastKind.KUN_PENG) spawnAtLocation(TechniqueManualItem.of(HeavenMethod.of(element, Realm.TRUE_IMMORTAL))); // its element's True Immortal art
 		for (Item remains : kind().remains()) spawnAtLocation(new ItemStack(remains, 2 + random.nextInt(3 + looting)));
 	}
 

@@ -53,16 +53,13 @@ public class GhostKingGameTests implements FabricGameTest {
 		ghost.netherworld().setGhost(true);
 		helper.assertTrue(GhostMethods.understoodTo(ghost.netherworld(), fire) == 3, "The dead are held by the ghost path too");
 
-		// A layer behind the path settles in, as a heaven method's does: half its cost, never past the path.
+		// Known, it is understood as far as the path at once (since 2026-11-16 nothing settles: the user's ask, no layers but the Laws').
 		NetherworldState t = new NetherworldState();
-		t.setMethod(fire, 3, 0);
+		t.setMethod(fire, 1, 0);
 		t.setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE), 0);
-		helper.assertTrue(!GhostMethods.settling(t, fire) && GhostMethods.settle(t, fire, 100_000, GhostMethods.understoodTo(t, fire)) == 0
-				&& t.layer(fire) == 3 && t.progress(fire) == 0, "At Qi Refining, the third is as far as it goes: nothing settles");
+		helper.assertTrue(!GhostMethods.settling(t, fire) && t.layer(fire) == 3 && t.progress(fire) == 0, "At Qi Refining, the third is as far as it goes");
 		t.setPath(PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY), 0);
-		helper.assertTrue(GhostMethods.settling(t, fire) && GhostMethods.settleCost(fire, 4) == GhostMethods.SETTLE_SHARE * GhostMethods.layerCost(fire, 4),
-				"The path at Foundation Building: the fourth settles in, on half its cost");
-		helper.assertTrue(GhostMethods.settle(t, fire, GhostMethods.settleCost(fire, 4), 6) == 1 && t.layer(fire) == 4, "...and on it goes, to the fourth");
+		helper.assertTrue(!GhostMethods.settling(t, fire) && t.layer(fire) == 6, "The path at Foundation Building: through the sixth at once");
 		// The rate goes by the ghost path, not the ordinary realm.
 		PlayerCultivation low = new PlayerCultivation(), high = new PlayerCultivation();
 		high.setState(Realm.FOUR_AXIS, Stage.EARLY, 0);
@@ -89,9 +86,8 @@ public class GhostKingGameTests implements FabricGameTest {
 			if (!method.isFoundation()) continue;
 			helper.assertTrue(method.layers() == 9 * method.tier(), method.getId() + ": nine layers a realm, Qi Refining to its own");
 			for (int layer = 1; layer <= method.layers(); layer++) {
-				helper.assertTrue(GhostMethods.floor(method, layer) == GhostMethods.floor(deepest, layer)
-						&& GhostMethods.layerCost(method, layer) == GhostMethods.layerCost(deepest, layer),
-						method.getId() + "'s layer " + layer + " stands and costs as every foundation's does");
+				helper.assertTrue(GhostMethods.floor(method, layer) == GhostMethods.floor(deepest, layer),
+						method.getId() + "'s layer " + layer + " stands as every foundation's does");
 			}
 			if (method.next() != null) helper.assertTrue(GhostMethods.floor(method.next(), method.layers() + 1) > GhostMethods.floor(method, method.layers()),
 					method.getId() + " ends where " + method.next().getId() + " goes on");
@@ -128,7 +124,9 @@ public class GhostKingGameTests implements FabricGameTest {
 			helper.assertTrue(!GhostMethods.heldByMethod(c) && GhostMethods.canBreakthrough(c) && !GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING),
 					"The tribulation can be faced with the Breathing Art alone, though it carries no volume of Foundation Building");
 			GhostMethods.give(ghost, GhostMethod.YELLOW_SPRINGS_MARROW);
-			helper.assertTrue(GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING) && GhostMethods.canBreakthrough(c), "The Marrow Art carries it");
+			helper.assertTrue(!GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING), "The Marrow Art carries none (since 2026-11-16 a foundation is arts alone)");
+			CultivationMethods.teach(ghost, CultivationMethod.NETHERWORLD_BREATHING, Realm.FOUNDATION_BUILDING);
+			helper.assertTrue(GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING) && GhostMethods.canBreakthrough(c), "Breathing's Foundation Building volume carries it");
 			helper.assertTrue(GhostMethods.breakthrough(s) && GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING && !GhostSystem.isKing(ghost)
 					&& s.pathCultivation() == 0, "Through: Foundation Building, the bar empty, no king");
 			GhostMethods.give(ghost, GhostMethod.GHOST_CORE_CANON);

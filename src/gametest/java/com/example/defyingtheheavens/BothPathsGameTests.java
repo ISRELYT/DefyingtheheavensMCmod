@@ -133,14 +133,16 @@ public class BothPathsGameTests implements FabricGameTest {
 		try {
 			GhostSystem.makeGhost(dead);
 			PlayerCultivation d = CultivationManager.get(dead);
-			d.netherworld().setMethod(GhostMethod.WANDERING_SOUL_STEPS, 3, 0);
+			// The steps understood as far as the ghost path (since 2026-11-16): three at its Qi Refining, six at its Foundation Building, nine from Core Formation.
+			d.netherworld().setMethod(GhostMethod.WANDERING_SOUL_STEPS, 1, 0);
+			GhostMethods.setPath(d.netherworld(), PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE));
 			QiFlight.tick(dead, d);
 			helper.assertTrue(dead.getAbilities().getFlyingSpeed() == SwordFlight.QI_FLIGHT_SPEED, "Three layers of the steps: Qi Flight's speed");
-			d.netherworld().setMethod(GhostMethod.WANDERING_SOUL_STEPS, 4, 0);
+			GhostMethods.setPath(d.netherworld(), PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY));
 			QiFlight.tick(dead, d);
-			float fourth = dead.getAbilities().getFlyingSpeed();
-			helper.assertTrue(Math.abs(fourth - SwordFlight.QI_FLIGHT_SPEED * 1.1f) < 1.0e-6, "The fourth: a tenth swifter (" + fourth + ")");
-			d.netherworld().setMethod(GhostMethod.WANDERING_SOUL_STEPS, 9, 0);
+			float sixth = dead.getAbilities().getFlyingSpeed();
+			helper.assertTrue(Math.abs(sixth - SwordFlight.QI_FLIGHT_SPEED * 1.3f) < 1.0e-6, "Six: the fourth to the sixth a tenth swifter each (" + sixth + ")");
+			GhostMethods.setPath(d.netherworld(), PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY));
 			QiFlight.tick(dead, d);
 			float ninth = dead.getAbilities().getFlyingSpeed();
 			helper.assertTrue(Math.abs(ninth - SwordFlight.QI_FLIGHT_SPEED * 1.6f) < 1.0e-6, "The ninth: +60% (" + ninth + ")");

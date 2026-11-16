@@ -197,7 +197,8 @@ public class TalismanGameTests implements FabricGameTest {
 				CultivationManager.refresh(each);
 			}
 			NetherworldState s = CultivationManager.get(sealed).netherworld();
-			s.setMethod(GhostMethod.GHOST_FIRE_SCRIPTURE, 4, 0);
+			s.setMethod(GhostMethod.GHOST_FIRE_SCRIPTURE, 1, 0);
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY)); // the bolt's (understood as far as the path, 2026-11-16)
 			s.setGhostQi(20);
 			helper.assertTrue(Talismans.seal(sealed, rank, 1, thrower) && sealed.hasEffect(ModEffects.QI_SEALED)
 					&& sealed.getEffect(ModEffects.QI_SEALED).getDuration() == Talismans.SEAL_SECONDS * 20, "Sealed as strong as the talisman: five seconds");

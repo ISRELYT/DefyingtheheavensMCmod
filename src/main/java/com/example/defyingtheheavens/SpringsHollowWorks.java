@@ -487,7 +487,9 @@ public final class SpringsHollowWorks extends RealmWorks {
 		out.add(new ItemStack(ModItems.MID_SPIRIT_STONE, 1 + random.nextInt(3)));
 		if (random.nextFloat() < 0.5f) out.add(new ItemStack(ModItems.YIN_GATHERING_PILL));
 		if (random.nextFloat() < 0.3f) out.add(new ItemStack(ModItems.YANG_PRESERVATION_PILL));
-		if (random.nextFloat() < 0.3f) out.add(GhostJadeSlipItem.of(GhostMethod.NINE_NETHER_SOUL_SUTRA));
+		if (random.nextFloat() < 0.3f) out.add(TechniqueManualItem.of(GhostMethod.NINE_NETHER_SOUL_SUTRA));
+		// Netherworld Breathing's manual as often (2026-11-16: the ghost arts carry none of its volumes).
+		if (random.nextFloat() < 0.3f) out.add(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.NASCENT_SOUL));
 		if (random.nextFloat() < 0.3f) out.add(new ItemStack(ModItems.DEPARTURE_JADE));
 		return out;
 	}
@@ -526,7 +528,8 @@ public final class SpringsHollowWorks extends RealmWorks {
 		carried.add(new ItemStack(ModItems.YIN_JADE, 2 + random.nextInt(4)));
 		carried.add(new ItemStack(ModItems.LOW_SPIRIT_STONE, 3 + random.nextInt(6)));
 		if (random.nextFloat() < 0.2f) carried.add(new ItemStack(ModItems.DEPARTURE_JADE));
-		if (random.nextFloat() < 0.1f) carried.add(GhostJadeSlipItem.of(GhostMethod.GHOST_CORE_CANON));
+		if (random.nextFloat() < 0.1f) carried.add(TechniqueManualItem.of(GhostMethod.GHOST_CORE_CANON));
+		if (random.nextFloat() < 0.1f) carried.add(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.CORE_FORMATION));
 		return carried;
 	}
 
@@ -805,16 +808,21 @@ public final class SpringsHollowWorks extends RealmWorks {
 
 	// --- Its inheritance ---
 
-	/** The Great Inheritance: the Ghost King's own foundation, the Six Paths Reincarnation Canon; Yin Jade from his tomb. */
+	/**
+	 * The Great Inheritance: the Ghost King's own foundation's Art Manual, the Six Paths Reincarnation Canon, and the Netherworld Breathing he
+	 * cultivated by, to Heavenly Being (2026-11-16: no art carries its volumes, and Four Axis has none); Yin Jade from his tomb.
+	 */
 	@Override
 	protected List<ItemStack> great(ServerLevel level) {
-		return List.of(GhostJadeSlipItem.of(GhostMethod.SIX_PATHS_CANON), new ItemStack(ModItems.YIN_JADE, 16));
+		return List.of(TechniqueManualItem.of(GhostMethod.SIX_PATHS_CANON), MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.HEAVENLY_BEING),
+				new ItemStack(ModItems.YIN_JADE, 16));
 	}
 
-	/** A lesser legacy: the method he cultivated before it (Yama's Judgement), spirit stones. */
+	/** A lesser legacy: the art he cultivated before it (Yama's Judgement) and its Netherworld Breathing manual, spirit stones. */
 	@Override
 	protected List<ItemStack> lesser(ServerLevel level, RandomSource random) {
-		return List.of(GhostJadeSlipItem.of(GhostMethod.YAMA_JUDGEMENT), new ItemStack(ModItems.MID_SPIRIT_STONE, 2 + random.nextInt(3)));
+		return List.of(TechniqueManualItem.of(GhostMethod.YAMA_JUDGEMENT), MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.HEAVENLY_BEING),
+				new ItemStack(ModItems.MID_SPIRIT_STONE, 2 + random.nextInt(3)));
 	}
 
 	@Override

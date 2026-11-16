@@ -97,6 +97,7 @@ public final class Haunting {
 	 */
 	static void second(ServerPlayer p) {
 		if (!Incorporeal.isRuledGhost(p)) return;
+		if (Lingering.lingers(p)) return; // one lingering after its death is held up by its own pull, not driven down by the dawn (Lingering)
 		ServerLevel level = p.serverLevel();
 		if (!livingWorld(level)) return;
 		if (!level.isNight()) {

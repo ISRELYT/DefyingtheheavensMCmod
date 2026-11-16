@@ -790,6 +790,9 @@ public final class CaveAbodeWorks extends RealmWorks {
 		}
 		if (random.nextFloat() < 0.5f) out.add(slip(random, Realm.NASCENT_SOUL));
 		if (random.nextFloat() < 0.15f) out.add(slip(random, Realm.HEAVENLY_BEING));
+		// Qi Circulation's manuals as often (2026-11-16: the arts carry none of its volumes).
+		if (random.nextFloat() < 0.5f) out.add(MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.NASCENT_SOUL));
+		if (random.nextFloat() < 0.15f) out.add(MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.HEAVENLY_BEING));
 		if (random.nextFloat() < 0.4f) out.add(new ItemStack(ModItems.DEPARTURE_JADE));
 		// The master's talismans, of no known hand now (Talismans#found).
 		if (random.nextFloat() < 0.5f) out.addAll(Talismans.found(random, 2));
@@ -814,10 +817,10 @@ public final class CaveAbodeWorks extends RealmWorks {
 		return spells.isEmpty() ? ItemStack.EMPTY : TechniqueManualItem.of(spells.get(random.nextInt(spells.size())));
 	}
 
-	/** A jade slip of a heaven method of {@code realm}, of any of the five. */
+	/** An Art Manual of a heaven art of {@code realm}, of any of the five (a jade slip before 2026-11-16). */
 	static ItemStack slip(RandomSource random, Realm realm) {
 		QiElement[] five = QiElement.five();
-		return JadeSlipItem.of(HeavenMethod.of(five[random.nextInt(five.length)], realm));
+		return TechniqueManualItem.of(HeavenMethod.of(five[random.nextInt(five.length)], realm));
 	}
 
 	/** The five pillars dark; the chamber's barrier whole; the master's bones in their place. */
@@ -1126,16 +1129,21 @@ public final class CaveAbodeWorks extends RealmWorks {
 		return Component.translatable(ModLang.MSG_ABODE_PUPPET_BOWS);
 	}
 
-	/** The Great Inheritance: the master's own method (to the Four Axis, of his element) and the Marrow-Washing Fruit. */
+	/**
+	 * The Great Inheritance: the master's own art (to the Four Axis, of his element), the Qi Circulation he cultivated by (its manual to Heavenly
+	 * Being: since 2026-11-16 no art carries its volumes, and Four Axis has none) and the Marrow-Washing Fruit.
+	 */
 	@Override
 	protected List<ItemStack> great(ServerLevel level) {
-		return List.of(JadeSlipItem.of(HeavenMethod.of(masterElement(level.getSeed()), Realm.FOUR_AXIS)), new ItemStack(ModItems.MARROW_WASHING_FRUIT));
+		return List.of(TechniqueManualItem.of(HeavenMethod.of(masterElement(level.getSeed()), Realm.FOUR_AXIS)),
+				MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.HEAVENLY_BEING), new ItemStack(ModItems.MARROW_WASHING_FRUIT));
 	}
 
-	/** A lesser legacy: the method he cultivated before it (the Heavenly Being's), spirit stones, a Spring of the Ancients. */
+	/** A lesser legacy: the art he cultivated before it (the Heavenly Being's) and its Qi Circulation manual, spirit stones, a Spring of the Ancients. */
 	@Override
 	protected List<ItemStack> lesser(ServerLevel level, RandomSource random) {
-		return List.of(JadeSlipItem.of(HeavenMethod.of(masterElement(level.getSeed()), Realm.HEAVENLY_BEING)), new ItemStack(ModItems.MID_SPIRIT_STONE, 3 + random.nextInt(3)),
+		return List.of(TechniqueManualItem.of(HeavenMethod.of(masterElement(level.getSeed()), Realm.HEAVENLY_BEING)),
+				MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.HEAVENLY_BEING), new ItemStack(ModItems.MID_SPIRIT_STONE, 3 + random.nextInt(3)),
 				new ItemStack(ModItems.SPRING_OF_THE_ANCIENTS));
 	}
 

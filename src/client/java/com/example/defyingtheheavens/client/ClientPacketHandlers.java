@@ -31,7 +31,9 @@ public final class ClientPacketHandlers {
 			float corruption = buf.readFloat();
 			int trend = buf.readByte();
 			int held = buf.readVarInt();
-			client.execute(() -> ClientNetherworldData.set(ghostQi, ghostQiMax, density, corruption, trend, held));
+			float pull = buf.readFloat(); // the Netherworld's pull on a soul lingering after its death (Lingering), -1 for none
+			int pullSeconds = buf.readVarInt();
+			client.execute(() -> ClientNetherworldData.set(ghostQi, ghostQiMax, density, corruption, trend, held, pull, pullSeconds));
 		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.METHODS, (client, handler, buf, sender) -> client.execute(ClientMethods.read(buf)));
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST, (client, handler, buf, sender) -> {
@@ -40,7 +42,8 @@ public final class ClientPacketHandlers {
 			boolean king = buf.readBoolean();
 			int look = buf.readByte();
 			TwoPaths.Look drawn = look >= 0 && look < TwoPaths.Look.values().length ? TwoPaths.Look.values()[look] : TwoPaths.Look.HUMAN;
-			client.execute(() -> ClientGhosts.set(entity, ghost, king, drawn));
+			boolean soul = buf.readBoolean(); // a nascent soul lingering after its death (Lingering): a soul's violet
+			client.execute(() -> ClientGhosts.set(entity, ghost, king, drawn, soul));
 		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST_FADE, (client, handler, buf, sender) -> {
 			int rgb = buf.readInt();

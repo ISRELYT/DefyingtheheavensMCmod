@@ -455,7 +455,8 @@ public class SpellProjectile extends Projectile {
 		if (!(target instanceof LivingEntity living) || struck.contains(target.getId()) || target == getOwner()) return false;
 		if (target.isSpectator() || !target.isAlive()) return false;
 		if (getOwner() instanceof LivingEntity caster && HeavenSpells.spared(caster, living)) return false;
-		return !(target instanceof net.minecraft.world.entity.player.Player player && Incorporeal.untouchable(player));
+		// Through a projected soul or one of the dead; not through a nascent soul lingering after its death, which anyone's blow finds (Lingering).
+		return !(target instanceof net.minecraft.world.entity.player.Player player && Incorporeal.untouchable(player) && !Lingering.isSoul(player));
 	}
 
 	@Override

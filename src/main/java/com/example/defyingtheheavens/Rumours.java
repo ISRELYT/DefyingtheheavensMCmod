@@ -373,8 +373,10 @@ public final class Rumours extends SavedData {
 				yield Component.translatable(ModLang.rumour("killing"), rumour.subject, direction, country, rough, when, rumour.detail);
 			}
 			case STELE -> {
-				GhostMethod method = GhostMethod.byId(rumour.subject);
-				Component name = method == null ? Component.literal(rumour.subject) : method.getDisplayName();
+				// The method it teaches (SteleTeachings, since 2026-11-16), drawn by its place, as a touch would tell it; the art carved on it, else.
+				GhostMethod carved = GhostMethod.byId(rumour.subject);
+				SteleTeachings.Teaching teaching = carved == null ? null : SteleTeachings.of(level, rumour.pos, SteleTeachings.carved(carved));
+				Component name = teaching != null ? teaching.method().getDisplayName() : carved == null ? Component.literal(rumour.subject) : carved.getDisplayName();
 				yield Component.translatable(ModLang.rumour("stele"), name, direction, country, rough);
 			}
 			case LEGEND -> legendTale(rumour, teller, direction, country, rough);

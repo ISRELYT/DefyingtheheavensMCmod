@@ -37,6 +37,7 @@ public final class ClientGhosts {
 	public static void register() {
 		GhostSystem.clientGhost = player -> GHOSTS.contains(player.getId());
 		GhostSystem.clientKing = player -> KINGS.contains(player.getId());
+		com.example.defyingtheheavens.Lingering.clientSoul = player -> SOULS.contains(player.getId());
 		ClientTickEvents.END_CLIENT_TICK.register(ClientGhosts::tick);
 		HudRenderCallback.EVENT.register(ClientGhosts::overlay);
 	}
@@ -49,10 +50,14 @@ public final class ClientGhosts {
 	 */
 	private static final Set<Integer> LIGHT = new HashSet<>();
 	private static final Set<Integer> CROWNED = new HashSet<>();
+	/** The dead lingering among the living as their nascent souls (Lingering): drawn in a soul's violet, not the dead's cyan. */
+	private static final Set<Integer> SOULS = new HashSet<>();
 
-	static void set(int entityId, boolean ghost, boolean king, TwoPaths.Look look) {
+	static void set(int entityId, boolean ghost, boolean king, TwoPaths.Look look, boolean soul) {
 		if (ghost) GHOSTS.add(entityId);
 		else GHOSTS.remove(entityId);
+		if (ghost && soul) SOULS.add(entityId);
+		else SOULS.remove(entityId);
 		if (ghost && king) KINGS.add(entityId);
 		else KINGS.remove(entityId);
 		if (look != TwoPaths.Look.HUMAN) LIGHT.add(entityId);
@@ -69,6 +74,11 @@ public final class ClientGhosts {
 	/** Whether {@code player} is drawn crowned, in a Ghost King's light. */
 	public static boolean crowned(Player player) {
 		return player != null && CROWNED.contains(player.getId());
+	}
+
+	/** Whether {@code player} lingers after its death as its nascent soul (Lingering): drawn in a soul's violet. */
+	public static boolean lingeringSoul(Player player) {
+		return player != null && SOULS.contains(player.getId());
 	}
 
 	static boolean any() {
@@ -88,6 +98,7 @@ public final class ClientGhosts {
 		KINGS.clear();
 		LIGHT.clear();
 		CROWNED.clear();
+		SOULS.clear();
 		fadeTick = -1;
 		fadeAlpha = fadePrevious = 0;
 	}
@@ -133,10 +144,12 @@ public final class ClientGhosts {
 			float reach = Math.min(w, h) * 0.22f;
 			float pulse = 0.85f + 0.15f * Mth.sin((mc.player.tickCount + tickDelta) * 0.05f);
 			float a = 0.32f * pulse;
-			edge(b, m, 0, 0, w, 0, 0, 1, reach, a);
-			edge(b, m, w, h, 0, h, 0, -1, reach, a);
-			edge(b, m, 0, h, 0, 0, 1, 0, reach, a);
-			edge(b, m, w, 0, w, h, -1, 0, reach, a);
+			// A soul lingering after its death sees the edges of its sight in a soul's violet; the dead, in their cyan.
+			float[] rgb = lingeringSoul(mc.player) ? new float[] {0.66f, 0.45f, 0.95f} : new float[] {0.25f, 0.85f, 0.92f};
+			edge(b, m, 0, 0, w, 0, 0, 1, reach, a, rgb);
+			edge(b, m, w, h, 0, h, 0, -1, reach, a, rgb);
+			edge(b, m, 0, h, 0, 0, 1, 0, reach, a, rgb);
+			edge(b, m, w, 0, w, h, -1, 0, reach, a, rgb);
 			BufferUploader.drawWithShader(b.end());
 			RenderSystem.enableCull();
 			RenderSystem.disableBlend();
@@ -145,11 +158,11 @@ public final class ClientGhosts {
 		if (alpha > 0.003f) g.fill(0, 0, w, h, (Math.round(Mth.clamp(alpha, 0, 1) * 255) << 24) | fadeRgb);
 	}
 
-	private static void edge(BufferBuilder b, Matrix4f m, float x0, float y0, float x1, float y1, float nx, float ny, float reach, float alpha) {
-		b.vertex(m, x0, y0, 0).color(0.25f, 0.85f, 0.92f, alpha).endVertex();
-		b.vertex(m, x0 + nx * reach, y0 + ny * reach, 0).color(0.25f, 0.85f, 0.92f, 0).endVertex();
-		b.vertex(m, x1 + nx * reach, y1 + ny * reach, 0).color(0.25f, 0.85f, 0.92f, 0).endVertex();
-		b.vertex(m, x1, y1, 0).color(0.25f, 0.85f, 0.92f, alpha).endVertex();
+	private static void edge(BufferBuilder b, Matrix4f m, float x0, float y0, float x1, float y1, float nx, float ny, float reach, float alpha, float[] rgb) {
+		b.vertex(m, x0, y0, 0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+		b.vertex(m, x0 + nx * reach, y0 + ny * reach, 0).color(rgb[0], rgb[1], rgb[2], 0).endVertex();
+		b.vertex(m, x1 + nx * reach, y1 + ny * reach, 0).color(rgb[0], rgb[1], rgb[2], 0).endVertex();
+		b.vertex(m, x1, y1, 0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
 	}
 
 	private ClientGhosts() {}

@@ -10,43 +10,42 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.LightLayer;
 
 /**
- * Cultivating the heaven path's scriptures (see HeavenMethod): who may, how they carry cultivation, how far they are understood, and
- * what the layers bring.
+ * The heaven path's scriptures (see HeavenMethod): who may take them up, how far they are understood, what they bring, and the heaven
+ * path's gathering by Qi Circulation.
  * <p>
  * <b>Method and Art</b> (the user's overhaul, 2026-10-31: "you need a method to cultivate at all"; a method is HOW one cultivates, and
- * each of its volumes lasts for one realm). Each scripture (HeavenMethod) is a volume of its element's Art (its spells and passive) and
- * carries the chapters of the heaven path's orthodox method, <b>Qi Circulation</b>, for every realm from Qi Refining up to its own
- * ({@link #hasVolume}). Without Circulation's volume for one's realm, meditation gathers nothing on the heaven path
- * ({@link #canGain}); one may still break through into the next realm (no scripture holds a breakthrough back: only the Laws, past True
- * Immortal), and gather nothing there until a scripture of it is found. Four Axis has no volume of any method: its axes are everyone's
- * method there (FourAxis#fillBars). Past True Immortal the Laws carry it, as before.
+ * each of its volumes lasts for one realm). The heaven path's orthodox method, <b>Qi Circulation</b>, comes in volumes from its own Method
+ * Manuals (since 2026-11-16, the user's ask: before, every scripture carried them): without its volume for one's realm, meditation gathers
+ * nothing on the heaven path ({@link #hasVolume}, {@link #canGain}); one may still break through into the next realm (only the Laws, past
+ * True Immortal, hold a breakthrough back), and gather nothing there until its volume is found. Four Axis has no volume of any method: its
+ * axes are everyone's method there (FourAxis#fillBars). Each scripture (HeavenMethod) is arts alone, read from its Art Manual: its
+ * element's spells and passive.
  * <p>
- * A scripture known is understood as far as one's cultivation has come ({@link #understoodTo}): learned, at once; and each time the
- * realm reaches a new stage, the layers standing for it settle in over meditation ({@link #settle}: half the stage's own cultivation,
- * gathered by the scripture's element), each told as it does. A scripture goes no further than its own realm.
+ * A scripture known is understood as far as one's cultivation has come ({@link #understoodTo}, HeavenState#layer), at once and always:
+ * no layers settle since 2026-11-16 (the user's ask: "get rid of the whole layer system besides laws"). It goes no further than its own
+ * realm.
  * <p>
- * <b>The rate.</b> Circulation's gathering is multiplied by the Art one is attuned to ({@link #practised}, {@link #cultivationFactor}):
+ * <b>The rate.</b> Circulation's gathering is multiplied by the scripture one practises ({@link #practised}, {@link #cultivationFactor}):
  * the element's share of the qi where one sits ({@link #elementFactor}: x{@link #SHARE_FLOOR} where there is none of it, x1 at an even
- * fifth, up to x{@link #FACTOR_CAP} where it runs thick) x {@link #STELE_BONUS} beside a Dao Stele of its element x a Qi Gathering
- * Pill's and cultivator clothing's boost to gathering. The dead can't cultivate them (their meridians are the ghost path's now), nor a
- * mortal (closed meridians).
+ * fifth, up to x{@link #FACTOR_CAP} where it runs thick) x {@link #STELE_BONUS} beside a stele of the method practised x a Qi Gathering
+ * Pill's and cultivator clothing's boost to gathering; with none practised, the plain pace. The dead can't take them up (their meridians are
+ * the ghost path's now), nor a mortal (closed meridians).
  * <p>
- * <b>Learning.</b> A Dao Stele (DaoSteleBlock) teaches its method to one who meditates beside it for {@link #STELE_LEARN_SECONDS};
- * a Jade Slip, read, at once; a cultivator who is Warm to you may teach theirs (TalkSystem).
+ * <b>Learning.</b> An Art Manual (TechniqueManualItem), read, at once; a cultivator who is Warm to you may teach theirs (TalkSystem). The
+ * steles teach methods, not scriptures (SteleTeachings).
  * <p>
- * <b>What the layers bring.</b> The element's spells of every realm it spans (Spell#taughtBy): three in Qi Refining and in
- * Foundation Building (at the second, fifth and eighth layers of the realm), two in each realm deeper (the third and seventh); and
- * every layer of the element's deepest method strengthens the element's passive (HeavenPassives), by the realm the layer stands
- * in. Methods of one element don't stack; of different elements they do.
+ * <b>What they bring.</b> The element's spells of every realm it spans (Spell#taughtBy): three in Qi Refining and in Foundation Building
+ * (at its Early, Mid and Late), two in each realm deeper (its Mid and Late), each wielded once the realm reaches it; and the element's
+ * passive (HeavenPassives), growing with the realm through the scripture's span. Scriptures of one element don't stack; of different
+ * elements they do.
  */
 public final class HeavenMethods {
 	/** The element's share of the qi: x{@code SHARE_FLOOR + SHARE_GAIN x share}, no more than {@code FACTOR_CAP}; an even fifth is x1. */
 	public static final double SHARE_FLOOR = 0.75, SHARE_GAIN = 1.25, FACTOR_CAP = 1.5;
-	public static final double STELE_BONUS = 1.25;
-	public static final double STELE_LEARN_RADIUS = 4, STELE_BONUS_RADIUS = 8;
-	public static final double STELE_LEARN_SECONDS = 15;
-	/** A new stage's layers settle in over this share of the stage's own cultivation, gathered by the method's element. */
-	public static final double SETTLE_SHARE = 0.5;
+	/** A stele of the method practised near (SteleTeachings, which teach methods since 2026-11-16). */
+	public static final double STELE_BONUS = SteleTeachings.BONUS;
+	public static final double STELE_LEARN_RADIUS = SteleTeachings.LEARN_RADIUS, STELE_BONUS_RADIUS = SteleTeachings.BONUS_RADIUS;
+	public static final double STELE_LEARN_SECONDS = SteleTeachings.LEARN_SECONDS;
 	/** A cultivator's guidance on a method already known: this many seconds of the learner's plain meditation (TalkSystem). */
 	public static final double TEACHING_SECONDS = 10 * 60;
 
@@ -77,98 +76,53 @@ public final class HeavenMethods {
 		return s.layer(method) >= method.layers();
 	}
 
-	/**
-	 * Cultivation through layer {@code layer} (PlayerCultivation's own units): the layers standing for a stage share out its
-	 * requirement (PlayerCultivation#required) by their places' minutes (MethodLayers#MINUTES): Qi Refining Early's two 43 and 57 of
-	 * its 100, Grand Perfection's one all of it.
-	 */
-	public static double layerCost(int layer) {
-		int at = Math.max(1, layer);
-		int within = MethodLayers.within(at);
-		Stage stage = MethodLayers.stageAt(within);
-		double minutes = 0;
-		for (int w = 1; w <= MethodLayers.PER_REALM; w++) if (MethodLayers.stageAt(w) == stage) minutes += MethodLayers.MINUTES[w - 1];
-		return PlayerCultivation.required(MethodLayers.realmOf(at), stage) * MethodLayers.MINUTES[within - 1] / minutes;
-	}
-
-	/** What layer {@code layer} takes to settle in (meditation's cultivation by its element: {@link #settle}): {@link #SETTLE_SHARE} of its cost. */
-	public static double settleCost(int layer) {
-		return SETTLE_SHARE * layerCost(layer);
-	}
-
-	// --- How far the methods are understood ---
+	// --- How far the scriptures are understood ---
 
 	/**
-	 * The layer {@code method} is understood to once settled: the deepest standing for the stage {@code c}'s cultivation stands at,
-	 * no further than its last.
+	 * The layer {@code method} is understood to: the deepest standing for the stage {@code c}'s cultivation stands at, no further than its
+	 * last (HeavenState#layer of a cultivator's: since 2026-11-16 nothing settles, the realm alone decides).
 	 */
 	public static int understoodTo(PlayerCultivation c, HeavenMethod method) {
 		return Math.min(method.layers(), MethodLayers.deepestAt(PlayerCultivation.rank(c.getRealm(), c.getStage())));
 	}
 
-	/** Whether {@code method}'s layers are still settling in, behind {@code c}'s cultivation. */
+	/** Whether {@code method}'s layers are still settling in: never, since 2026-11-16 (the user's ask: no layers but the Laws'). */
 	public static boolean settling(PlayerCultivation c, HeavenMethod method) {
-		HeavenState s = c.heaven();
-		return s.knows(method) && s.layer(method) < understoodTo(c, method);
+		return false;
+	}
+
+	/** How many arts {@code method} teaches: its element's of every realm it spans (Spell#taughtBy), each wielded as the realm reaches it. */
+	public static int artsOf(HeavenMethod method) {
+		int count = 0;
+		for (Spell spell : Spell.values()) if (spell.taughtBy(method)) count++;
+		return count;
 	}
 
 	/**
-	 * Adds {@code amount} of settling to {@code method} (meditation's cultivation, by its element), layer by layer, up to layer
-	 * {@code upTo}; with nothing left to settle there, none is kept. Never lowers a layer. Returns how many layers settled.
+	 * Every method known understood no deeper than the stage {@code rank} stands for (a fall): nothing to do since 2026-11-16, an art's
+	 * layers being only how far the realm stands (HeavenState#layer).
 	 */
-	public static int settle(HeavenState s, HeavenMethod method, double amount, int upTo) {
-		int layer = s.layer(method);
-		if (layer <= 0) return 0;
-		if (layer >= upTo) {
-			if (s.progress(method) > 0) s.setMethod(method, layer, 0);
-			return 0;
-		}
-		if (amount <= 0) return 0;
-		double progress = s.progress(method) + amount;
-		int gained = 0;
-		while (layer < upTo && progress >= settleCost(layer + 1)) {
-			progress -= settleCost(layer + 1);
-			layer++;
-			gained++;
-		}
-		s.setMethod(method, layer, layer >= upTo ? 0 : progress);
-		return gained;
-	}
+	public static void clampTo(HeavenState s, int rank) {}
 
-	/** Every method known understood no deeper than the stage {@code rank} stands for (a fall: a tribulation failed, the nascent soul lost). */
-	public static void clampTo(HeavenState s, int rank) {
-		int deepest = Math.max(1, MethodLayers.deepestAt(rank));
-		for (HeavenMethod method : java.util.List.copyOf(s.known())) {
-			if (s.layer(method) > deepest) s.setMethod(method, deepest, 0);
-		}
-	}
-
-	/**
-	 * Every method known understood exactly as far as the stage {@code rank} stands for, nothing settling (an op setting the realm, an
-	 * old save): those deeper set back, those behind brought up.
-	 */
-	public static void alignTo(HeavenState s, int rank) {
-		int deepest = Math.max(1, MethodLayers.deepestAt(rank));
-		for (HeavenMethod method : java.util.List.copyOf(s.known())) s.setMethod(method, Math.min(method.layers(), deepest), 0);
-	}
+	/** Every method known understood exactly as far as the stage {@code rank} stands for: so they always are since 2026-11-16 (HeavenState#layer). */
+	public static void alignTo(HeavenState s, int rank) {}
 
 	// --- Qi Circulation's volumes ---
 
 	/**
-	 * Whether {@code c} has Qi Circulation's volume for {@code realm}: a scripture of it or deeper known (every scripture carries the
-	 * chapters from Qi Refining up to its own realm). Four Axis has none (its axes are the method there); past True Immortal the Laws carry
-	 * it, so there is nothing to have.
+	 * Whether {@code c} has Qi Circulation's volume for {@code realm}: its manual read (or a stele sat by, a teacher heard) as far as it or
+	 * further (PlayerCultivation#methodReach; since 2026-11-16, the user's ask, no longer what the scriptures carry: they are arts now). Four
+	 * Axis has none (its axes are the method there); past True Immortal the Laws carry it, so there is nothing to have.
 	 */
 	public static boolean hasVolume(PlayerCultivation c, Realm realm) {
 		if (realm == Realm.FOUR_AXIS) return false;
 		if (realm.isPastTrueImmortal()) return true;
-		Realm deepest = deepestRealm(c.heaven());
-		return deepest != null && deepest.ordinal() >= realm.ordinal();
+		return c.methodReach(CultivationMethod.QI_CIRCULATION) >= realm.ordinal();
 	}
 
 	/**
 	 * Whether {@code c}'s heaven path can gather where it stands: one of the living, the method it practises holding its volume of the realm
-	 * (CultivationMethods#holdsVolume: Qi Circulation's by the scriptures known). How it gathers is the method's own (CultivationMethods#whyNoGain).
+	 * (CultivationMethods#holdsVolume: Qi Circulation's by its manual). How it gathers is the method's own (CultivationMethods#whyNoGain).
 	 */
 	public static boolean canGain(PlayerCultivation c) {
 		return canLearn(c) && CultivationMethods.holdsVolume(c, TwoPaths.Path.HEAVEN);
@@ -251,10 +205,11 @@ public final class HeavenMethods {
 
 	/**
 	 * What Qi Circulation makes of meditation's cultivation, attuned to {@code method}'s Art ({@link #practised}), where {@code share} of
-	 * the qi is its element's: {@link #methodFactor}; with no scripture known, nothing (no method, no cultivation).
+	 * the qi is its element's: {@link #methodFactor}; with no art to follow, the plain pace (x1) with a Qi Gathering Pill's and clothing's
+	 * boosts, and a stele's of the method (whether it gathers at all is Qi Circulation's volume's: MeditationManager, CultivationMethods#whyNoGain).
 	 */
 	public static double cultivationFactor(PlayerCultivation c, HeavenMethod method, double share, boolean byStele) {
-		return method == null ? 0 : methodFactor(c, share, byStele);
+		return method == null ? (byStele ? STELE_BONUS : 1.0) * boosts(c) : methodFactor(c, share, byStele);
 	}
 
 	/** A Qi Gathering Pill's and cultivator clothing's boosts to gathering. */
@@ -269,50 +224,6 @@ public final class HeavenMethods {
 
 	// --- Settling in ---
 
-	/**
-	 * Half a second of meditation for {@code player}'s heaven methods (MeditationManager): every method known whose layers are behind
-	 * the realm settles by {@code gained} (meditation's cultivation, before any method's factor) x its own element's factor here
-	 * ({@link #methodFactor}, by its stele too: {@code byStele} names the elements with a Dao Stele near), plus {@code refined} pill
-	 * and fruit qi; each layer that settles is told, with any spell it brings. Returns whether any did.
-	 */
-	static boolean meditate(ServerPlayer player, double gained, double refined, java.util.Set<QiElement> byStele) {
-		PlayerCultivation c = CultivationManager.get(player);
-		HeavenState s = c.heaven();
-		boolean any = false;
-		for (HeavenMethod method : java.util.List.copyOf(s.known())) {
-			int upTo = understoodTo(c, method);
-			if (s.layer(method) >= upTo) {
-				if (s.progress(method) > 0) s.setMethod(method, s.layer(method), 0);
-				continue;
-			}
-			int before = s.layer(method);
-			double amount = c.hasPhysique(Physique.FALLEN_TRUE_IMMORTAL) ? Double.POSITIVE_INFINITY // understood at once, no settling
-					: gained * methodFactor(c, shareAt(player, method.element()), byStele.contains(method.element())) + refined;
-			if (settle(s, method, amount, upTo) <= 0) continue;
-			any = true;
-			for (int layer = before + 1; layer <= s.layer(method); layer++) settled(player, method, layer);
-		}
-		if (any) {
-			player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 1.4f);
-			afterLayer(player);
-		}
-		return any;
-	}
-
-	/** Layer {@code layer} of {@code method} has settled in: told, with the spells it brings. */
-	private static void settled(ServerPlayer player, HeavenMethod method, int layer) {
-		Component spells = null;
-		for (Spell spell : Spell.values()) {
-			if (!spell.taughtBy(method) || spell.layer() != layer) continue;
-			spells = spells == null ? spell.getDisplayName().copy() : spells.copy().append(", ").append(spell.getDisplayName());
-		}
-		// A layer alone is a passing word over the hotbar; a new spell is kept in the chat.
-		if (spells == null) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_HEAVEN_LAYER, method.getDisplayName(), layer).withStyle(ChatFormatting.GOLD), true);
-		} else {
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_HEAVEN_LAYER_SPELL, method.getDisplayName(), layer, spells).withStyle(ChatFormatting.GOLD));
-		}
-	}
 
 	// --- An element's methods ---
 
@@ -358,17 +269,12 @@ public final class HeavenMethods {
 		PlayerCultivation c = CultivationManager.get(player);
 		HeavenState s = c.heaven();
 		if (s.knows(method)) return;
-		Realm reachedBefore = deepestRealm(s);
-		int layer = Math.max(1, understoodTo(c, method));
-		s.setMethod(method, layer, 0);
+		s.setMethod(method, 1, 0); // its layers are as far as the realm stands, at once (HeavenState#layer): no layers to settle since 2026-11-16
 		HeavenMethod active = s.activeMethod();
 		if (active == null || active.element() == method.element() && method.tier() > active.tier()) s.setActiveMethod(method);
-		player.sendSystemMessage(Component.translatable(ModLang.MSG_HEAVEN_LEARNED, method.getDisplayName(), layer, method.layers()).withStyle(ChatFormatting.GOLD));
-		// Its Qi Circulation chapters carry the method further than any scripture known did.
-		Realm reach = FourAxis.volumeReach(method.realm());
-		if (reachedBefore == null || reach.ordinal() > FourAxis.volumeReach(reachedBefore).ordinal()) {
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_CIRCULATION_VOLUMES, reach.getDisplayName()).withStyle(ChatFormatting.GOLD));
-		}
+		// Its arts only, every one of them at once, each wielded as the realm reaches it (Spell#isKnown): Qi Circulation's volumes are in its own
+		// manual since 2026-11-16, so an art carries none.
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_ART_LEARNED, method.getDisplayName(), artsOf(method)).withStyle(ChatFormatting.GOLD));
 		player.playNotifySound(SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1.0f, 1.1f);
 		Journal.note(player, "heaven_method:" + method.getId(), ModLang.JOURNAL_HEAVEN_METHOD, Component.translatable(ModLang.JOURNAL_HEAVEN_METHOD_TEXT,
 				method.getDisplayName(), method.element().getDisplayName(), method.getGains()));
@@ -398,16 +304,19 @@ public final class HeavenMethods {
 	static void watchSpells(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
 		java.util.EnumSet<Spell> now = java.util.EnumSet.noneOf(Spell.class);
-		for (Spell spell : Spell.values()) if (spell.isHeaven() && spell.isKnown(c)) now.add(spell);
+		// The ghost path's arts too (since 2026-11-16 an art's spells open with the path's stages, no layers settling to tell of them).
+		for (Spell spell : Spell.values()) if (!spell.isDual() && spell.isKnown(c)) now.add(spell);
 		java.util.EnumSet<Spell> before = KNOWN_SPELLS.put(p.getUUID(), now);
 		if (before == null) return;
-		boolean added = false;
+		Component opened = null;
 		for (Spell spell : now) {
 			if (before.contains(spell)) continue;
 			c.netherworld().addToWheel(spell);
-			added = true;
+			opened = opened == null ? spell.getDisplayName().copy() : opened.copy().append(", ").append(spell.getDisplayName());
 		}
-		if (!added) return;
+		if (opened == null) return;
+		// Told in the chat, as a layer's spells were: the realm reached opens the arts known that wait on it.
+		p.sendSystemMessage(Component.translatable(ModLang.MSG_ARTS_OPENED, opened).withStyle(ChatFormatting.GOLD));
 		CultivationManager.markDirty(p.server);
 		Spells.sync(p);
 	}

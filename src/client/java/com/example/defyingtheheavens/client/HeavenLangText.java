@@ -4,131 +4,131 @@ import com.example.defyingtheheavens.ModLang;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 
 /**
- * The heaven methods' English (HeavenMethod, and the five elements' spells they teach): their names, lore, what their layers
- * bring, and what each spell does. Generated from the design's sheets; kept apart from ModEnglishLangProvider for its length.
+ * The heaven scriptures' English (HeavenMethod, and the five elements' spells they teach): their names, lore, what they bring as the
+ * realm climbs, and what each spell does. Generated from the design's sheets; kept apart from ModEnglishLangProvider for its length.
  */
 final class HeavenLangText {
 	static void add(FabricLanguageProvider.TranslationBuilder t) {
 		// Green Sprout Breathing Manual
 		t.add(ModLang.heavenMethodKey("green_sprout_breathing_manual"), "Green Sprout Breathing Manual");
 		t.add(ModLang.heavenMethodKey("green_sprout_breathing_manual") + ".description", "Village hermits copied this primer from the margins of an old almanac. It teaches you to breathe the way a seed breathes when it splits its husk, drawing green qi up from the soil through the soles of the feet; humble and patient, it is the root every Wood art grows from.");
-		t.add(ModLang.heavenMethodKey("green_sprout_breathing_manual") + ".gains", "Qi Refining, nine layers (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Wood Bullet (layer 2), Emerald Healing Art (layer 5), Verdant Growth (layer 8). Every layer: Evergreen Vitality.");
+		t.add(ModLang.heavenMethodKey("green_sprout_breathing_manual") + ".gains", gains("Qi Refining", "Wood Bullet (Early), Emerald Healing Art (Mid), Verdant Growth (Late)", null, "Evergreen Vitality"));
 		// Coiling Vine Scripture
 		t.add(ModLang.heavenMethodKey("coiling_vine_scripture"), "Coiling Vine Scripture");
 		t.add(ModLang.heavenMethodKey("coiling_vine_scripture") + ".description", "A recluse left it in a ruined mountain shrine after watching wild vines pull the shrine's walls down over forty springs. It teaches qi to climb, to coil and never to let go.");
-		t.add(ModLang.heavenMethodKey("coiling_vine_scripture") + ".gains", "Qi Refining to Foundation Building, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Life Force Drain (layer 11), Life Force Gain (layer 14), Mysterious Bristle Prison (layer 17). It teaches the wood arts of every realm below it too. Every layer: Evergreen Vitality.");
+		t.add(ModLang.heavenMethodKey("coiling_vine_scripture") + ".gains", gains("Qi Refining to Foundation Building", "Life Force Drain (Foundation Building Early), Life Force Gain (Mid), Mysterious Bristle Prison (Late)", "wood", "Evergreen Vitality"));
 		// Ancient Cypress Art
 		t.add(ModLang.heavenMethodKey("ancient_cypress_art"), "Ancient Cypress Art");
 		t.add(ModLang.heavenMethodKey("ancient_cypress_art") + ".description", "Carved into the bark of a cypress that outlived three dynasties, this art teaches the cultivator to grow ring upon ring and endure every storm, and to scatter thorns among its roots for whatever comes to fell it.");
-		t.add(ModLang.heavenMethodKey("ancient_cypress_art") + ".gains", "Qi Refining to Core Formation, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Thousand Leaf Storm (layer 21), Ancient Bark Skin (layer 25). It teaches the wood arts of every realm below it too. Every layer: Evergreen Vitality.");
+		t.add(ModLang.heavenMethodKey("ancient_cypress_art") + ".gains", gains("Qi Refining to Core Formation", "Thousand Leaf Storm (Core Formation Mid), Ancient Bark Skin (Late)", "wood", "Evergreen Vitality"));
 		// Primeval Forest Canon
 		t.add(ModLang.heavenMethodKey("primeval_forest_canon"), "Primeval Forest Canon");
 		t.add(ModLang.heavenMethodKey("primeval_forest_canon") + ".description", "The canon of a forest sect whose elders sat beneath the trees so long that none could say where their meridians ended and the roots began. Its cultivator becomes a whole wood, drowsy with blossom and bristling with thorns.");
-		t.add(ModLang.heavenMethodKey("primeval_forest_canon") + ".gains", "Qi Refining to Nascent Soul, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Thorn Spear Forest (layer 30), Lotus of Rebirth (layer 34). It teaches the wood arts of every realm below it too. Every layer: Evergreen Vitality.");
+		t.add(ModLang.heavenMethodKey("primeval_forest_canon") + ".gains", gains("Qi Refining to Nascent Soul", "Thorn Spear Forest (Nascent Soul Mid), Lotus of Rebirth (Late)", "wood", "Evergreen Vitality"));
 		// Eternal Spring Sutra
 		t.add(ModLang.heavenMethodKey("eternal_spring_sutra"), "Eternal Spring Sutra");
 		t.add(ModLang.heavenMethodKey("eternal_spring_sutra") + ".description", "Recited in the peach gardens of the immortals, where spring never yields to autumn. Here life renews itself without pause and mends the wounds of all it shelters, and what it cannot grow it takes, as the strangler fig takes its host.");
-		t.add(ModLang.heavenMethodKey("eternal_spring_sutra") + ".gains", "Qi Refining to Heavenly Being, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Heaven-Piercing Bamboo (layer 39), Spring of Myriad Life (layer 43). It teaches the wood arts of every realm below it too. Every layer: Evergreen Vitality.");
+		t.add(ModLang.heavenMethodKey("eternal_spring_sutra") + ".gains", gains("Qi Refining to Heavenly Being", "Heaven-Piercing Bamboo (Heavenly Being Mid), Spring of Myriad Life (Late)", "wood", "Evergreen Vitality"));
 		// Heaven-Bearing World Tree Classic
 		t.add(ModLang.heavenMethodKey("heaven_bearing_world_tree_classic"), "Heaven-Bearing World Tree Classic");
 		t.add(ModLang.heavenMethodKey("heaven_bearing_world_tree_classic") + ".description", "The root-script of the tree that stood where the four axes meet before heaven and earth were parted, bearing the sky upon its branches. Whoever completes it carries a world within their trunk, and all beneath its shade are kept.");
-		t.add(ModLang.heavenMethodKey("heaven_bearing_world_tree_classic") + ".gains", "Qi Refining to Four Axis, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Myriad Vine Binding (layer 48), World Tree (layer 52). It teaches the wood arts of every realm below it too. Every layer: Evergreen Vitality.");
+		t.add(ModLang.heavenMethodKey("heaven_bearing_world_tree_classic") + ".gains", gains("Qi Refining to Four Axis", "Myriad Vine Binding (Four Axis Mid), Return to the Bough (Mid), World Tree (Late)", "wood", "Evergreen Vitality"));
 		// Morning Dew Gathering Art
 		t.add(ModLang.heavenMethodKey("morning_dew_gathering_art"), "Morning Dew Gathering Art");
 		t.add(ModLang.heavenMethodKey("morning_dew_gathering_art") + ".description", "A humble breathing art of river hermits. You sit among wet grass before sunrise and draw in the cold qi that settles with the dew, until your meridians run as clear as a mountain brook.");
-		t.add(ModLang.heavenMethodKey("morning_dew_gathering_art") + ".gains", "Qi Refining, nine layers (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Water Arrow (layer 2), Azure Coating Technique (layer 5), Azure Breathing Technique (layer 8). Every layer: Ceaseless Flow.");
+		t.add(ModLang.heavenMethodKey("morning_dew_gathering_art") + ".gains", gains("Qi Refining", "Water Arrow (Early), Azure Coating Technique (Mid), Azure Breathing Technique (Late)", null, "Ceaseless Flow"));
 		// Clear Fount Cleansing Manual
 		t.add(ModLang.heavenMethodKey("clear_fount_cleansing_manual"), "Clear Fount Cleansing Manual");
 		t.add(ModLang.heavenMethodKey("clear_fount_cleansing_manual") + ".description", "Written beside a fount that never froze and never failed. It teaches qi to rise from deep in the body as spring water rises from the rock, washing every impurity away as it climbs.");
-		t.add(ModLang.heavenMethodKey("clear_fount_cleansing_manual") + ".gains", "Qi Refining to Foundation Building, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Rain Call (layer 11), Water Prison (layer 14), Torrential Spring (layer 17). It teaches the water arts of every realm below it too. Every layer: Ceaseless Flow.");
+		t.add(ModLang.heavenMethodKey("clear_fount_cleansing_manual") + ".gains", gains("Qi Refining to Foundation Building", "Rain Call (Foundation Building Early), Water Prison (Mid), Torrential Spring (Late)", "water", "Ceaseless Flow"));
 		// Nine-Bend River Record
 		t.add(ModLang.heavenMethodKey("nine_bend_river_record"), "Nine-Bend River Record");
 		t.add(ModLang.heavenMethodKey("nine_bend_river_record") + ".description", "A record of the great river that turns nine times on its way to the sea, never contending with the mountains yet wearing them all away. From it the cultivator learns to bend, to coil and to carry.");
-		t.add(ModLang.heavenMethodKey("nine_bend_river_record") + ".gains", "Qi Refining to Core Formation, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Tidal Lance (layer 21), Mist Veil (layer 25). It teaches the water arts of every realm below it too. Every layer: Ceaseless Flow.");
+		t.add(ModLang.heavenMethodKey("nine_bend_river_record") + ".gains", gains("Qi Refining to Core Formation", "Tidal Lance (Core Formation Mid), Mist Veil (Late)", "water", "Ceaseless Flow"));
 		// Moon-Mirror Lake Sutra
 		t.add(ModLang.heavenMethodKey("moon_mirror_lake_sutra"), "Moon-Mirror Lake Sutra");
 		t.add(ModLang.heavenMethodKey("moon_mirror_lake_sutra") + ".description", "Composed by a recluse who sat for a hundred years beside a lake so still that it held the moon twice. The sutra teaches the heart to become still water, reflecting all things and holding none.");
-		t.add(ModLang.heavenMethodKey("moon_mirror_lake_sutra") + ".gains", "Qi Refining to Nascent Soul, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Glacial Spears (layer 30), Great Tide (layer 34). It teaches the water arts of every realm below it too. Every layer: Ceaseless Flow.");
+		t.add(ModLang.heavenMethodKey("moon_mirror_lake_sutra") + ".gains", gains("Qi Refining to Nascent Soul", "Glacial Spears (Nascent Soul Mid), Great Tide (Late)", "water", "Ceaseless Flow"));
 		// Heavenly River Scripture
 		t.add(ModLang.heavenMethodKey("heavenly_river_scripture"), "Heavenly River Scripture");
 		t.add(ModLang.heavenMethodKey("heavenly_river_scripture") + ".description", "Said to be copied from the starry river that divides the sky. It teaches qi to fall from the heavens with the whole weight of the celestial current behind it, and to drown whatever it closes over.");
-		t.add(ModLang.heavenMethodKey("heavenly_river_scripture") + ".gains", "Qi Refining to Heavenly Being, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Heavenly River Torrent (layer 39), Frozen Field (layer 43). It teaches the water arts of every realm below it too. Every layer: Ceaseless Flow.");
+		t.add(ModLang.heavenMethodKey("heavenly_river_scripture") + ".gains", gains("Qi Refining to Heavenly Being", "Heavenly River Torrent (Heavenly Being Mid), Frozen Field (Late)", "water", "Ceaseless Flow"));
 		// Boundless Four Seas Canon
 		t.add(ModLang.heavenMethodKey("boundless_four_seas_canon"), "Boundless Four Seas Canon");
 		t.add(ModLang.heavenMethodKey("boundless_four_seas_canon") + ".description", "The canon of the waters that ring the world at its four axes, from which every river comes and to which every river returns. At its end lies the abyss of the north, where even time stands frozen.");
-		t.add(ModLang.heavenMethodKey("boundless_four_seas_canon") + ".gains", "Qi Refining to Four Axis, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Absolute Zero (layer 48), Boundless Sea (layer 52). It teaches the water arts of every realm below it too. Every layer: Ceaseless Flow.");
+		t.add(ModLang.heavenMethodKey("boundless_four_seas_canon") + ".gains", gains("Qi Refining to Four Axis", "Absolute Zero (Four Axis Mid), Boundless Sea (Late)", "water", "Ceaseless Flow"));
 		// Ember Kindling Art
 		t.add(ModLang.heavenMethodKey("ember_kindling_art"), "Ember Kindling Art");
 		t.add(ModLang.heavenMethodKey("ember_kindling_art") + ".description", "A hearth-keeper's scripture handed down in mountain villages. Breath is banked in the dantian like coals under ash at night and fanned again at dawn, so that even the smallest ember of qi never goes out.");
-		t.add(ModLang.heavenMethodKey("ember_kindling_art") + ".gains", "Qi Refining, nine layers (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Flame Bolt (layer 2), Flame Fist (layer 5), Crimson Tempering (layer 8). Every layer: Fury of the Fanned Flame.");
+		t.add(ModLang.heavenMethodKey("ember_kindling_art") + ".gains", gains("Qi Refining", "Flame Bolt (Early), Flame Fist (Mid), Crimson Tempering (Late)", null, "Fury of the Fanned Flame"));
 		// Furnace Heart Manual
 		t.add(ModLang.heavenMethodKey("furnace_heart_manual"), "Furnace Heart Manual");
 		t.add(ModLang.heavenMethodKey("furnace_heart_manual") + ".description", "The foundation is laid as the floor of a furnace beneath the heart. Breath works the bellows, each layer tempers the furnace walls, and whatever is thrown into its fire is refined, not lost.");
-		t.add(ModLang.heavenMethodKey("furnace_heart_manual") + ".gains", "Qi Refining to Foundation Building, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Remote Yang Bomb (layer 11), Flame Armour (layer 14), Fire Serpent (layer 17). It teaches the fire arts of every realm below it too. Every layer: Fury of the Fanned Flame.");
+		t.add(ModLang.heavenMethodKey("furnace_heart_manual") + ".gains", gains("Qi Refining to Foundation Building", "Remote Yang Bomb (Foundation Building Early), Flame Armour (Mid), Fire Serpent (Late)", "fire", "Fury of the Fanned Flame"));
 		// Crimson Crucible Classic
 		t.add(ModLang.heavenMethodKey("crimson_crucible_classic"), "Crimson Crucible Classic");
 		t.add(ModLang.heavenMethodKey("crimson_crucible_classic") + ".description", "Written by an alchemist who held that a golden core is only ore until it is smelted. The body becomes a crucible, and the core is poured from fire refined nine times over, until it blooms like a lotus in the flame.");
-		t.add(ModLang.heavenMethodKey("crimson_crucible_classic") + ".gains", "Qi Refining to Core Formation, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Crimson Swirl (layer 21), Solar Field (layer 25). It teaches the fire arts of every realm below it too. Every layer: Fury of the Fanned Flame.");
+		t.add(ModLang.heavenMethodKey("crimson_crucible_classic") + ".gains", gains("Qi Refining to Core Formation", "Crimson Swirl (Core Formation Mid), Solar Field (Late)", "fire", "Fury of the Fanned Flame"));
 		// Vermilion Bird Sutra
 		t.add(ModLang.heavenMethodKey("vermilion_bird_sutra"), "Vermilion Bird Sutra");
 		t.add(ModLang.heavenMethodKey("vermilion_bird_sutra") + ".description", "The Nascent Soul is hatched in the fire of the south and takes the shape of the Vermilion Bird, guardian of the summer quarter of the sky. Its talons sear what they touch, and its descent sets the plains alight.");
-		t.add(ModLang.heavenMethodKey("vermilion_bird_sutra") + ".gains", "Qi Refining to Nascent Soul, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Karmic Fire (layer 30), Blazing Meteor (layer 34). It teaches the fire arts of every realm below it too. Every layer: Fury of the Fanned Flame.");
+		t.add(ModLang.heavenMethodKey("vermilion_bird_sutra") + ".gains", gains("Qi Refining to Nascent Soul", "Karmic Fire (Nascent Soul Mid), Blazing Meteor (Late)", "fire", "Fury of the Fanned Flame"));
 		// Golden Crow Great Sun Scripture
 		t.add(ModLang.heavenMethodKey("golden_crow_great_sun_scripture"), "Golden Crow Great Sun Scripture");
 		t.add(ModLang.heavenMethodKey("golden_crow_great_sun_scripture") + ".description", "Said to be copied from the marks the three-legged golden crow left on the great mulberry of the eastern sea before it carried the sun across the sky. Its practitioners learn to bear a sun within them, as bright as noon.");
-		t.add(ModLang.heavenMethodKey("golden_crow_great_sun_scripture") + ".gains", "Qi Refining to Heavenly Being, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Phoenix Descent (layer 39), Sea of Flames (layer 43). It teaches the fire arts of every realm below it too. Every layer: Fury of the Fanned Flame.");
+		t.add(ModLang.heavenMethodKey("golden_crow_great_sun_scripture") + ".gains", gains("Qi Refining to Heavenly Being", "Phoenix Descent (Heavenly Being Mid), Sea of Flames (Late)", "fire", "Fury of the Fanned Flame"));
 		// Heaven-Burning Phoenix Nirvana Canon
 		t.add(ModLang.heavenMethodKey("heaven_burning_phoenix_nirvana_canon"), "Heaven-Burning Phoenix Nirvana Canon");
 		t.add(ModLang.heavenMethodKey("heaven_burning_phoenix_nirvana_canon") + ".description", "The highest fire under the four axes of heaven, the fire of the phoenix that burns itself to ash and rises again. Its masters set storms of flame loose across the sky and, once in a long while, refuse death itself.");
-		t.add(ModLang.heavenMethodKey("heaven_burning_phoenix_nirvana_canon") + ".gains", "Qi Refining to Four Axis, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Nine Suns Descend (layer 48), Phoenix Nirvana (layer 52). It teaches the fire arts of every realm below it too. Every layer: Fury of the Fanned Flame.");
+		t.add(ModLang.heavenMethodKey("heaven_burning_phoenix_nirvana_canon") + ".gains", gains("Qi Refining to Four Axis", "Nine Suns Descend (Four Axis Mid), Phoenix Nirvana (Late)", "fire", "Fury of the Fanned Flame"));
 		// Rammed Earth Manual
 		t.add(ModLang.heavenMethodKey("rammed_earth_manual"), "Rammed Earth Manual");
 		t.add(ModLang.heavenMethodKey("rammed_earth_manual") + ".description", "A village builder's manual, its pages stiff with dried clay. It teaches the body to take in the soil's qi one layer at a time, packed hard, the way earth is rammed between boards to raise a wall.");
-		t.add(ModLang.heavenMethodKey("rammed_earth_manual") + ".gains", "Qi Refining, nine layers (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Earth Spear (layer 2), Hardened Body (layer 5), Dirt Tide (layer 8). Every layer: Unshaken Mountain Body.");
+		t.add(ModLang.heavenMethodKey("rammed_earth_manual") + ".gains", gains("Qi Refining", "Earth Spear (Early), Hardened Body (Mid), Dirt Tide (Late)", null, "Unshaken Mountain Body"));
 		// Thousand-Layer Stone Record
 		t.add(ModLang.heavenMethodKey("thousand_layer_stone_record"), "Thousand-Layer Stone Record");
 		t.add(ModLang.heavenMethodKey("thousand_layer_stone_record") + ".description", "Copied from a cliff face by a hermit who read the strata like the pages of a book. It records stone laid on stone over ten thousand years, each layer pressing the one beneath into something harder.");
-		t.add(ModLang.heavenMethodKey("thousand_layer_stone_record") + ".gains", "Qi Refining to Foundation Building, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Earth Wall Technique (layer 11), Boulder Throw (layer 14), Cave Formation (layer 17). It teaches the earth arts of every realm below it too. Every layer: Unshaken Mountain Body.");
+		t.add(ModLang.heavenMethodKey("thousand_layer_stone_record") + ".gains", gains("Qi Refining to Foundation Building", "Earth Wall Technique (Foundation Building Early), Boulder Throw (Mid), Cave Formation (Late)", "earth", "Unshaken Mountain Body"));
 		// Five Sacred Peaks Classic
 		t.add(ModLang.heavenMethodKey("five_sacred_peaks_classic"), "Five Sacred Peaks Classic");
 		t.add(ModLang.heavenMethodKey("five_sacred_peaks_classic") + ".description", "The five sacred mountains stand at the four quarters and the centre of the land. This classic teaches the cultivator to gather their weight into a single core that nothing under heaven can shift.");
-		t.add(ModLang.heavenMethodKey("five_sacred_peaks_classic") + ".gains", "Qi Refining to Core Formation, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Earth Dragon Surge (layer 21), Mountain Stance (layer 25). It teaches the earth arts of every realm below it too. Every layer: Unshaken Mountain Body.");
+		t.add(ModLang.heavenMethodKey("five_sacred_peaks_classic") + ".gains", gains("Qi Refining to Core Formation", "Earth Dragon Surge (Core Formation Mid), Mountain Stance (Late)", "earth", "Unshaken Mountain Body"));
 		// Yellow Dragon Earth-Vein Canon
 		t.add(ModLang.heavenMethodKey("yellow_dragon_earth_vein_canon"), "Yellow Dragon Earth-Vein Canon");
 		t.add(ModLang.heavenMethodKey("yellow_dragon_earth_vein_canon") + ".description", "Beneath every mountain run the earth's veins, and in them sleeps the Yellow Dragon of the Centre. This canon teaches the nascent soul to swim those veins beside it, and to wake it.");
-		t.add(ModLang.heavenMethodKey("yellow_dragon_earth_vein_canon") + ".gains", "Qi Refining to Nascent Soul, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Summon Golem (layer 30), Earthquake (layer 34). It teaches the earth arts of every realm below it too. Every layer: Unshaken Mountain Body.");
+		t.add(ModLang.heavenMethodKey("yellow_dragon_earth_vein_canon") + ".gains", gains("Qi Refining to Nascent Soul", "Summon Golem (Nascent Soul Mid), Earthquake (Late)", "earth", "Unshaken Mountain Body"));
 		// Sovereign Earth Myriad-Bearing Sutra
 		t.add(ModLang.heavenMethodKey("sovereign_earth_myriad_bearing_sutra"), "Sovereign Earth Myriad-Bearing Sutra");
 		t.add(ModLang.heavenMethodKey("sovereign_earth_myriad_bearing_sutra") + ".description", "Sovereign Earth carries every mountain, river and living thing and never once complains of the weight. Those who recite this sutra learn to bear what others cannot, and to become the ground beneath their companions' feet.");
-		t.add(ModLang.heavenMethodKey("sovereign_earth_myriad_bearing_sutra") + ".gains", "Qi Refining to Heavenly Being, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Falling Mountain (layer 39), Heavy Earth Seal (layer 43). It teaches the earth arts of every realm below it too. Every layer: Unshaken Mountain Body.");
+		t.add(ModLang.heavenMethodKey("sovereign_earth_myriad_bearing_sutra") + ".gains", gains("Qi Refining to Heavenly Being", "Falling Mountain (Heavenly Being Mid), Heavy Earth Seal (Late)", "earth", "Unshaken Mountain Body"));
 		// Four Pillars Upholding Heaven Scripture
 		t.add(ModLang.heavenMethodKey("four_pillars_upholding_heaven_scripture"), "Four Pillars Upholding Heaven Scripture");
 		t.add(ModLang.heavenMethodKey("four_pillars_upholding_heaven_scripture") + ".description", "When Mount Buzhou broke and the sky tilted, four pillars were raised at the ends of the world to hold heaven up again. This scripture is found only above the clouds, and is said to be cut into the stone of those pillars themselves.");
-		t.add(ModLang.heavenMethodKey("four_pillars_upholding_heaven_scripture") + ".gains", "Qi Refining to Four Axis, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Earthen Titan (layer 48), Mountain Seal (layer 52). It teaches the earth arts of every realm below it too. Every layer: Unshaken Mountain Body.");
+		t.add(ModLang.heavenMethodKey("four_pillars_upholding_heaven_scripture") + ".gains", gains("Qi Refining to Four Axis", "Earthen Titan (Four Axis Mid), Mountain Seal (Late)", "earth", "Unshaken Mountain Body"));
 		// Whetstone Edge Manual
 		t.add(ModLang.heavenMethodKey("whetstone_edge_manual"), "Whetstone Edge Manual");
 		t.add(ModLang.heavenMethodKey("whetstone_edge_manual") + ".description", "A smith's apprentice's manual, its pages black with forge soot: grind your qi as a whetstone grinds iron and hang it about the body like an iron bell, until one thread of it grows keen enough to fly out and come home.");
-		t.add(ModLang.heavenMethodKey("whetstone_edge_manual") + ".gains", "Qi Refining, nine layers (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Flying Sword (layer 2), Blade Polish (layer 5), Steel Hurricane (layer 8). Every layer: Whetted Edge.");
+		t.add(ModLang.heavenMethodKey("whetstone_edge_manual") + ".gains", gains("Qi Refining", "Flying Sword (Early), Blade Polish (Mid), Steel Hurricane (Late)", null, "Whetted Edge"));
 		// Hundred-Forged Lodestone Art
 		t.add(ModLang.heavenMethodKey("hundred_forged_lodestone_art"), "Hundred-Forged Lodestone Art");
 		t.add(ModLang.heavenMethodKey("hundred_forged_lodestone_art") + ".description", "The foundation is folded a hundred times like sword steel and laid about a lodestone heart. Iron leans toward its practitioner, and the weapons of others grow heavy in their hands.");
-		t.add(ModLang.heavenMethodKey("hundred_forged_lodestone_art") + ".gains", "Qi Refining to Foundation Building, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Boulder Cleave (layer 11), Mineral Purification (layer 14), Advanced Flying Sword Technique (layer 17). It teaches the metal arts of every realm below it too. Every layer: Whetted Edge.");
+		t.add(ModLang.heavenMethodKey("hundred_forged_lodestone_art") + ".gains", gains("Qi Refining to Foundation Building", "Boulder Cleave (Foundation Building Early), Mineral Purification (Mid), Advanced Flying Sword Technique (Late)", "metal", "Whetted Edge"));
 		// Golden Thunder Core Sutra
 		t.add(ModLang.heavenMethodKey("golden_thunder_core_sutra"), "Golden Thunder Core Sutra");
 		t.add(ModLang.heavenMethodKey("golden_thunder_core_sutra") + ".description", "Left in a cave beneath the Thunder Peaks by a sword cultivator who let heaven's lightning hammer his core like an anvil until it rang gold. Its practitioners point and armour splits; they open their hand and the thunder leaps.");
-		t.add(ModLang.heavenMethodKey("golden_thunder_core_sutra") + ".gains", "Qi Refining to Core Formation, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Sword Rain (layer 21), Golden Bell Shield (layer 25). It teaches the metal arts of every realm below it too. Every layer: Whetted Edge.");
+		t.add(ModLang.heavenMethodKey("golden_thunder_core_sutra") + ".gains", gains("Qi Refining to Core Formation", "Sword Rain (Core Formation Mid), Golden Bell Shield (Late)", "metal", "Whetted Edge"));
 		// Nine Bells Sword-Soul Classic
 		t.add(ModLang.heavenMethodKey("nine_bells_sword_soul_classic"), "Nine Bells Sword-Soul Classic");
 		t.add(ModLang.heavenMethodKey("nine_bells_sword_soul_classic") + ".description", "The nascent soul is cast like a great bell with nine swords hung inside it. When it tolls, every blade answers, and all who hear it share one another's wounds.");
-		t.add(ModLang.heavenMethodKey("nine_bells_sword_soul_classic") + ".gains", "Qi Refining to Nascent Soul, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Piercing Sword Light (layer 30), Vajra Body (layer 34). It teaches the metal arts of every realm below it too. Every layer: Whetted Edge.");
+		t.add(ModLang.heavenMethodKey("nine_bells_sword_soul_classic") + ".gains", gains("Qi Refining to Nascent Soul", "Piercing Sword Light (Nascent Soul Mid), Vajra Body (Late)", "metal", "Whetted Edge"));
 		// Heaven-Severing Sword Scripture
 		t.add(ModLang.heavenMethodKey("heaven_severing_sword_scripture"), "Heaven-Severing Sword Scripture");
 		t.add(ModLang.heavenMethodKey("heaven_severing_sword_scripture") + ".description", "Recovered from the deepest grave of the Ancient Sword Graveyard, a scripture of the edge that cuts even karma, severing whatever heaven has granted. At its height the practitioner calls down the swords of every master buried there.");
-		t.add(ModLang.heavenMethodKey("heaven_severing_sword_scripture") + ".gains", "Qi Refining to Heavenly Being, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Mountain Cleave (layer 39), Sword Domain (layer 43). It teaches the metal arts of every realm below it too. Every layer: Whetted Edge.");
+		t.add(ModLang.heavenMethodKey("heaven_severing_sword_scripture") + ".gains", gains("Qi Refining to Heavenly Being", "Mountain Cleave (Heavenly Being Mid), Sword Domain (Late)", "metal", "Whetted Edge"));
 		// Four Swords Immortal-Slaying Canon
 		t.add(ModLang.heavenMethodKey("four_swords_immortal_slaying_canon"), "Four Swords Immortal-Slaying Canon");
 		t.add(ModLang.heavenMethodKey("four_swords_immortal_slaying_canon") + ".description", "The Metal at the four axes of the world, forged into four swords that stand at the gates of creation. Whoever enters their array is never let out, and whoever wears this Canon's golden body is broken by no single blow.");
-		t.add(ModLang.heavenMethodKey("four_swords_immortal_slaying_canon") + ".gains", "Qi Refining to Four Axis, nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). Its realm's arts: Heaven-Severing Sword (layer 48), Four Swords Array (layer 52). It teaches the metal arts of every realm below it too. Every layer: Whetted Edge.");
+		t.add(ModLang.heavenMethodKey("four_swords_immortal_slaying_canon") + ".gains", gains("Qi Refining to Four Axis", "Heaven-Severing Sword (Four Axis Mid), Four Swords Array (Late)", "metal", "Whetted Edge"));
 		// The realms after Four Axis (2026-10-22): their methods; the spells of their own realms Dao Integration's and Void Shattering's so far.
 		deep(t, "myriad_woods_dao_union_scripture", "Myriad Woods Return to Dao Scripture", "When every forest of every world is seen as one tree, and that tree as the Dao itself putting out leaves, the cultivator's roots go down into heaven's own law. Its few readers say the scripture grows a page each spring.", "Dao Integration", "wood", "Evergreen Vitality");
 		deep(t, "void_rooted_divine_tree_canon", "Void-Rooted Divine Tree Canon", "A tree whose roots hang in the void between the realms and drink from nothing. Its masters grow through the walls of the world as a root splits stone, and stand where there is no ground at all.", "Void Shattering", "wood", "Evergreen Vitality");
@@ -405,45 +405,57 @@ final class HeavenLangText {
 		t.add(ModLang.spellKey("primal_axe_splits_chaos") + ".description", "Pangu's axe, that split heaven from earth, stands behind you, 85 blocks tall, and is raised back over you, then chops down forward along your look: everything within 10 blocks of its line, out to 89 blocks, takes 75000 metal harm, thrown aside, and the land is split into a chasm along it, 9 blocks wide and 27 deep (from 10 blocks ahead of you), cracks running 34 blocks out where its head lands.");
 	}
 
-	/** ...and of True Immortal. */
-	private static final java.util.Map<String, String> IMMORTAL_SPELLS = java.util.Map.of("wood", "Primal Wind of Creation (layer 93) and First Seed of Creation (97)",
-			"fire", "Samadhi True Fire (layer 93) and First Flame Before Heaven (97)", "earth", "Hand of Houtu (layer 93) and Falling Continent (97)",
-			"water", "Glacier of the First Age (layer 93) and The Primordial Sea (97)", "metal", "Heaven-Slaying Sword Rises (layer 93) and Primal Axe Splits Chaos (97)");
+	/**
+	 * Each element's own two arts of the realms after Four Axis, by realm (the scriptures of that realm teach them: their gains text names them):
+	 * the first opens at its realm's Mid stage, the second at its Late.
+	 */
+	private static final java.util.Map<String, java.util.Map<String, String[]>> DEEP_SPELLS = java.util.Map.of(
+			"Dao Integration", java.util.Map.of("wood", new String[] {"Azure Dragon", "Myriad Woods Return to the Dao"},
+					"fire", new String[] {"Vermilion Bird's Descent", "One Flame Burns the Heavens"},
+					"earth", new String[] {"Qilin Tramples the Land", "Seal of Ten Thousand Mountains"},
+					"water", new String[] {"Black Tortoise Bastion", "Hundred Rivers Converge"},
+					"metal", new String[] {"White Tiger's Pounce", "Myriad Swords Return to One"}),
+			"Void Shattering", java.util.Map.of("wood", new String[] {"Spring Thunder of the Azure Emperor", "Void Withering"},
+					"fire", new String[] {"Golden Crow Descends", "Sun Pulled Through the Void"},
+					"earth", new String[] {"Buzhou Falls", "Earth Veins Lock the Void"},
+					"water", new String[] {"Weak Water from the Void", "Kun Rises from the Northern Abyss"},
+					"metal", new String[] {"Void-Severing Sword Light", "Ten-Direction Sword Prison"}),
+			"Sacred Vessel", java.util.Map.of("wood", new String[] {"Heaven-Swallowing Gourd", "Seven-Treasure Bodhi Branch"},
+					"fire", new String[] {"Wind-Fire Wheels", "Eight Trigrams Furnace"},
+					"earth", new String[] {"Xirang, the Self-Growing Soil", "Nine Cauldrons Suppress the Land"},
+					"water", new String[] {"Twenty-Four Sea-Fixing Pearls", "Ocean-Sealing Vase"},
+					"metal", new String[] {"Immortal-Binding Golden Ropes", "Golden Dragon Scissors"}),
+			"Entering Nirvana", java.util.Map.of("wood", new String[] {"Seed of Withering Rebirth", "Withering and Flourishing"},
+					"fire", new String[] {"Undying Ember", "Pyre of the Heavens"},
+					"earth", new String[] {"Gravestone Falls", "Buried World"},
+					"water", new String[] {"Frozen Moon in the Well", "The Frozen Moon Falls"},
+					"metal", new String[] {"Sword Tomb Awakens", "Nine Rebirths of the Sword"}),
+			"True Immortal", java.util.Map.of("wood", new String[] {"Primal Wind of Creation", "First Seed of Creation"},
+					"fire", new String[] {"Samadhi True Fire", "First Flame Before Heaven"},
+					"earth", new String[] {"Hand of Houtu", "Falling Continent"},
+					"water", new String[] {"Glacier of the First Age", "The Primordial Sea"},
+					"metal", new String[] {"Heaven-Slaying Sword Rises", "Primal Axe Splits Chaos"}));
 
-	/** Each element's own two spells of Dao Integration (the methods of that realm teach them: their gains text names them). */
-	private static final java.util.Map<String, String> DAO_SPELLS = java.util.Map.of("wood", "Azure Dragon (layer 57) and Myriad Woods Return to the Dao (61)",
-			"fire", "Vermilion Bird's Descent (layer 57) and One Flame Burns the Heavens (61)", "earth", "Qilin Tramples the Land (layer 57) and Seal of Ten Thousand Mountains (61)",
-			"water", "Black Tortoise Bastion (layer 57) and Hundred Rivers Converge (61)", "metal", "White Tiger's Pounce (layer 57) and Myriad Swords Return to One (61)");
-
-	/** ...and of Void Shattering. */
-	private static final java.util.Map<String, String> VOID_SPELLS = java.util.Map.of("wood", "Spring Thunder of the Azure Emperor (layer 66) and Void Withering (70)",
-			"fire", "Golden Crow Descends (layer 66) and Sun Pulled Through the Void (70)", "earth", "Buzhou Falls (layer 66) and Earth Veins Lock the Void (70)",
-			"water", "Weak Water from the Void (layer 66) and Kun Rises from the Northern Abyss (70)", "metal", "Void-Severing Sword Light (layer 66) and Ten-Direction Sword Prison (70)");
-
-	/** ...and of Sacred Vessel. */
-	private static final java.util.Map<String, String> VESSEL_SPELLS = java.util.Map.of("wood", "Heaven-Swallowing Gourd (layer 75) and Seven-Treasure Bodhi Branch (79)",
-			"fire", "Wind-Fire Wheels (layer 75) and Eight Trigrams Furnace (79)", "earth", "Xirang, the Self-Growing Soil (layer 75) and Nine Cauldrons Suppress the Land (79)",
-			"water", "Twenty-Four Sea-Fixing Pearls (layer 75) and Ocean-Sealing Vase (79)", "metal", "Immortal-Binding Golden Ropes (layer 75) and Golden Dragon Scissors (79)");
-
-	/** ...and of Entering Nirvana. */
-	private static final java.util.Map<String, String> NIRVANA_SPELLS = java.util.Map.of("wood", "Seed of Withering Rebirth (layer 84) and Withering and Flourishing (88)",
-			"fire", "Undying Ember (layer 84) and Pyre of the Heavens (88)", "earth", "Gravestone Falls (layer 84) and Buried World (88)",
-			"water", "Frozen Moon in the Well (layer 84) and The Frozen Moon Falls (88)", "metal", "Sword Tomb Awakens (layer 84) and Nine Rebirths of the Sword (88)");
-
-	/** A method of a realm after Four Axis: its name, its lore, and what its layers bring (its own realm's spells, Dao Integration's to True Immortal's). */
+	/** A scripture of a realm after Four Axis: its name, its lore, and what it brings (its own realm's arts, and its element's of every realm below). */
 	private static void deep(FabricLanguageProvider.TranslationBuilder t, String id, String name, String description, String realm, String element,
 							 String passive) {
 		t.add(ModLang.heavenMethodKey(id), name);
 		t.add(ModLang.heavenMethodKey(id) + ".description", description);
-		String own = realm.equals("Dao Integration") ? "Its own realm's arts: " + DAO_SPELLS.get(element) + "; and it teaches the "
-				: realm.equals("Void Shattering") ? "Its own realm's arts: " + VOID_SPELLS.get(element) + "; and it teaches the "
-				: realm.equals("Sacred Vessel") ? "Its own realm's arts: " + VESSEL_SPELLS.get(element) + "; and it teaches the "
-				: realm.equals("Entering Nirvana") ? "Its own realm's arts: " + NIRVANA_SPELLS.get(element) + "; and it teaches the "
-				: realm.equals("True Immortal") ? "Its own realm's arts: " + IMMORTAL_SPELLS.get(element) + "; and it teaches the "
-				: "No arts of its own realm yet; it teaches the ";
-		t.add(ModLang.heavenMethodKey(id) + ".gains", "Qi Refining to " + realm + ", nine layers a realm (of each realm's nine, layer 1 Early, 3 Mid, "
-				+ "6 Late, 9 Grand Perfection; each opens when your cultivation reaches it). " + own
-				+ element + " arts of every realm below it. Every layer: " + passive + ".");
+		java.util.Map<String, String[]> ofRealm = DEEP_SPELLS.get(realm);
+		String[] own = ofRealm == null ? null : ofRealm.get(element);
+		t.add(ModLang.heavenMethodKey(id) + ".gains", gains("Qi Refining to " + realm, own == null ? null : own[0] + " (" + realm + " Mid), " + own[1] + " (Late)",
+				element, passive));
+	}
+
+	/**
+	 * What a scripture brings, as its ".gains" says it (no layers since 2026-11-16, the user's ask: "get rid of the whole layer system besides
+	 * laws"): the realms it spans; its own realm's arts with the stage each opens at (Spell#realmNeeded; null, none); the arts of its element
+	 * ({@code below}) of every realm below it (null for a Qi Refining scripture, which has none below), all learned at once; its element's passive.
+	 */
+	private static String gains(String realms, String arts, String below, String passive) {
+		String lower = below == null ? "" : (arts == null ? ". It teaches the " : "; and the ") + below + " arts of every realm below it";
+		return realms + (arts == null ? "" : ". Its realm's arts: " + arts) + lower + ". All learned at once, each wielded once your cultivation reaches "
+				+ "its stage. " + passive + " grows as your cultivation climbs " + (below == null ? "the realm." : "its realms.");
 	}
 
 	private HeavenLangText() {}

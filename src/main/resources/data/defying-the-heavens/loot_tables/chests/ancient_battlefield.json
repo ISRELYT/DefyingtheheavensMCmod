@@ -17,13 +17,13 @@
     {
       "rolls": 1,
       "entries": [
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 4, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"heaven_severing_sword_scripture\"}"}]},
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"four_swords_immortal_slaying_canon\"}"}]},
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"myriad_swords_return_scripture\"}"}]},
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"void_splitting_sword_canon\"}"}]},
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"golden_crow_great_sun_scripture\"}"}]},
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"heaven_burning_phoenix_nirvana_canon\"}"}]},
-        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"sovereign_earth_myriad_bearing_sutra\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 4, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"heaven_severing_sword_scripture\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"four_swords_immortal_slaying_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"myriad_swords_return_scripture\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"void_splitting_sword_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"golden_crow_great_sun_scripture\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"heaven_burning_phoenix_nirvana_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:technique_manual", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"sovereign_earth_myriad_bearing_sutra\"}"}]},
         {"type": "minecraft:empty", "weight": 27}
       ]
     }

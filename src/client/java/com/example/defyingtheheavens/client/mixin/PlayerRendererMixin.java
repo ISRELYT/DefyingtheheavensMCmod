@@ -31,7 +31,8 @@ public abstract class PlayerRendererMixin {
 			return;
 		}
 		if (!ClientGhosts.drawnAsLight(player)) return; // a form is a look: a Ghost King's form's hand too, a human form's not
-		SoulRenderer.drawGhostArm(pose, buffers, player.getSkinTextureLocation(), arm, sleeve, light);
+		// One lingering after its death as its nascent soul (Lingering): a soul's violet hand, as it is drawn to others.
+		SoulRenderer.drawGhostArm(pose, buffers, player.getSkinTextureLocation(), arm, sleeve, light, ClientGhosts.lingeringSoul(player));
 		ci.cancel();
 	}
 

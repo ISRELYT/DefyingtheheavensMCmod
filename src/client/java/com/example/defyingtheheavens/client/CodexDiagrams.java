@@ -324,7 +324,7 @@ final class CodexDiagrams {
 			Realm realm = kind.isPrimordial() ? Realm.TRUE_IMMORTAL : CultivatorNpc.realmOf(kind.minRank());
 			if (kin != null) drops.add(List.of(DemonBloodItem.of(kin, realm)));
 			if (kind.isPrimordial()) drops.add(List.of(new ItemStack(ModItems.IMMORTAL_JADE)));
-			if (kind == BeastKind.KUN_PENG) drops.add(List.of(JadeSlipItem.of(HeavenMethod.of(kind.element, Realm.TRUE_IMMORTAL))));
+			if (kind == BeastKind.KUN_PENG) drops.add(List.of(com.example.defyingtheheavens.TechniqueManualItem.of(HeavenMethod.of(kind.element, Realm.TRUE_IMMORTAL))));
 			for (Item remains : kind.remains()) drops.add(List.of(new ItemStack(remains)));
 		} else if (path.equals("void_vestige")) {
 			drops.add(List.of(new ItemStack(ModItems.LOW_SPIRIT_STONE), new ItemStack(ModItems.MID_SPIRIT_STONE), new ItemStack(ModItems.HIGH_SPIRIT_STONE)));

@@ -4255,7 +4255,9 @@ The game tests leave no bodies (the kept test world would fill with them) except
 While the gamerule **`netherworldAfterDeath`** is on (the default), a player who dies wakes at the Ghost Gate as a
 **ghost** instead of at their bed. The death itself is vanilla's (its message, keepInventory if set), its drops laid in the
 body left where they fell (The bodies of the dead, above); only the respawn is the Gate's. A living visitor overtaken by yin becomes a ghost where they stand instead, and keeps all
-they carry, as a ghost. With the gamerule off, death is vanilla's and there are no ghosts.
+they carry, as a ghost. With the gamerule off, death is vanilla's and there are no ghosts. A Nascent Soul on any qi path, or one
+of the ghost path alone, first lingers among the living where its body lies, until the Netherworld's pull takes it down (see "The
+soul after death", 2026-11-16).
 
 A ghost:
 
@@ -6501,6 +6503,130 @@ hundredth of another's health, which mends whole in 30 seconds, so the immortals
   strike, not the 30 wards, mendings, ways of moving and works on the land (`Spell#harms`).
 - Tests: `SpellMightGameTests` (the numbers above, the waits, a True Immortal cultivator's Flame Bolt on a creature, the next-tick cast),
   `SpellCooldownGameTests` (the top now none at all).
+
+## The soul after death (2026-11-16)
+
+The user's ask: "if u are past nascent soul and you die not in the netherworld you should be able to fly around as a nascent soul and be
+able to possess someone to not get sent to the netherworld as fast ... you should feel the 'pull of the netherworld' (a timer). possessing
+someone or something just extends it (make sure it cant be infinitely extended). the higher your ghost cultivation path the longer you can
+resist the pull." (`Lingering`)
+
+- **Who.** While `netherworldAfterDeath` is on: one whose heaven, ghost or Demon path stands at Nascent Soul Early or above, dying anywhere
+  but the Netherworld, its passages (the Soul River, the Spatial Gap, a Void Breach, the Immortal Gate's climb) and the Inner Realm, of
+  anything but what takes the soul with the body: a tribulation's strike or the Five Decays' judgement, the Chief Judge's gaze, old age, a
+  soul scattered, severed or seized, the Chaos storm (`Lingering#mayLinger`, `#destroysTheSoul`; a core detonated leaves the nascent soul
+  to flee). A clone's death is the clone's. Mortals and everyone below Nascent Soul go down to the Gate as before.
+- **Rising.** After the death screen you rise where your body lies (the body keeps your things, as ever) as your **nascent soul**, drawn
+  in a soul's violet: one of the dead (you fly freely and touch nothing, seen only by those who see souls: a Nascent Soul with Qi Sense
+  open, a Heavenly Being and up, a Ghost Eye), with no Ghost King's crown or hands while you linger.
+- **Anyone can strike it.** Every blow that finds it lands whole, a mortal's too, seeing it or not, and arrows and spells' bolts find
+  it where they pass through the dead (`SoulProjectileMixin`, `SpellProjectile#canHitEntity`); the world's own (a fall, fire, a blast)
+  passes through it as through the dead. Hostile cultivators of Nascent Soul and up may hunt it (`CultivatorNpc#canAttack`). Struck
+  down, it is torn away and reforms at the Gate as the dead do.
+- **Possessing.** Right-click a person (a player or a cultivator) at least a realm below your highest path, or a body of the dead (your
+  own too), or use Ghostly Possession: free of ghostly qi, no upkeep; in it you are that body, as any possessor is. A lingering soul's
+  right-click is for this alone (no talk from a few steps off). It can't project a soul: it is one.
+- **The pull**, a HUD bar ("Netherworld's Pull", with the time left): **90 s and 6 s more for each stage of your ghost path**. The dead
+  are taught Netherworld Breathing as they rise if they have no ghost foundation, so a heaven path Nascent Soul has 96 s, a Nascent Soul
+  Early ghost path 168 s, a Heavenly Lord Grand Perfection one 498 s. **In a body it fills at a third of its pace**: three times as long,
+  never for good. You're told in its last quarter. Full, it tears you out of any body (given back where it stands) and takes you down to
+  the Ghost Gate, one of the dead as any death leaves one (a Ghost King crowned there). Logging out, it takes you: you reform at the Gate
+  on your return (a crash too).
+- **My call, the ghost path alone** (`Lingering#pureGhost`: its ghost path begun, no heaven scripture or heaven method from a manual, no
+  Demon Path): it is half the Netherworld's already, so at any realm it rises as a **ghost** (the dead's cyan and protection: only what
+  reaches the dead harms it; a Ghost King keeps its crown and its hands), and its pull lasts **twice** as long.
+- Code: `Lingering`, `NetherworldState` (Lingering and Pull, saved), `GhostSystem#onDeath`/`#onRespawn`, `GhostPossession` (free for a
+  lingering soul), client `NetherworldHud`, `ClientGhosts` (the soul bit of `GHOST`, the violet edge of the screen), `SoulRenderer`.
+
+### Two fixes with it
+
+- **A right-click in a possessed body** (the user's report: "During possession (ghost and human) if u right click to interact it attempts
+  to interact with the person your are possessing"): talking from a few steps off (`TalkReach`) found the body one was in, set aside and
+  standing where one stands, at once, and spent every right-click on it ("doesn't seem to hear you"), so no block or item was ever used.
+  It now takes only what the crosshair could pick (`CultivatorNpc#isPickable`), and the server refuses such a talk too (`TalkSystem#request`).
+- **"Still warm"** (the user's report: "Gate guardians in the netherworld and meng po describe me as 'still warm' even when I'm very
+  dead"): the dead spoke to a dead mortal (no qi: the "mortal" rung) with their lines for a living mortal visitor. They now have their own
+  words for the dead (`NpcLines#lineTo`, the `*.ghost_dead` lines: greetings, questions, passing remarks) and call a dead mortal "little
+  shade" (`NpcAddress`).
+- Tests: `LingeringGameTests` (who lingers, the pull's length, a real death risen as a soul and taken down, a body holding the pull back but
+  not for good, blows and the hunt, struck down and logging out, the dead's words to the dead).
+
+## Methods from manuals (2026-11-16)
+
+The user's asks: "remove all method jade slips from the game entirely and have all methods come from method manuals, and replace technique
+manuals with technique jade slips"; "end cities and all the other stuff to have loot from the mod in it, and village chests to have stuff
+like low-grade spirit stones"; "Steles should instead now tell you what method they give you upon right clicking them (also what path that
+method belongs to and the realms it cultivates and stuff) and provide you with a method to cultivate from one of the method manuals"; "the
+method that steles have should be random"; "arts can still be found from art manuals"; "being born with certain physiques limits what
+methods you can cultivate and what arts you can learn"; "you dont need to be drawing in from that path for steles to work. change the
+meditation time from 15 seconds to 7 seconds"; and "get rid of the whole layer system besides laws ... (i want you to learn spells
+immediately upon using the arts manual)".
+
+- **No method jade slips.** The Jade Slip and the Ghost Jade Slip are made nowhere now: no loot table, trade, drop or teacher gives one.
+  One left in an old world turns into the Art Manual of its scripture or foundation the moment it is carried or read (`JadeSlipItem`,
+  `GhostJadeSlipItem`).
+- **Every method from its Method Manual.** Qi Circulation and Netherworld Breathing are Method Manuals now, one a realm, like every other
+  method; the scriptures and the ghost foundations carry none of their volumes. Where they are: every sect library but the body sects'
+  and the beasts' keeps a Qi Circulation volume of its world's realms (Qi Refining to Core Formation below, Core Formation to Sacred Vessel
+  in the Jade Firmament: `MethodManualItem#circulation`); cultivators sell and drop one beside their scripture (rolled apart), ghost elders
+  and kings Breathing's beside their foundation; the Celestial Court, the cave abodes and the Yellow Springs Hollow keep them; any cultivator
+  teaches the basics (Qi Circulation's first volume and a Qi Refining scripture), a teacher the Qi Circulation it breathes by to its
+  scripture's realm, a ghost Breathing to its foundation's; death teaches every soul Breathing's first volume. Bloodline Purification, Body
+  Tempering, the Four Axes and Thunder Tempering stay as they were (`CultivationMethod#fromManual`).
+- **Art Manuals** (the item that was the Technique Manual): a heaven scripture, a ghost foundation or art, or one art. A scripture's or a
+  foundation's teaches it whole at once, every art with it, **each wielded once its path reaches the stage it stands at** (the heaven
+  path's realm for a scripture's, the ghost path's for a foundation's: the Methods tab says where each opens; "New arts to wield" in the
+  chat as they do). A scripture keeps its element's passive and quickens Qi Circulation where its element runs thick.
+- **No layers but the Laws'.** A scripture or foundation known is understood as far as its path stands, at once (`HeavenState#layer`,
+  `NetherworldState#layer`): nothing settles, nothing to meditate in, and a fall leaves it as far as the stage fallen to. The Methods tab
+  shows each one's arts (all of them, or how many and the next with its stage) instead of layers and bars; the ghost foundations have no
+  Practise button any more (nothing of theirs is practised). Soul River Feast's and the Yellow Springs' "memory" now takes a quarter of the
+  ghost path's stage instead of a layer.
+- **Technique Jade Slips** (`TechniqueSlipItem`): Clone, Universe in a Sleeve, Sword Intent and Blood Battle come on jade slips; an old
+  Technique Manual of one turns into its slip; the Inscription Brush writes a technique out on a slip, an art on an Art Manual.
+- **Steles** (`SteleTeachings`). A Dao Stele and a Method Stele alike hold one method: any a manual holds, of any path, whose volumes span
+  the stele's realm (its carving's: a Dao Stele's scripture's realm, a Method Stele's foundation's, the fire's and the steps' Qi
+  Refining's; a Four Axis carving teaches Heavenly Being's volumes; a True Immortal one stays sealed), drawn by the stele's place and the
+  world's seed, so it never changes. **Right-click**: its method and path, its volumes, what it is, and whether you can take it (or why not).
+  **Meditate within 4 blocks for 7 seconds, whichever qi you draw in**, and its volumes up to the stele's realm are yours. Practising its
+  method within 8 blocks, a quarter faster. The dead's rumours of a Method Stele name the method it holds.
+- **Bodies born against methods** (`Physique#bars`, `CultivationMethods#barredBy`; a manual, a stele or a teacher refuses and says why):
+
+  | Body | Can't take |
+  | --- | --- |
+  | True Element Root, Three Elements Roots | Five Elements Cycling |
+  | Heaven Sacred Body | Corpse Yin Refining, Haunting, Soul River Feast, Rift Haunting, Soul Furnace Refining, Ten Thousand Ghosts Union, Borrowed Life |
+  | Blood Demon Body, Soul-Devouring Body | Heaven-Petitioning Rites, Incense and Faith, Judgement Hall Service |
+  | Heaven-Defying Body | Heaven-Petitioning Rites, Incense and Faith |
+  | Nine Yang Body | Corpse Yin Refining, Yellow Springs Immersion, Soul Furnace Refining |
+  | Ghost Devil Body | Heaven-Petitioning Rites |
+  | Shattered Meridians | every qi method and art (a mortal's meridians, as before) |
+
+  The arts: element roots take only their elements' scriptures, as before. A Myriad Form Body's forms bar as their own bodies do.
+- **The vanilla world's chests** (`VanillaLoot`, Fabric's loot table events, the vanilla tables only):
+
+  | Where | The mod's goods | Writings |
+  | --- | --- | --- |
+  | Villages' houses and shops | 6 in 10: low-grade spirit stones, young ginseng, a low Qi Gathering Pill | none |
+  | Dungeons, mineshafts, desert and jungle temples, shipwrecks, ruined portals, outposts, igloos, buried treasure, ocean ruins | low and mid stones, herbs, Qi Gathering and Cultivation Pills | a third: a Method Manual or an Art Manual of Qi Refining to Foundation Building |
+  | Strongholds, woodland mansions, ancient cities, bastions, Nether fortresses | mid and high stones, older herbs, Foundation and Core Pills | nearly half: Core Formation to Nascent Soul |
+  | End cities | high stones, the oldest herbs, Core Pills | most: Nascent Soul to Heavenly Being; a quarter a Technique Jade Slip |
+
+  A Method Manual's method is any a manual holds, of any path, written to one of those realms its volumes span; an Art Manual a scripture or
+  a ghost art of them.
+- **Old worlds.** Saved before (no `ManualsModel` in the record): Qi Circulation's volumes reach as far as the deepest scripture known did,
+  Breathing's as far as the deepest foundation's (`PlayerCultivation#keepOrthodoxReach`), so nobody loses a realm's gathering.
+- **My calls** (to confirm): the scriptures and ghost foundations themselves are the "arts" the Art Manuals hold; arts are learned at once but
+  wielded from their stage, as every art always was; a stele of the method practised near gives the old x1.25; a Four Axis carving
+  teaches Heavenly Being's volumes; the stele's random method is any path's (a Demon Path one wants a demon core, a Body Path one the Body
+  Path begun; Netherworld Breathing, like a ghost foundation, begins the ghost path, the ghost path's other ways don't, as before); the old
+  jade slips convert rather than vanish.
+- Code: `SteleTeachings`, `CultivationMethods` (`teach`, `barredBy`, `refusal`), `MethodManualItem`, `TechniqueManualItem` (the Art
+  Manual), `TechniqueSlipItem`, `JadeSlipItem`/`GhostJadeSlipItem` (conversion), `VanillaLoot`, `HeavenState`/`NetherworldState` (layers
+  from the path), `MeditationManager#readSteles`, client `CultivationScreen` (the Methods tab's arts lines), the loot tables.
+- Tests: `ManualsGameTests` (a stele's method fixed by its place and random between places, learned in seven seconds on the heavens' qi, an
+  Art Manual teaching a whole scripture with its arts by the realm, Qi Circulation and Breathing from their manuals, the bodies' bars, old
+  worlds' volumes kept, the Soul River's memory, the vanilla chests, no slip in any table), and the method tests rewritten for it.
 
 ## License
 

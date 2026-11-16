@@ -24,10 +24,10 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A Method Stele (功法碑): a tall tablet of carved stone, three blocks high, standing across the Netherworld, each teaching one
- * ghost method (see GhostMethods): meditating beside it for 15 seconds teaches the method, and beside the stele of a method
- * one knows, meditation on that method goes faster. Unbreakable; the dead may use it (tagged ghost_usable): a touch tells what
- * it teaches.
+ * A Method Stele (功法碑): a tall tablet of carved stone, three blocks high, standing across the Netherworld, carved after one ghost art (its
+ * realm the realm of what it teaches). Since 2026-11-16 it teaches a method, any a manual holds, drawn by its place (SteleTeachings): a touch tells
+ * which, its path and its volumes; meditating beside it for 7 seconds teaches it, and beside it a path practising that method gathers faster.
+ * Unbreakable; the dead may use it (tagged ghost_usable).
  */
 public class MethodSteleBlock extends HorizontalDirectionalBlock {
 	public enum Part implements StringRepresentable {
@@ -80,17 +80,8 @@ public class MethodSteleBlock extends HorizontalDirectionalBlock {
 	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
 		if (level.isClientSide) return InteractionResult.SUCCESS;
-		if (player instanceof ServerPlayer sp) {
-			GhostMethod method = state.getValue(METHOD);
-			// One carved before True Immortal's were kept for the Immortal Realm (GhostMethod#taughtInTheWorld) can't be read.
-			if (!method.taughtInTheWorld()) {
-				sp.displayClientMessage(Component.translatable(ModLang.MSG_STELE_SEALED, method.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
-				return InteractionResult.CONSUME;
-			}
-			boolean known = CultivationManager.get(sp).netherworld().knows(method);
-			sp.displayClientMessage(Component.translatable(known ? ModLang.MSG_STELE_KNOWN : ModLang.MSG_STELE_TEACHES, method.getDisplayName())
-					.withStyle(ChatFormatting.AQUA), true);
-		}
+		// What it teaches, its path and volumes, and where the toucher stands with it (one carved too deep for this world can't be read).
+		if (player instanceof ServerPlayer sp) SteleTeachings.tell(sp, state, pos);
 		return InteractionResult.CONSUME;
 	}
 }

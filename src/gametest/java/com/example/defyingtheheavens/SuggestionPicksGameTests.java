@@ -175,13 +175,14 @@ public class SuggestionPicksGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
-	/** The slips 4000 of a sect library's chests opened in {@code level} keep, counted by realm. */
+	/** The scriptures' Art Manuals (their jade slips before 2026-11-16) 4000 of a sect library's chests opened in {@code level} keep, counted by realm. */
 	private static int[] libraryRealms(MinecraftServer server, ServerLevel level, Vec3 at) {
 		LootTable library = server.getLootData().getLootTable(SectPiece.LIBRARY_LOOT);
 		int[] realms = new int[Realm.values().length];
 		for (int i = 0; i < 4000; i++) {
 			for (ItemStack stack : library.getRandomItems(new LootParams.Builder(level).withParameter(LootContextParams.ORIGIN, at).create(LootContextParamSets.CHEST))) {
-				if (stack.is(ModItems.JADE_SLIP)) realms[JadeSlipItem.method(stack).realm().ordinal()] += stack.getCount();
+				HeavenMethod method = stack.is(ModItems.TECHNIQUE_MANUAL) ? TechniqueManualItem.heavenArt(stack) : null;
+				if (method != null) realms[method.realm().ordinal()] += stack.getCount();
 			}
 		}
 		return realms;
@@ -244,7 +245,9 @@ public class SuggestionPicksGameTests implements FabricGameTest {
 			rogue.changeRegard(player, Regard.TRUSTED);
 			for (MerchantOffer offer : CultivatorTrades.offersFor(rogue, player, new HashMap<>(), new IdentityHashMap<>())) {
 				ItemStack sold = offer.getResult();
-				helper.assertTrue(!sold.is(ModItems.JADE_SLIP) || JadeSlipItem.method(sold).realm().taughtInTheWorld(), "...no True Immortal's slip on sale (" + sold + ")");
+				HeavenMethod art = sold.is(ModItems.TECHNIQUE_MANUAL) ? TechniqueManualItem.heavenArt(sold) : null;
+				helper.assertTrue(art == null || art.realm().taughtInTheWorld(), "...no True Immortal's Art Manual on sale (" + sold + ")");
+				helper.assertTrue(!sold.is(ModItems.METHOD_MANUAL) || MethodManualItem.realm(sold).taughtInTheWorld(), "...nor a True Immortal volume (" + sold + ")");
 			}
 			helper.succeed();
 		} finally {

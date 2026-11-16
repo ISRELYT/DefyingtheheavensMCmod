@@ -159,7 +159,8 @@ public final class SoulRenderer {
 			if (com.example.defyingtheheavens.SoulProjection.isSoul(ghost)) continue;
 			float clarity = whole ? 1.0f : ClientSoul.clarity(ghost);
 			if (clarity <= 0) continue;
-			drawSoul(context, ghost, clarity, partial, true, ClientGhosts.crowned(ghost));
+			// One lingering after its death as its nascent soul (Lingering): drawn as a soul is, in violet, not in the dead's cyan.
+			drawSoul(context, ghost, clarity, partial, !ClientGhosts.lingeringSoul(ghost), ClientGhosts.crowned(ghost));
 			if (ghost != mc.player) drawName(context, ghost, partial);
 		}
 		// The Netherworld's own dead, ghost cultivators and Hungry Ghosts, likewise (their plates are their renderers').
@@ -397,20 +398,23 @@ public final class SoulRenderer {
 	 * glow, as everyone else sees the ghost. Without the shader, the skin tinted cyan and faded. Under a shader pack, which draws
 	 * the hand in its own pass and keeps nothing the soul shader draws there (ShaderPacks): the dead's cyan, through a glowing
 	 * render type the pack knows, at full light, flat (the skin tinted came out the skin's own greens and browns, not the light
-	 * the dead are drawn as).
+	 * the dead are drawn as). {@code soul}: one lingering after its death as its nascent soul (Lingering), in a soul's violet instead.
 	 */
-	public static void drawGhostArm(PoseStack pose, MultiBufferSource buffers, ResourceLocation skin, ModelPart arm, ModelPart sleeve, int light) {
+	public static void drawGhostArm(PoseStack pose, MultiBufferSource buffers, ResourceLocation skin, ModelPart arm, ModelPart sleeve, int light,
+									boolean soul) {
 		arm.xRot = 0;
 		sleeve.xRot = 0;
 		if (com.example.defyingtheheavens.client.compat.ShaderPacks.inUse()) {
 			VertexConsumer glow = buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE));
-			arm.render(pose, glow, 0xF000F0, OverlayTexture.NO_OVERLAY, 0.3f, 0.85f, 1.0f, 0.6f);
+			if (soul) arm.render(pose, glow, 0xF000F0, OverlayTexture.NO_OVERLAY, 0.66f, 0.45f, 0.95f, 0.6f);
+			else arm.render(pose, glow, 0xF000F0, OverlayTexture.NO_OVERLAY, 0.3f, 0.85f, 1.0f, 0.6f);
 			return;
 		}
 		if (soulShader == null) {
 			VertexConsumer faded = buffers.getBuffer(RenderType.entityTranslucent(skin));
-			arm.render(pose, faded, light, OverlayTexture.NO_OVERLAY, 0.35f, 0.95f, 1.0f, 0.55f);
-			sleeve.render(pose, faded, light, OverlayTexture.NO_OVERLAY, 0.35f, 0.95f, 1.0f, 0.55f);
+			float red = soul ? 0.6f : 0.35f, green = soul ? 0.4f : 0.95f;
+			arm.render(pose, faded, light, OverlayTexture.NO_OVERLAY, red, green, 1.0f, 0.55f);
+			sleeve.render(pose, faded, light, OverlayTexture.NO_OVERLAY, red, green, 1.0f, 0.55f);
 			return;
 		}
 		// As the sense layer draws the dead (SenseOverlay): blended, tested but not written, both faces.
@@ -422,24 +426,28 @@ public final class SoulRenderer {
 		RenderSystem.setShaderTexture(0, skin);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-		drawArm(pose, arm, sleeve, 1, 1.0f);
+		float green = soul ? 1 : 0; // the shader's switch: a soul's violet, or the dead's cyan
+		drawArm(pose, arm, sleeve, 1, 1.0f, green);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-		drawArm(pose, arm, sleeve, 0, 1.07f);
+		drawArm(pose, arm, sleeve, 0, 1.07f, green);
 		RenderSystem.depthMask(true);
 		RenderSystem.enableCull();
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableBlend();
 	}
 
-	/** The arm and its sleeve, {@code red} 1 the body pass and 0 the halo (see drawModel), {@code size} times as large. */
-	private static void drawArm(PoseStack pose, ModelPart arm, ModelPart sleeve, float red, float size) {
+	/**
+	 * The arm and its sleeve, {@code red} 1 the body pass and 0 the halo (see drawModel), {@code size} times as large; {@code green} the
+	 * shader's switch, 0 the dead's cyan and 1 a soul's violet.
+	 */
+	private static void drawArm(PoseStack pose, ModelPart arm, ModelPart sleeve, float red, float size, float green) {
 		arm.xScale = arm.yScale = arm.zScale = size;
 		sleeve.xScale = sleeve.yScale = sleeve.zScale = size;
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-		arm.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, 0, 1, 1);
-		sleeve.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, 0, 1, 1);
+		arm.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1, 1);
+		sleeve.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1, 1);
 		BufferUploader.drawWithShader(buffer.end());
 		arm.xScale = arm.yScale = arm.zScale = 1;
 		sleeve.xScale = sleeve.yScale = sleeve.zScale = 1;

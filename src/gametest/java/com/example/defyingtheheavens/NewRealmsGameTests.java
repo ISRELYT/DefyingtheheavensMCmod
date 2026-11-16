@@ -200,19 +200,22 @@ public class NewRealmsGameTests implements FabricGameTest {
 					realm.getId() + ": its steles in the Upper Realm's wondrous lands alone (True Immortal's on none)");
 		}
 		for (int layer = 1; layer <= MethodLayers.layers(Realm.TRUE_IMMORTAL); layer++) {
-			helper.assertTrue(MethodLayers.cost(layer) > 0 && HeavenMethods.layerCost(layer) > 0, "Layer " + layer + " has its cost");
+			helper.assertTrue(MethodLayers.cost(layer) > 0, "Layer " + layer + " has its cost (the ghost path's bar of before is reckoned by them)");
 		}
-		// The volumes (the methods overhaul, 2026-10-31): Dao Integration gathers with a scripture of it; Four Axis's carries none there,
-		// nor of Four Axis itself (the axes fill it). The way into it is open either way.
+		// The volumes (the methods overhaul, 2026-10-31; Qi Circulation's own manuals' since 2026-11-16): Dao Integration gathers with its
+		// volume; none has a volume of Four Axis (the axes fill it). The way into it is open either way.
 		PlayerCultivation c = new PlayerCultivation();
 		c.awaken(0);
 		c.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
-		c.heaven().setMethod(HeavenMethod.FIRE_FOUR_AXIS, HeavenMethod.FIRE_FOUR_AXIS.layers(), 0);
+		c.heaven().setMethod(HeavenMethod.FIRE_FOUR_AXIS, 1, 0);
+		c.raiseReach(CultivationMethod.QI_CIRCULATION, Realm.HEAVENLY_BEING);
 		helper.assertTrue(!HeavenMethods.hasVolume(c, Realm.DAO_INTEGRATION) && !HeavenMethods.hasVolume(c, Realm.FOUR_AXIS) && HeavenMethods.hasVolume(c, Realm.HEAVENLY_BEING)
-				&& HeavenMethods.opensWay(c, Realm.DAO_INTEGRATION), "A Four Axis scripture carries volumes to Heavenly Being: none of Four Axis, none of Dao Integration");
+				&& HeavenMethods.opensWay(c, Realm.DAO_INTEGRATION), "Qi Circulation's volumes to Heavenly Being: none of Four Axis, none of Dao Integration");
 		c.heaven().setMethod(HeavenMethod.WATER_DAO_INTEGRATION, 1, 0);
+		helper.assertTrue(!HeavenMethods.hasVolume(c, Realm.DAO_INTEGRATION), "...a Dao Integration scripture carries none of it (the scriptures are arts now)");
+		c.raiseReach(CultivationMethod.QI_CIRCULATION, Realm.DAO_INTEGRATION);
 		helper.assertTrue(HeavenMethods.hasVolume(c, Realm.DAO_INTEGRATION) && !HeavenMethods.hasVolume(c, Realm.VOID_SHATTERING)
-				&& HeavenMethods.deepestRealm(c.heaven()) == Realm.DAO_INTEGRATION, "...a Dao Integration scripture carries its own, and no further");
+				&& HeavenMethods.deepestRealm(c.heaven()) == Realm.DAO_INTEGRATION, "...its Dao Integration volume does, and no further");
 		// The ghost path to the last realm's Grand Perfection (Heavenly Lord's since phase 3), as the heaven path's.
 		NetherworldState s = c.netherworld();
 		GhostMethods.setPath(s, PlayerCultivation.LAST_RANK);

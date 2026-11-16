@@ -60,16 +60,13 @@ import java.util.UUID;
 public final class GhostMethods {
 	/** The fire's and the steps' layers (a foundation's: GhostMethod#layers). */
 	public static final int LAYERS = 9;
-	/** The fire's and the steps' layers, in minutes of baseline meditation (what each cost to cultivate before the bar; half of it settles one in). */
-	public static final int[] MINUTES = {5, 8, 12, 20, 30, 45, 60, 90, 120};
 	public static final double BASE_RATE = 1.0;
 	public static final double GHOST_FACTOR = 1.5;
 	public static final double REALM_STEP = 0.10;
-	public static final double STELE_BONUS = 1.25;
-	public static final double STELE_LEARN_RADIUS = 4, STELE_BONUS_RADIUS = 8;
-	public static final double STELE_LEARN_SECONDS = 15;
-	/** A new stage's layers settle in over this share of their own cost, gathered on the ghost path (as the heaven methods'). */
-	public static final double SETTLE_SHARE = 0.5;
+	/** A stele of the method practised near (SteleTeachings, which teach methods since 2026-11-16). */
+	public static final double STELE_BONUS = SteleTeachings.BONUS;
+	public static final double STELE_LEARN_RADIUS = SteleTeachings.LEARN_RADIUS, STELE_BONUS_RADIUS = SteleTeachings.BONUS_RADIUS;
+	public static final double STELE_LEARN_SECONDS = SteleTeachings.LEARN_SECONDS;
 	/** Each layer of Wandering Soul Steps quickens a ghost this much; each of Ghost Fire Scripture strengthens its blows this much. */
 	public static final double STEPS_SPEED_PER_LAYER = 0.03, FIRE_DAMAGE_PER_LAYER = 0.10;
 	/**
@@ -90,18 +87,6 @@ public final class GhostMethods {
 	public static final int LAYERS_PER_REALM = 3;
 	/** The very top of the ghost path, as the heaven path's (the user's ask, 2026-10-22; Four Axis's before): Heavenly Lord Grand Perfection since phase 3. */
 	public static final int LAST_RANK = PlayerCultivation.LAST_RANK;
-
-	/** Seconds of baseline meditation through layer {@code layer} of {@code method} (1 to its last): what a layer stands for. */
-	public static double layerCost(GhostMethod method, int layer) {
-		int at = Math.max(1, Math.min(method.layers(), layer));
-		if (!method.isFoundation()) return MINUTES[at - 1] * 60.0;
-		return MethodLayers.cost(at);
-	}
-
-	/** What layer {@code layer} of {@code method} takes to settle in ({@link #settle}): {@link #SETTLE_SHARE} of its cost. */
-	public static double settleCost(GhostMethod method, int layer) {
-		return SETTLE_SHARE * layerCost(method, layer);
-	}
 
 	// --- The ghost path ---
 
@@ -183,18 +168,29 @@ public final class GhostMethods {
 	 * for a world saved then (NetherworldState#load), to start the bar from.
 	 */
 	static double layeredStageProgress(NetherworldState s) {
-		GhostMethod deepest = deepestFoundation(s);
+		GhostMethod deepest = savedDeepestFoundation(s);
 		if (deepest == null) return 0;
-		int layer = s.layer(deepest);
+		int layer = s.savedLayer(deepest);
 		int rank = floor(deepest, layer);
 		double done = 0, whole = 0;
 		for (int at = MethodLayers.deepestAt(rank - 1) + 1; at <= MethodLayers.deepestAt(rank); at++) {
 			double cost = MethodLayers.cost(at);
 			whole += cost;
 			if (at < layer) done += cost;
-			else if (at == layer) done += Math.min(cost, s.progress(deepest));
+			else if (at == layer) done += Math.min(cost, s.savedProgress(deepest));
 		}
 		return whole <= 0 ? 0 : Math.min(1, done / whole);
+	}
+
+	/** {@link #deepestFoundation} by the layers as saved (NetherworldState#savedLayer): an old save's, carried over in NetherworldState#load. */
+	static GhostMethod savedDeepestFoundation(NetherworldState s) {
+		GhostMethod deepest = null;
+		for (GhostMethod method : GhostMethod.values()) {
+			if (!method.isFoundation() || !s.knows(method)) continue;
+			int layer = s.savedLayer(method), best = deepest == null ? 0 : s.savedLayer(deepest);
+			if (deepest == null || layer > best || layer == best && method.tier() > deepest.tier()) deepest = method;
+		}
+		return deepest;
 	}
 
 	/** The name of a rank (PlayerCultivation#rankName), for the ghost path's. */
@@ -230,22 +226,20 @@ public final class GhostMethods {
 	}
 
 	/**
-	 * Whether {@code c} has Netherworld Breathing's volume for {@code realm}: a foundation of it or deeper known (each carries the chapters
-	 * from Qi Refining up to its own realm). Four Axis has none (its axes are the method there, FourAxis#fillBars); past True Immortal the
-	 * Laws carry the path, so there is nothing to have. A path not begun ({@code realm} null) has none.
+	 * Whether {@code c} has Netherworld Breathing's volume for {@code realm}: its manual read (or a stele sat by, a teacher heard, the Gate's
+	 * first breath for the dead) as far as it or further (PlayerCultivation#methodReach; since 2026-11-16, the user's ask, no longer what the
+	 * foundations carry: they are arts now). Four Axis has none (its axes are the method there, FourAxis#fillBars); past True Immortal the Laws
+	 * carry the path, so there is nothing to have. A path not begun ({@code realm} null) has none.
 	 */
 	public static boolean hasVolume(PlayerCultivation c, Realm realm) {
 		if (realm == null || realm == Realm.FOUR_AXIS) return false;
 		if (realm.isPastTrueImmortal()) return true;
-		for (GhostMethod method : c.netherworld().knownMethods()) {
-			if (method.isFoundation() && method.realm().ordinal() >= realm.ordinal()) return true;
-		}
-		return false;
+		return c.methodReach(CultivationMethod.NETHERWORLD_BREATHING) >= realm.ordinal();
 	}
 
 	/**
 	 * Whether {@code c}'s ghost path can gather where it stands: begun, not a mortal's, the method it practises holding its volume of its realm
-	 * (CultivationMethods#holdsVolume: Netherworld Breathing's by the foundations known).
+	 * (CultivationMethods#holdsVolume: Netherworld Breathing's by its manual).
 	 */
 	public static boolean canGain(PlayerCultivation c) {
 		return !c.isMortal() && CultivationMethods.holdsVolume(c, TwoPaths.Path.GHOST);
@@ -321,45 +315,32 @@ public final class GhostMethods {
 		return true;
 	}
 
-	/** The ghost path's tribulation failed: a stage down (Early to the realm before's Grand Perfection), its cultivation lost, the methods' layers past it. */
+	/** The ghost path's tribulation failed: a stage down (Early to the realm before's Grand Perfection), its cultivation lost (the arts' layers with it: NetherworldState#layer). */
 	public static void fallOneStage(NetherworldState s) {
 		int rank = ghostRank(s);
 		if (rank < 0) return;
 		s.setPath(Math.max(0, rank - 1), 0);
-		clampTo(s, ghostRank(s));
 	}
 
 	/**
-	 * The ghost path falls to {@code rank} (its nascent soul lost, its core detonated), its cultivation there lost, every method
-	 * understood no deeper than that rank's last layer ({@link #clampTo}). A path already at or below it is untouched.
+	 * The ghost path falls to {@code rank} (its nascent soul lost, its core detonated), its cultivation there lost, every art understood no
+	 * deeper than that rank (NetherworldState#layer). A path already at or below it is untouched.
 	 */
 	public static void fallTo(NetherworldState s, int rank) {
 		if (ghostRank(s) <= rank) return;
 		s.setPath(rank, 0);
-		clampTo(s, rank);
 	}
 
-	/** Every method known understood no deeper than the ghost path at {@code rank} carries it ({@link #understoodTo}). */
-	public static void clampTo(NetherworldState s, int rank) {
-		for (GhostMethod method : java.util.List.copyOf(s.knownMethods())) {
-			int deepest = Math.max(1, understoodAt(method, rank));
-			if (s.layer(method) > deepest) s.setMethod(method, deepest, 0);
-		}
-	}
+	/** Every method known understood no deeper than the ghost path at {@code rank} carries it: so they always are since 2026-11-16 (NetherworldState#layer). */
+	public static void clampTo(NetherworldState s, int rank) {}
 
-	/**
-	 * The ghost path set to {@code rank} (-1: not begun), its stage's cultivation none, every method understood exactly as far as it
-	 * carries them, nothing settling (an op's command, the game tests).
-	 */
+	/** The ghost path set to {@code rank} (-1: not begun), its stage's cultivation none (an op's command, the game tests). */
 	public static void setPath(NetherworldState s, int rank) {
 		s.setPath(rank, 0);
-		alignTo(s);
 	}
 
-	/** Every method known understood exactly as far as the ghost path carries it, nothing settling (those deeper set back, those behind brought up). */
-	public static void alignTo(NetherworldState s) {
-		for (GhostMethod method : java.util.List.copyOf(s.knownMethods())) s.setMethod(method, Math.max(1, understoodTo(s, method)), 0);
-	}
+	/** Every method known understood exactly as far as the ghost path carries it: so they always are since 2026-11-16 (NetherworldState#layer). */
+	public static void alignTo(NetherworldState s) {}
 
 	// --- How far the methods are understood ---
 
@@ -371,7 +352,8 @@ public final class GhostMethods {
 		return understoodAt(method, Math.max(0, ghostRank(s)));
 	}
 
-	private static int understoodAt(GhostMethod method, int rank) {
+	/** {@link #understoodTo} of the ghost path at {@code rank}: what NetherworldState#layer is of an art known. */
+	static int understoodAt(GhostMethod method, int rank) {
 		if (method.isFoundation()) return Math.min(method.layers(), MethodLayers.deepestAt(Math.max(0, rank)));
 		int realm = Math.min(Math.max(0, rank) / Stage.values().length, Realm.CORE_FORMATION.ordinal());
 		return Math.min(LAYERS, LAYERS_PER_REALM * (realm + 1));
@@ -387,75 +369,9 @@ public final class GhostMethods {
 		return PlayerCultivation.rank(Realm.byIndex(realm), Stage.EARLY);
 	}
 
-	/** Whether {@code method}'s layers are still settling in, behind the ghost path. */
+	/** Whether {@code method}'s layers are still settling in: never, since 2026-11-16 (the user's ask: no layers but the Laws'). */
 	public static boolean settling(NetherworldState s, GhostMethod method) {
-		return s.knows(method) && s.layer(method) < understoodTo(s, method);
-	}
-
-	/**
-	 * Adds {@code amount} of settling to {@code method}, layer by layer, up to layer {@code upTo}; with nothing left to settle there,
-	 * none is kept. Never lowers a layer. Returns how many layers settled.
-	 */
-	public static int settle(NetherworldState s, GhostMethod method, double amount, int upTo) {
-		int layer = s.layer(method);
-		if (layer <= 0) return 0;
-		if (layer >= upTo) {
-			if (s.progress(method) > 0) s.setMethod(method, layer, 0);
-			return 0;
-		}
-		if (amount <= 0) return 0;
-		double progress = s.progress(method) + amount;
-		int gained = 0;
-		while (layer < upTo && progress >= settleCost(method, layer + 1)) {
-			progress -= settleCost(method, layer + 1);
-			layer++;
-			gained++;
-		}
-		s.setMethod(method, layer, layer >= upTo ? 0 : progress);
-		return gained;
-	}
-
-	/**
-	 * Half a second of meditation on the ghost path for {@code player}'s methods (MeditationManager): every method known whose layers
-	 * lag behind the path settles by {@code gained} (what the bar gathered), by its own stele quicker; each layer that settles is told,
-	 * with any spell it brings. Returns whether any did.
-	 */
-	static boolean meditate(ServerPlayer player, double gained, java.util.Set<GhostMethod> byStele) {
-		PlayerCultivation c = CultivationManager.get(player);
-		NetherworldState s = c.netherworld();
-		boolean any = false;
-		for (GhostMethod method : java.util.List.copyOf(s.knownMethods())) {
-			int upTo = understoodTo(s, method);
-			if (s.layer(method) >= upTo) {
-				if (s.progress(method) > 0) s.setMethod(method, s.layer(method), 0);
-				continue;
-			}
-			int before = s.layer(method);
-			double amount = c.hasPhysique(Physique.FALLEN_TRUE_IMMORTAL) ? Double.POSITIVE_INFINITY // understood at once, no settling
-					: gained * (byStele.contains(method) ? STELE_BONUS : 1.0);
-			if (settle(s, method, amount, upTo) <= 0) continue;
-			any = true;
-			for (int layer = before + 1; layer <= s.layer(method); layer++) settled(player, method, layer);
-		}
-		if (any) {
-			player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.6f);
-			afterLayer(player, s);
-		}
-		return any;
-	}
-
-	/** Layer {@code layer} of {@code method} has settled in: told, with the spells it brings. */
-	private static void settled(ServerPlayer player, GhostMethod method, int layer) {
-		Component spells = null;
-		for (Spell spell : Spell.values()) {
-			if (spell.method() != method || spell.layer() != layer) continue;
-			spells = spells == null ? spell.getDisplayName().copy() : spells.copy().append(", ").append(spell.getDisplayName());
-		}
-		if (spells == null) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_LAYER, method.getDisplayName(), layer).withStyle(ChatFormatting.AQUA), true);
-		} else {
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_LAYER_SPELL, method.getDisplayName(), layer, spells).withStyle(ChatFormatting.AQUA));
-		}
+		return false;
 	}
 
 	/** The ghost path's factor on the rate: -10% a realm below Nascent Soul, +10% a realm above (not begun: as Qi Refining). */
@@ -488,11 +404,15 @@ public final class GhostMethods {
 	static void teachTheDead(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
 		NetherworldState s = c.netherworld();
-		if (!s.ghost() || c.isMortal() || deepestFoundation(s) != null) return;
+		if (!s.ghost() || c.isMortal()) return;
+		boolean art = deepestFoundation(s) == null, method = !CultivationMethods.knows(c, CultivationMethod.NETHERWORLD_BREATHING);
+		if (!art && !method) return;
 		player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_TAUGHT_BREATHING, GhostMethod.NETHERWORLD_BREATHING.getDisplayName())
 				.withStyle(ChatFormatting.AQUA));
 		player.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.8f);
-		give(player, GhostMethod.NETHERWORLD_BREATHING);
+		// The breath itself, Netherworld Breathing's first volume (its own manual's since 2026-11-16), and the art of the same name, the dead's first.
+		if (method) CultivationMethods.teach(player, CultivationMethod.NETHERWORLD_BREATHING, Realm.QI_REFINING);
+		if (art) give(player, GhostMethod.NETHERWORLD_BREATHING);
 		CultivationManager.refresh(player);
 	}
 
@@ -542,29 +462,18 @@ public final class GhostMethods {
 		NetherworldState s = c.netherworld();
 		if (s.knows(method)) return;
 		int before = ghostRank(s);
-		// Its Breathing chapters carry the path further than any foundation known did.
-		Realm reachedBefore = foundationReach(s);
-		boolean reaches = method.isFoundation() && (reachedBefore == null
-				|| FourAxis.volumeReach(method.realm()).ordinal() > FourAxis.volumeReach(reachedBefore).ordinal());
 		if (method.isFoundation() && before < 0) s.setPath(0, 0); // the ghost path begins
 		// A Ghost Devil Body (Physique) finding a foundation of Core Formation or deeper leaps to its realm's Early.
 		if (method.isFoundation() && c.hasPhysique(Physique.GHOST_DEVIL_BODY) && method.realm().ordinal() >= Realm.CORE_FORMATION.ordinal()) {
 			int leap = PlayerCultivation.rank(method.realm(), Stage.EARLY);
-			if (ghostRank(s) < leap) {
-				s.setPath(leap, 0);
-				alignTo(s); // the methods already known carry it as far at once
-			}
+			if (ghostRank(s) < leap) s.setPath(leap, 0);
 		}
-		int layer = Math.max(1, understoodTo(s, method));
-		s.setMethod(method, layer, 0);
+		s.setMethod(method, 1, 0); // its layers are as far as the ghost path stands, at once (NetherworldState#layer): nothing settles since 2026-11-16
 		GhostMethod active = s.activeMethod();
 		if (active == null || method.isFoundation() && active.isFoundation() && method.tier() > active.tier()) s.setActiveMethod(method);
-		player.sendSystemMessage((layer > 1 ? Component.translatable(ModLang.MSG_METHOD_LEARNED_AT, method.getDisplayName(), layer)
-				: Component.translatable(ModLang.MSG_METHOD_LEARNED, method.getDisplayName())).withStyle(ChatFormatting.AQUA));
-		if (reaches) {
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_BREATHING_VOLUMES, FourAxis.volumeReach(method.realm()).getDisplayName())
-					.withStyle(ChatFormatting.AQUA));
-		}
+		// Its arts only, every one at once, each wielded as the ghost path reaches it: Netherworld Breathing's volumes are in its own manual since
+		// 2026-11-16, so a foundation carries none.
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_ART_LEARNED, method.getDisplayName()).withStyle(ChatFormatting.AQUA));
 		player.playNotifySound(SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1.0f, 0.7f);
 		afterLayer(player, s);
 		afterRank(player, before);
@@ -588,12 +497,16 @@ public final class GhostMethods {
 	 * Formation is crowned: GhostSystem#watchKing); either way, the body follows the higher path and the harmony the two (TwoPaths).
 	 */
 	static void afterRank(ServerPlayer player, int before) {
-		int now = ghostRank(CultivationManager.get(player).netherworld());
+		NetherworldState s = CultivationManager.get(player).netherworld();
+		int now = ghostRank(s);
 		if (now > before && now >= 0) {
 			player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_PATH_RISES, rankName(now)).withStyle(ChatFormatting.AQUA));
 			player.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.7f);
 		}
-		if (now != before) CultivationManager.refresh(player);
+		if (now != before) {
+			afterLayer(player, s); // the arts' spells the new stage opens, on the wheel (HeavenMethods#watchSpells tells of them)
+			CultivationManager.refresh(player);
+		}
 	}
 
 	// --- What the layers bring ---

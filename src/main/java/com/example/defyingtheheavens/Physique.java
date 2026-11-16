@@ -168,6 +168,29 @@ public enum Physique {
 		return rootCount() == 0 || roots.contains(element);
 	}
 
+	/**
+	 * Whether this body can't take up {@code method} (the user's pick, 2026-11-16: "being born with certain physiques limits what methods you can
+	 * cultivate"): the Heaven Sacred Body no devilish way; the Blood Demon and Soul Devouring Bodies none of the righteous' (the rites, faith's
+	 * incense, the Judgement Hall); the Heaven-Defying Body neither the rites nor faith's incense (the heavens won't hear it); the Nine Yang Body
+	 * no way of yin (corpses, the Yellow Springs, the Soul Furnace); the Ghost Devil Body no rites. Roots of fewer elements than five can't cycle
+	 * all five: CultivationMethods#barredBy.
+	 */
+	public boolean bars(CultivationMethod method) {
+		return switch (this) {
+			case HEAVEN_SACRED_BODY -> switch (method) {
+				case CORPSE_YIN, HAUNTING, SOUL_RIVER_FEAST, RIFT_HAUNTING, SOUL_FURNACE, TEN_THOUSAND_GHOSTS, BORROWED_LIFE -> true;
+				default -> false;
+			};
+			case BLOOD_DEMON_BODY, SOUL_DEVOURING_BODY -> method == CultivationMethod.HEAVEN_RITES || method == CultivationMethod.INCENSE_FAITH
+					|| method == CultivationMethod.JUDGEMENT_HALL_SERVICE;
+			case HEAVEN_DEFYING_BODY -> method == CultivationMethod.HEAVEN_RITES || method == CultivationMethod.INCENSE_FAITH;
+			case NINE_YANG_BODY -> method == CultivationMethod.CORPSE_YIN || method == CultivationMethod.YELLOW_SPRINGS_IMMERSION
+					|| method == CultivationMethod.SOUL_FURNACE;
+			case GHOST_DEVIL_BODY -> method == CultivationMethod.HEAVEN_RITES;
+			default -> false;
+		};
+	}
+
 	/** What the heaven path's cultivation (and the methods' settling with it) is multiplied by. */
 	public double cultivationFactor() {
 		return switch (this) {

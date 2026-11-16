@@ -30,24 +30,33 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 		GhostSystem.forget(player.getUUID());
 	}
 
+	/** No layers but the Laws' (the user's ask, 2026-11-16): a ghost foundation or art known is understood as far as the ghost path, at once. */
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void layersCostTheirMinutesAndSettleInOnHalf(GameTestHelper helper) {
-		int total = 0;
-		for (int minutes : GhostMethods.MINUTES) total += minutes;
-		helper.assertTrue(GhostMethods.layerCost(GhostMethod.GHOST_FIRE_SCRIPTURE, 1) == 300 && GhostMethods.layerCost(GhostMethod.GHOST_FIRE_SCRIPTURE, 9) == 7200
-						&& total == 390, "The fire: 5 minutes for the first layer, two hours for the ninth, six and a half hours in all");
+	public void aGhostArtIsUnderstoodAsFarAsThePathAtOnce(GameTestHelper helper) {
 		NetherworldState s = new NetherworldState();
+		helper.assertTrue(s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 0, "Not known: nothing");
 		s.setMethod(GhostMethod.GHOST_FIRE_SCRIPTURE, 1, 0);
-		s.setPath(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 0); // the path far enough for all nine
-		int upTo = GhostMethods.understoodTo(s, GhostMethod.GHOST_FIRE_SCRIPTURE);
-		helper.assertTrue(GhostMethods.settle(s, GhostMethod.GHOST_FIRE_SCRIPTURE, 240, upTo) == 1
-				&& s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 2 && s.progress(GhostMethod.GHOST_FIRE_SCRIPTURE) == 0, "Half the second layer's eight minutes: it settles in");
-		helper.assertTrue(GhostMethods.settle(s, GhostMethod.GHOST_FIRE_SCRIPTURE, 1_000_000, upTo) == 7
-				&& s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 9 && s.progress(GhostMethod.GHOST_FIRE_SCRIPTURE) == 0,
-				"On to the ninth, all of it understood, nothing left settling");
-		helper.assertTrue(GhostMethods.settle(s, GhostMethod.NETHERWORLD_BREATHING, 1000, 9) == 0
-				&& !s.knows(GhostMethod.NETHERWORLD_BREATHING), "A method never learned gains nothing");
+		helper.assertTrue(s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 3 && s.progress(GhostMethod.GHOST_FIRE_SCRIPTURE) == 0,
+				"No ghost path begun: as at its Qi Refining, the fire's three");
+		s.setPath(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 0);
+		helper.assertTrue(s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 9, "The path at Core Formation: all nine at once");
+		s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 9, 500);
+		s.setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID), 0);
+		helper.assertTrue(s.layer(GhostMethod.NETHERWORLD_BREATHING) == 5 && s.progress(GhostMethod.NETHERWORLD_BREATHING) == 0
+				&& s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 3 && !GhostMethods.settling(s, GhostMethod.NETHERWORLD_BREATHING),
+				"Whatever is set, the path decides: the Breathing Art as far as Mid, the fire's three, nothing settling");
+		helper.assertTrue(Spell.GHOSTLY_WAIL.isKnown(withState(s)), "Mid's art open at once (the Ghostly Wail)");
+		s.setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), 0);
+		helper.assertTrue(!Spell.GHOSTLY_WAIL.isKnown(withState(s)) && Spell.GHOST_FIRE.isKnown(withState(s)), "...not at Early; the fire's first, any time");
 		helper.succeed();
+	}
+
+	/** A cultivator of the living (Qi Refining Early, meridians open) whose ghost path is {@code s}'s. */
+	private static PlayerCultivation withState(NetherworldState s) {
+		PlayerCultivation c = new PlayerCultivation();
+		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		c.netherworld().load(s.save());
+		return c;
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -89,8 +98,9 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 		s.setSpellSlot(3, Spell.SOUL_DASH);
 		s.setSpellSlot(0, Spell.GHOSTLY_WAIL);
 		NetherworldState loaded = PlayerCultivation.load(c.save()).netherworld();
-		helper.assertTrue(loaded.layer(GhostMethod.NETHERWORLD_BREATHING) == 5 && loaded.progress(GhostMethod.NETHERWORLD_BREATHING) == 123.5
-				&& loaded.layer(GhostMethod.WANDERING_SOUL_STEPS) == 2 && !loaded.knows(GhostMethod.GHOST_FIRE_SCRIPTURE), "Each method's layer and settling");
+		helper.assertTrue(loaded.knows(GhostMethod.NETHERWORLD_BREATHING) && loaded.layer(GhostMethod.NETHERWORLD_BREATHING) == 5
+				&& loaded.layer(GhostMethod.WANDERING_SOUL_STEPS) == 3 && !loaded.knows(GhostMethod.GHOST_FIRE_SCRIPTURE),
+				"Each method known, understood as far as the path (Qi Refining Mid: the Breathing Art's fifth, the steps' three)");
 		helper.assertTrue(loaded.pathRank() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID) && loaded.pathCultivation() == 50 && loaded.cultivatingGhost(),
 				"The ghost path's bar, and the qi drawn in");
 		helper.assertTrue(loaded.activeMethod() == GhostMethod.WANDERING_SOUL_STEPS && loaded.readiedSpell() == Spell.SOUL_DASH, "The practised method, the readied spell");
@@ -107,21 +117,21 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 		old.put("Methods", learned);
 		NetherworldState migrated = new NetherworldState();
 		migrated.load(old);
-		helper.assertTrue(migrated.layer(GhostMethod.NETHERWORLD_BREATHING) == 9 && migrated.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 18
-				&& migrated.layer(GhostMethod.GHOST_CORE_CANON) == 21 && migrated.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 4
-				&& GhostMethods.ghostRank(migrated) == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.MID),
-				"An old save's Ghost Core Canon at its third layer is its 21st now: Core Formation Mid as before");
+		helper.assertTrue(migrated.savedLayer(GhostMethod.NETHERWORLD_BREATHING) == 9 && migrated.savedLayer(GhostMethod.YELLOW_SPRINGS_MARROW) == 18
+				&& migrated.savedLayer(GhostMethod.GHOST_CORE_CANON) == 21 && migrated.savedLayer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 4
+				&& GhostMethods.ghostRank(migrated) == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.MID)
+				&& migrated.layer(GhostMethod.GHOST_CORE_CANON) == 23 && migrated.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 9,
+				"An old save's Ghost Core Canon at its third layer was its 21st: Core Formation Mid as before (understood, since 2026-11-16, as far as it)");
 		// ...and saved before the ghost path had a bar of its own (2026-10-19): the bar starts where its deepest foundation stood, its
 		// progress through the layer the bar's; the foundations' settling starts afresh, the fire's kept.
 		// (As far through the bar's Core Formation Mid as 42 seconds were through that stage's old layers, 21 to 23.)
 		double oldMid = MethodLayers.cost(21) + MethodLayers.cost(22) + MethodLayers.cost(23);
 		double expected = 42 / oldMid * GhostMethods.required(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.MID));
-		helper.assertTrue(Math.abs(migrated.pathCultivation() - expected) < 1.0e-6 && migrated.progress(GhostMethod.GHOST_CORE_CANON) == 0
-				&& migrated.progress(GhostMethod.GHOST_FIRE_SCRIPTURE) == 42,
+		helper.assertTrue(Math.abs(migrated.pathCultivation() - expected) < 1.0e-6,
 				"The Canon's 42 seconds into its 21st layer: as far into the bar's Core Formation Mid (" + migrated.pathCultivation() + ")");
 		NetherworldState again = new NetherworldState();
 		again.load(migrated.save());
-		helper.assertTrue(again.layer(GhostMethod.GHOST_CORE_CANON) == 21 && again.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 18, "...and moved only once");
+		helper.assertTrue(again.savedLayer(GhostMethod.GHOST_CORE_CANON) == 21 && again.savedLayer(GhostMethod.YELLOW_SPRINGS_MARROW) == 18, "...and moved only once");
 		// Placing a spell already on the wheel trades the two slots.
 		loaded.setSpellSlot(0, Spell.SOUL_DASH);
 		helper.assertTrue(loaded.spellSlot(0) == Spell.SOUL_DASH && loaded.spellSlot(3) == Spell.GHOSTLY_WAIL, "Moved onto a full slot, they trade places");
@@ -142,23 +152,25 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 			helper.assertTrue(Spell.GHOST_FIRE.isKnown(c) && !Spell.GHOST_FIRE_BOLT.isKnown(c) && s.spellSlot(0) == Spell.GHOST_FIRE,
 					"Ghost Fire at once, on the wheel; the bolt not yet");
 			helper.assertTrue(!GhostMethods.learn(player, GhostMethod.GHOST_FIRE_SCRIPTURE), "Nothing more to learn of it");
-			s.setMethod(GhostMethod.GHOST_FIRE_SCRIPTURE, 4, 0);
-			GhostMethods.afterLayer(player, s);
-			helper.assertTrue(Spell.GHOST_FIRE_BOLT.isKnown(c) && s.spellSlot(1) == Spell.GHOST_FIRE_BOLT, "The fourth layer: the bolt, next on the wheel");
+			// Since 2026-11-16 (no layers but the Laws') the ghost path opens them, nothing settling.
 			GhostMethods.learn(player, GhostMethod.NETHERWORLD_BREATHING);
-			helper.assertTrue(s.activeMethod() == GhostMethod.GHOST_FIRE_SCRIPTURE, "A second method learned doesn't take over the practice");
-			helper.assertTrue(!Ability.GHOST_EYE.isUnlocked(c), "No Ghost Eye at the first layer of the Breathing Art...");
-			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 6, 0);
-			helper.assertTrue(Ability.GHOST_EYE.isUnlocked(c) && Ability.NETHERWORLD_VEIL.isUnlocked(c), "...at the third; the Veil at the sixth");
-			s.setMethod(GhostMethod.WANDERING_SOUL_STEPS, 4, 0);
+			helper.assertTrue(s.activeMethod() == GhostMethod.GHOST_FIRE_SCRIPTURE && GhostMethods.ghostRank(s) == 0,
+					"A second method learned doesn't take over the practice; a foundation begins the ghost path");
+			helper.assertTrue(!Ability.GHOST_EYE.isUnlocked(c), "No Ghost Eye at the ghost path's Qi Refining Early...");
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE));
+			helper.assertTrue(Ability.GHOST_EYE.isUnlocked(c) && Ability.NETHERWORLD_VEIL.isUnlocked(c), "...from its Mid; the Veil at its Late");
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY));
+			GhostMethods.afterLayer(player, s);
+			helper.assertTrue(Spell.GHOST_FIRE_BOLT.isKnown(c) && s.spellSlot(1) == Spell.GHOST_FIRE_BOLT, "The ghost path at Foundation Building: the bolt, next on the wheel");
+			s.setMethod(GhostMethod.WANDERING_SOUL_STEPS, 1, 0);
 			helper.assertTrue(Ability.YIN_WIND_STEPS.isUnlocked(c) && !Ability.GHOST_FLIGHT.isUnlocked(c), "Yin Wind Steps alive");
 			s.setGhost(true);
 			// Ghost Flight is retired (2026-10-18): the dead fly freely without it (TwoPaths#fliesFreely; BothPathsGameTests).
 			helper.assertTrue(!Ability.GHOST_FLIGHT.isUnlocked(c) && TwoPaths.fliesFreely(c), "...and the dead fly freely, no Ghost Flight needed");
 			s.setGhost(false);
-			helper.assertTrue(Math.abs(GhostQi.poolMax(c) - (GhostQi.BASE_POOL + 14 * GhostQi.POOL_PER_LAYER + 6 * GhostQi.BREATHING_POOL_PER_LAYER
-							+ GhostQi.realmPool(c))) < 1.0e-9,
-					"The pool grows with every layer, and the Breathing Art's twice over (on top of what its realm gives)");
+			helper.assertTrue(GhostMethods.layersKnown(c) == 9 + 6 + 6 && GhostMethods.foundationLayers(c) == 9
+					&& Math.abs(GhostQi.poolMax(c) - (GhostQi.poolMax(true, 21, 9) + GhostQi.realmPool(c)) * StatPoints.poolFactor(c) * (1 + TwoPaths.harmony(c))) < 1.0e-9,
+					"The pool grows with every layer understood (the Breathing Art's nine, the fire's and the steps' six), the Breathing Art's twice over");
 			c.setAbilityEnabled(Ability.GHOST_EYE, true);
 			c.setAbilityEnabled(Ability.YIN_WIND_STEPS, true);
 			helper.assertTrue(Math.abs(GhostMethods.upkeep(c) - (GhostMethods.GHOST_EYE_COST + GhostMethods.YIN_WIND_COST)) < 1.0e-9,
@@ -166,6 +178,7 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 			helper.assertTrue(Spells.fallIsSafe(player), "On the yin wind a fall does no harm");
 			PlayerCultivation mortal = new PlayerCultivation();
 			mortal.netherworld().setMethod(GhostMethod.NETHERWORLD_BREATHING, 5, 0);
+			mortal.netherworld().setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID), 0);
 			helper.assertTrue(!Spell.GHOSTLY_WAIL.isKnown(mortal) && !Ability.GHOST_EYE.isUnlocked(mortal), "A living mortal has no qi to shape them...");
 			mortal.netherworld().setGhost(true);
 			helper.assertTrue(!Spell.GHOSTLY_WAIL.isKnown(mortal) && !Ability.GHOST_EYE.isUnlocked(mortal), "...nor a mortal's ghost: its meridians were never opened");
@@ -182,7 +195,8 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 		ServerPlayer player = cultivator(helper, Realm.NASCENT_SOUL);
 		NetherworldState s = CultivationManager.get(player).netherworld();
 		try {
-			s.setMethod(GhostMethod.GHOST_FIRE_SCRIPTURE, 4, 0);
+			s.setMethod(GhostMethod.GHOST_FIRE_SCRIPTURE, 1, 0);
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY)); // the bolt's (understood as far as the path)
 			s.setGhostQi(20);
 			Spells.cast(player, Spell.GHOST_FIRE_BOLT);
 			helper.assertTrue(Math.abs(s.ghostQi() - (20 - Spell.GHOST_FIRE_BOLT.cost())) < 1.0e-9, "The bolt costs its ghostly qi");
@@ -229,6 +243,7 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 		try {
 			s.setMethod(GhostMethod.WANDERING_SOUL_STEPS, 2, 0);
 			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 5, 0);
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE)); // the wail's (understood as far as the path)
 			s.setGhostQi(100);
 			player.setYRot(0);
 			player.setXRot(0);

@@ -144,15 +144,18 @@ public class CelestialCourtGameTests implements FabricGameTest {
 		helper.assertTrue(key(CelestialCourt.ask(player, venerable)).equals(ModLang.talkLine("court.member")), "Asked again, it tells them their rank");
 		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.OFFICER, "An Officer to begin with");
 		MerchantOffers asOfficer = CelestialCourt.offers(quartermaster, player, uses, keys);
-		helper.assertTrue(open(asOfficer) == 6 && asOfficer.size() == 11, "Jade and the five True Immortal methods to an Officer (" + open(asOfficer) + " open)");
-		helper.assertTrue(asOfficer.get(1).getCostA().is(ModItems.COURT_MERIT_TOKEN) && asOfficer.get(1).getCostA().getCount() == 20, "A method's slip for twenty tokens");
+		// (Qi Circulation's True Immortal volume beside the scriptures, and Netherworld Breathing's beside the canon, since 2026-11-16.)
+		helper.assertTrue(open(asOfficer) == 7 && asOfficer.size() == 13, "Jade, the five True Immortal scriptures and Qi Circulation's volume to an Officer ("
+				+ open(asOfficer) + " open of " + asOfficer.size() + ")");
+		helper.assertTrue(asOfficer.get(1).getCostA().is(ModItems.COURT_MERIT_TOKEN) && asOfficer.get(1).getCostA().getCount() == 20
+				&& asOfficer.get(1).getResult().is(ModItems.TECHNIQUE_MANUAL), "A scripture's Art Manual for twenty tokens");
 		// Merit paid in tokens, the rank risen with it.
 		CelestialCourt.award(player, 30, ModLang.MSG_COURT_MERIT_WATCH);
 		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.CAPTAIN && CelestialCourt.meritOf(player.server, player.getUUID()) == 30
 				&& player.getInventory().countItem(ModItems.COURT_MERIT_TOKEN) == 30, "Thirty merit, thirty tokens: a Captain");
-		helper.assertTrue(open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 9, "A Captain's wares too (the day's Immortal artifact among them)");
+		helper.assertTrue(open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 10, "A Captain's wares too (the day's Immortal artifact among them)");
 		CelestialCourt.award(player, 70, ModLang.MSG_COURT_MERIT_WATCH);
-		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.GENERAL && open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 11,
+		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.GENERAL && open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 13,
 				"A hundred: a General, every ware open");
 		// The bounty on the realm's devilish immortals: a True Immortal more, none on the righteous, none below Entering Nirvana.
 		CultivatorNpc nirvana = devil(helper, PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY), -90, 3),

@@ -66,6 +66,12 @@ public final class SectExchange {
 			default -> new ItemStack(ModItems.IMMORTAL_JADE, 1);
 		};
 		wares.add(new Ware("stones", stones, new int[] {10, 20, 40, 60}[tier], 2, NpcTitle.OUTER_DISCIPLE));
+		// Qi Circulation's manual, written to the disciple's realm (2026-11-16: no art carries its volumes): what a member needs to gather where it
+		// stands. A body sect's walk the Body Path, which needs none.
+		if (!sect.body) {
+			ItemStack circulation = MethodManualItem.of(CultivationMethod.QI_CIRCULATION, realm);
+			wares.add(new Ware("circulation", circulation, 30 + 30 * MethodManualItem.realm(circulation).ordinal(), 1, NpcTitle.OUTER_DISCIPLE));
+		}
 		// Inner Disciples and up
 		wares.add(new Ware("foundation_pill", PillItem.create(ModItems.FOUNDATION_PILL, pills, years), 40 * p, 1, NpcTitle.INNER_DISCIPLE));
 		wares.add(new Ware("core_pill", PillItem.create(ModItems.CORE_PILL, pills, years), 80 * p, 1, NpcTitle.INNER_DISCIPLE));
@@ -100,7 +106,7 @@ public final class SectExchange {
 		// Elders and up
 		wares.add(new Ware("weapon", Artifacts.create(ArtifactKind.madeOf(element), forged, Artifacts.Quality.NORMAL, null), 150 * p, 1, NpcTitle.ELDER));
 		HeavenMethod method = sect.body ? null : otherMethod(sect, element, realm, day);
-		if (method != null) wares.add(new Ware("method", JadeSlipItem.of(method), 120 * p, 1, NpcTitle.ELDER));
+		if (method != null) wares.add(new Ware("method", TechniqueManualItem.of(method), 120 * p, 1, NpcTitle.ELDER)); // another element's art
 		for (Technique technique : Technique.values()) {
 			if (realm.ordinal() >= technique.realm().ordinal()) {
 				wares.add(new Ware("technique:" + technique.getId(), TechniqueManualItem.of(technique), 300 + 200 * technique.ordinal(), 1, NpcTitle.ELDER));

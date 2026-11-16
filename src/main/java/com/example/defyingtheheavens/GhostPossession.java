@@ -126,6 +126,7 @@ public final class GhostPossession {
 
 	/** What going in costs {@code own}: {@link SoulProjection#POSSESS_QI_FRACTION} of its ghostly qi pool. */
 	private static double cost(PlayerCultivation own) {
+		if (Lingering.lingers(own)) return 0; // a soul lingering after its death pays with its time instead (Lingering: the pull)
 		return TwoPaths.poolMax(own, TwoPaths.Path.GHOST) * SoulProjection.POSSESS_QI_FRACTION;
 	}
 
@@ -216,6 +217,7 @@ public final class GhostPossession {
 	/** A ghost's second in a body: its upkeep from its own ghostly qi ({@link #UPKEEP}, the same however far it is from anywhere); out of it, out. */
 	static void second(ServerPlayer ghost) {
 		PlayerCultivation own = CultivationManager.own(ghost);
+		if (Lingering.lingers(own)) return; // no upkeep for a soul lingering after its death: its pull fills meanwhile, a third as fast (Lingering)
 		if (TwoPaths.spend(own, TwoPaths.Path.GHOST, UPKEEP)) return;
 		own.netherworld().setGhostQi(0);
 		leave(ghost, Possession.inCorpse(ghost.getUUID()) ? ModLang.MSG_CORPSE_NO_GHOST_QI : ModLang.MSG_GHOST_POSSESS_DRY);

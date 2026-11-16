@@ -8,26 +8,42 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The heaven methods a cultivator knows (see HeavenMethods): each one's layer understood (1 to its last), the settling toward the next
- * (HeavenMethods#settle, in cultivation: HeavenMethods#settleCost), and the one meditation cultivates by. Saved by id under one
- * "HeavenMethods" compound in PlayerCultivation, and only when something is known. Saves from before layers settled kept other
- * progress: it is dropped (PlayerCultivation aligns their layers to the realm on load).
+ * The heaven arts (scriptures) a cultivator knows (see HeavenMethods), and the one its Qi Circulation follows. Since 2026-11-16 (the user's ask:
+ * "get rid of the whole layer system besides laws ... learn spells immediately upon using the arts manual") an art known is understood as far
+ * as its owner's realm stands, at once ({@link #layer}): nothing settles. Saved by id under one "HeavenMethods" compound in PlayerCultivation,
+ * and only when something is known (the layer saved is kept for older builds' sake, unread).
  */
 public final class HeavenState {
 	/** What progress is saved as: 3, settling toward the next layer. Before it, progress through the layer one was on. */
 	private static final int UNITS = 3;
 	private final Map<HeavenMethod, double[]> methods = new EnumMap<>(HeavenMethod.class);
 	private HeavenMethod activeMethod;
+	/** Whose arts these are (its realm is how far they are understood); null for a bare record, whose layers are as set. */
+	private final PlayerCultivation owner;
 
-	/** The layer understood in {@code method}: 0 if it isn't known. */
-	public int layer(HeavenMethod method) {
-		double[] entry = methods.get(method);
-		return entry == null ? 0 : (int) entry[0];
+	public HeavenState() {
+		this(null);
 	}
 
+	HeavenState(PlayerCultivation owner) {
+		this.owner = owner;
+	}
+
+	/**
+	 * The layer understood in {@code method}: 0 if it isn't known; else as far as its owner's realm and stage stand (HeavenMethods#understoodTo:
+	 * no settling since 2026-11-16), at least the first.
+	 */
+	public int layer(HeavenMethod method) {
+		double[] entry = methods.get(method);
+		if (entry == null) return 0;
+		if (owner == null) return (int) entry[0];
+		return Math.max(1, Math.min(method.layers(), MethodLayers.deepestAt(PlayerCultivation.rank(owner.getRealm(), owner.getStage()))));
+	}
+
+	/** Settling toward the next layer: none since 2026-11-16 (a bare record's, as set). */
 	public double progress(HeavenMethod method) {
 		double[] entry = methods.get(method);
-		return entry == null ? 0 : entry[1];
+		return entry == null || owner != null ? 0 : entry[1];
 	}
 
 	public boolean knows(HeavenMethod method) { return methods.containsKey(method); }

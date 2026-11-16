@@ -435,21 +435,24 @@ public final class CelestialCourt {
 	record Ware(ItemStack item, int tokens, int maxUses, Rank rank) {}
 
 	/**
-	 * What the Court's Quartermaster has for tokens today: three Immortal Jade for a token, and each element's True Immortal method's slip,
-	 * to every officer; to Captains, Immortal-grade Cultivation Pills, a Sacred Vessel (the day's element) and an Immortal artifact (the
-	 * day's kind); to Generals, the ghost path's last foundation (the Netherworld Immortal Canon) and a Ring of Transcendence.
+	 * What the Court's Quartermaster has for tokens today: three Immortal Jade for a token, each element's True Immortal art's manual and Qi
+	 * Circulation's True Immortal manual (2026-11-16: the arts carry none of its volumes), to every officer; to Captains, Immortal-grade
+	 * Cultivation Pills, a Sacred Vessel (the day's element) and an Immortal artifact (the day's kind); to Generals, the ghost path's last
+	 * foundation's Art Manual (the Netherworld Immortal Canon), Netherworld Breathing's True Immortal manual and a Ring of Transcendence.
 	 */
 	static List<Ware> wares(long day) {
 		List<Ware> wares = new ArrayList<>();
 		wares.add(new Ware(new ItemStack(ModItems.IMMORTAL_JADE, 3), 1, 16, Rank.OFFICER));
-		for (QiElement element : QiElement.five()) wares.add(new Ware(JadeSlipItem.of(HeavenMethod.of(element, Realm.TRUE_IMMORTAL)), 20, 1, Rank.OFFICER));
+		for (QiElement element : QiElement.five()) wares.add(new Ware(TechniqueManualItem.of(HeavenMethod.of(element, Realm.TRUE_IMMORTAL)), 20, 1, Rank.OFFICER));
+		wares.add(new Ware(MethodManualItem.of(CultivationMethod.QI_CIRCULATION, Realm.TRUE_IMMORTAL), 20, 1, Rank.OFFICER));
 		wares.add(new Ware(PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.IMMORTAL, 100), 3, 2, Rank.CAPTAIN));
 		QiElement todays = QiElement.five()[(int) Math.floorMod(day, 5L)];
 		wares.add(new Ware(new ItemStack(ModItems.sacredVessel(todays)), 15, 1, Rank.CAPTAIN));
 		// The day's Immortal artifact (the Artifact Forge's), its kind by the day, a banner of the day's element.
 		ArtifactKind kind = ArtifactKind.values()[(int) Math.floorMod(day, (long) ArtifactKind.values().length)];
 		wares.add(new Ware(Artifacts.create(kind, ArtifactGrade.IMMORTAL, Artifacts.Quality.NORMAL, kind == ArtifactKind.BANNER ? todays : null), 6, 1, Rank.CAPTAIN));
-		wares.add(new Ware(GhostJadeSlipItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 30, 1, Rank.GENERAL));
+		wares.add(new Ware(TechniqueManualItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 30, 1, Rank.GENERAL));
+		wares.add(new Ware(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.TRUE_IMMORTAL), 30, 1, Rank.GENERAL));
 		wares.add(new Ware(new ItemStack(ModItems.RING_OF_TRANSCENDENCE), 25, 1, Rank.GENERAL));
 		return wares;
 	}

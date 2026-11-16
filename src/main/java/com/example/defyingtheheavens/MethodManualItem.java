@@ -74,11 +74,19 @@ public class MethodManualItem extends Item {
 		CultivationMethod method = method(stack);
 		if (method == null) return;
 		tooltip.add(Component.translatable(ModLang.pathName(method.path())).withStyle(ChatFormatting.GOLD));
-		tooltip.add(method.path() == TwoPaths.Path.DEMON ? Component.translatable(ModLang.TOOLTIP_MANUAL_BLOOD).withStyle(ChatFormatting.GRAY)
-				: method.first() == method.last() ? Component.translatable(ModLang.TOOLTIP_MANUAL_VOLUME, method.first().getDisplayName()).withStyle(ChatFormatting.GRAY)
-				: Component.translatable(ModLang.TOOLTIP_MANUAL_VOLUMES, method.first().getDisplayName(), realm(stack).getDisplayName()).withStyle(ChatFormatting.GRAY));
+		tooltip.add(volumes(method, realm(stack)).copy().withStyle(ChatFormatting.GRAY));
 		tooltip.add(method.getDescription().copy().withStyle(ChatFormatting.DARK_GRAY));
 		tooltip.add(Component.translatable(ModLang.TOOLTIP_MANUAL_READ).withStyle(ChatFormatting.DARK_AQUA));
+	}
+
+	/**
+	 * What a manual (or a stele: SteleTeachings) of {@code method} written to {@code realm} holds: a Demon Path method whole (the blood is its volume);
+	 * one of a single realm, that realm's volume; else its volumes from its first realm to {@code realm}'s (CultivationMethod#volumeFor).
+	 */
+	public static Component volumes(CultivationMethod method, Realm realm) {
+		if (method.path() == TwoPaths.Path.DEMON) return Component.translatable(ModLang.TOOLTIP_MANUAL_BLOOD);
+		if (method.first() == method.last()) return Component.translatable(ModLang.TOOLTIP_MANUAL_VOLUME, method.first().getDisplayName());
+		return Component.translatable(ModLang.TOOLTIP_MANUAL_VOLUMES, method.first().getDisplayName(), method.volumeFor(realm).getDisplayName());
 	}
 
 	@Override
@@ -117,6 +125,17 @@ public class MethodManualItem extends Item {
 		int count = hall ? 1 : 1 + random.nextInt(2);
 		for (int i = 0; i < count; i++) manuals.add(volume(ways.get(random.nextInt(ways.size())), upper, random));
 		return manuals;
+	}
+
+	/**
+	 * A Qi Circulation manual for a sect library of the {@code upper} realm's or the lower realms' (SectPiece#chest: every one keeps one since
+	 * 2026-11-16, the arts carrying none of its volumes): written to one of the realms that world's are, the lower ones the likelier.
+	 */
+	public static ItemStack circulation(boolean upper, RandomSource random) {
+		int low = upper ? Realm.CORE_FORMATION.ordinal() : Realm.QI_REFINING.ordinal(), high = upper ? Realm.SACRED_VESSEL.ordinal() : Realm.CORE_FORMATION.ordinal();
+		int realm = low + Math.min(random.nextInt(high - low + 1), random.nextInt(high - low + 1)); // the lower of two
+		if (realm == Realm.FOUR_AXIS.ordinal()) realm--; // no method has a volume of Four Axis
+		return of(CultivationMethod.QI_CIRCULATION, Realm.byIndex(realm));
 	}
 
 	/** A manual of {@code method} for a sect's chest of the {@code upper} realm's or the lower realms': written to one of the realms that world's are. */
