@@ -203,7 +203,7 @@ public final class CultivationCommand {
 	/**
 	 * {@code amount} on {@code path}'s bar, its stages stepping on by themselves to a bottleneck: the heaven path's (nothing for a mortal,
 	 * or one the land holds below its realm: PlayerCultivation#addCultivation); the ghost path's in seconds of baseline meditation, its
-	 * methods' layers settling on it too, as /method progress (NetherworldCommand#progress); the Demon Path's, a demon's alone.
+	 * arts understood as far as the path then goes, as /method progress (NetherworldCommand#progress); the Demon Path's, a demon's alone.
 	 */
 	private static int addCultivation(CommandSourceStack source, TwoPaths.Path path, double amount) throws CommandSyntaxException {
 		ServerPlayer p = source.getPlayerOrException();

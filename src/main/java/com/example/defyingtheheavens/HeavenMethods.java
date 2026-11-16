@@ -195,9 +195,9 @@ public final class HeavenMethods {
 	}
 
 	/**
-	 * What a heaven method of an element with {@code share} of the qi here makes of meditation's cultivation (and how fast its layers
-	 * settle): the element's factor, {@link #STELE_BONUS} by its Dao Stele, and a Qi Gathering Pill's and cultivator clothing's boosts
-	 * to gathering.
+	 * What a heaven scripture of an element with {@code share} of the qi here makes of meditation's cultivation: the element's factor,
+	 * {@link #STELE_BONUS} beside a stele of the method practised, and a Qi Gathering Pill's and cultivator clothing's boosts to
+	 * gathering.
 	 */
 	public static double methodFactor(PlayerCultivation c, double share, boolean byStele) {
 		return elementFactor(share) * (byStele ? STELE_BONUS : 1.0) * boosts(c);

@@ -165,7 +165,7 @@ public final class DemonBlood {
 	 * How often a demon clan's den keeps a phial of its race's blood in one of its chests (a hoard's, its head's hall's, an elder's), and of
 	 * which realm when it does, weights from Qi Refining up (the user's ask, 2026-10-25: "demons should be able to loot the blood (although
 	 * rarely, as rare as getting a heaven method or ghost method at that level from a library) from chests and stuff in the demon clans"; it
-	 * also gives the Demon Path its way past Sacred Vessel, whose blood nothing else leaves). Its realms are those of a sect library's slips
+	 * also gives the Demon Path its way past Sacred Vessel, whose blood nothing else leaves). Its realms are those of a sect library's manuals
 	 * in the same world, as often (chests/sect_library keeps each world's own; the user, the same day: "you can get EN phials from clans but
 	 * you can't get EN methods from sects"): the lower realms' Qi Refining to Core Formation, the Upper Realm's Core Formation to Entering
 	 * Nirvana (never a True Immortal's: Realm#taughtInTheWorld).

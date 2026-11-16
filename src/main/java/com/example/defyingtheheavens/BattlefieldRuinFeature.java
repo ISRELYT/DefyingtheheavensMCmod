@@ -32,7 +32,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  *   <li>a field of rubble ({@link #rubble}): boulders and broken stone flung down, gravel, the blackened bricks of what stood there;</li>
  *   <li>a heap of bones and skulls;</li>
  *   <li>the stump of a broken wall of blackstone with a tattered banner on it, or a gate's arch fallen between its pillars ({@link #arch});</li>
- *   <li>a war chest half sunk in the earth by a fallen banner, its old weapons and slips ({@link #LOOT}).</li>
+ *   <li>a war chest half sunk in the earth by a fallen banner, its old weapons and Art Manuals ({@link #LOOT}).</li>
  * </ul>
  * Everything it lays lies within {@link #REACH} of where it is asked (as far as a feature may reach into the chunks beside its own).
  */

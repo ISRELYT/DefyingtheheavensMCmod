@@ -174,8 +174,8 @@ public final class CultivationMethods {
 	}
 
 	/**
-	 * The path's foundation re-laid: {@code path} falls to its realm's Early, its cultivation there lost (never a realm), the scriptures' and
-	 * foundations' layers past it with it, to settle in again (a switch; a bound beast's death: SpiritBonds#died, its owner online or not).
+	 * The path's foundation re-laid: {@code path} falls to its realm's Early, its cultivation there lost (never a realm), the scriptures and
+	 * foundations understood no further with it (a switch; a bound beast's death: SpiritBonds#died, its owner online or not).
 	 * @return whether anything was lost
 	 */
 	static boolean restart(PlayerCultivation c, TwoPaths.Path path) {

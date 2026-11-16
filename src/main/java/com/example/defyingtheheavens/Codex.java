@@ -504,8 +504,8 @@ public final class Codex {
 				- They are warmer to anyone on the Body Path, and call them by their body's realm where other cultivators see a mortal. \
 				They spar as any cultivator does (good for Hundred Battles), sell the manual of the body method they follow, and now and \
 				then drop it when struck down.
-				- A body sect's library and master's hall keep body method manuals instead of heaven slips, its exchange sells them \
-				instead of spell manuals, and it takes only disciples who walk the Body Path, mortal or not.""");
+				- A body sect's library and master's hall keep body method manuals instead of scriptures' Art Manuals, its exchange \
+				sells them instead of spell manuals, and it takes only disciples who walk the Body Path, mortal or not.""");
 		page("obsession", Items.HEART_OF_THE_SEA, NS, "Name Your Obsession", """
 				Before the tribulation from Nascent Soul into Heavenly Being, the heavens ask what your heart cannot let go of: Longevity, \
 				Fortune, Merit or Enlightenment.
@@ -1845,7 +1845,8 @@ public final class Codex {
 				A drowned city of the dead in the Netherworld, from Nascent Soul Late, meant for Heavenly Being. It opens every five years \
 				for twenty minutes, and it lets in the dead as well as the living. Inside it the dead lay hands on things as the living do.
 				- Its islands stand out of murky golden water over the city's sunken streets, joined by bridges of black stone. Drowned \
-				Shades keep them, and two of its houses keep vaults.
+				Shades keep them, and two of its houses keep vaults. Now and then a vault holds one of the dead's deepest foundations, \
+				from Dao Integration to Entering Nirvana.
 				- Other Shore Flowers grow on its islands, older for every year it slept.
 				- At its heart the Ghost King's tomb stands on an island, ringed by the Yellow Springs themselves: deep water that drags \
 				down and withers whoever swims it.

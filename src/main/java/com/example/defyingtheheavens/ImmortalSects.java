@@ -10,7 +10,7 @@ import net.minecraft.world.level.Level;
  * over it). Of {@link #MEMBERS}: a Sect Lord of the Earth Immortals (phase 3, 2026-10-26: the first realm past True Immortal), two grand elders of True Immortal Late or Grand Perfection,
  * four elders of True Immortal Early or Mid and thirteen disciples of Entering Nirvana ({@link #foundingRanks}: the titles fall to them by
  * strength, as in any sect). None of them below Entering Nirvana (the user's rule for the realm, 2026-10-25), its new disciples coming at
- * {@link #FLOOR}. Their library holds the True Immortal heaven methods' slips (chests/sect_library, the realm's own pool), their elders
+ * {@link #FLOOR}. Their library holds the True Immortal heaven arts' Art Manuals (chests/sect_library, the realm's own pool), their elders
  * teach theirs (TalkSystem#teachHeaven); joined as any sect is (SectMembership), its master named its Sect Lord.
  */
 public final class ImmortalSects {

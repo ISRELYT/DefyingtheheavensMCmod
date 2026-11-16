@@ -253,7 +253,7 @@ public final class CultivatorTrades {
 
 	/**
 	 * What the Netherworld's dead sell (to the living and the dead alike: TalkSystem): the Netherworld's herbs and Yin Jade, and
-	 * talismans against its yin; a Ghost Elder (a Ghost King, a king's retainer) its own method's Ghost Jade Slip (a king its
+	 * talismans against its yin; a Ghost Elder (a Ghost King, a king's retainer) its own art's Art Manual and Breathing's (a king its
 	 * realm's foundation only to one it is Warm to, at its price); the Gate's wardens the remedies for the yin
 	 * they warn the living of, and the means to keep the restless dead in order (the Peach Wood Sword, Ghost-Quelling Talismans).
 	 */
@@ -295,9 +295,10 @@ public final class CultivatorTrades {
 	/**
 	 * What an Immortal Realm merchant sells at its stall in a city's market (CityMarkets; phase 2 of the realm plan: "markets sell pills,
 	 * treasures and True Immortal slips for jade"), priced for immortals: Immortal-grade pills, herbs ten thousand years old and
-	 * Cultivation Fruit; a Sacred Vessel of its own element to one it is Warm to; and the slip of its element's True Immortal heaven
-	 * method (its own method's element, CultivatorNpc#heavenMethod) to the courteous, sold nowhere in the worlds below (Realm#taughtInTheWorld), at
-	 * {@link #heavenSlipPrice}; one merchant in five instead the ghost path's last foundation, the Netherworld Immortal Canon.
+	 * Cultivation Fruit; a Sacred Vessel of its own element to one it is Warm to; and the Art Manual of its element's True Immortal heaven
+	 * art (its own art's element, CultivatorNpc#heavenMethod) to the courteous, sold nowhere in the worlds below (Realm#taughtInTheWorld), at
+	 * {@link #heavenSlipPrice}, with Qi Circulation's True Immortal manual; one merchant in five instead the ghost path's last foundation,
+	 * the Netherworld Immortal Canon, with Breathing's.
 	 */
 	private static void immortalGoods(CultivatorNpc npc, RandomSource random, List<Goods> goods) {
 		goods.add(new Goods(PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.IMMORTAL, 100), 2 * IMMORTAL_STONE, 2, 0));
@@ -341,8 +342,8 @@ public final class CultivatorTrades {
 	}
 
 	/**
-	 * A demon race's blood's price (Low stones): its realm's slip's ({@link #heavenSlipPrice}), a True Immortal's sixty Immortal Jade; past
-	 * it, which no slip teaches (phase 3), ten jade more a realm, a Heavenly Lord's 120 (within the two stacks of jade a trade can ask:
+	 * A demon race's blood's price (Low stones): its realm's Art Manual's ({@link #heavenSlipPrice}), a True Immortal's sixty Immortal Jade;
+	 * past it, which no manual teaches (phase 3), ten jade more a realm, a Heavenly Lord's 120 (within the two stacks of jade a trade can ask:
 	 * {@link #costsFor}).
 	 */
 	public static int bloodPrice(Realm realm) {
@@ -352,7 +353,7 @@ public final class CultivatorTrades {
 		return (int) price;
 	}
 
-	/** A Ghost Jade Slip's price (Low stones): a whole method's first layer, and the way to the rest. */
+	/** A Qi Refining manual's price (Low stones; a Ghost Jade Slip's before 2026-11-16), three times as much a realm deeper. */
 	public static final int GHOST_SLIP_PRICE = 60;
 
 	/**

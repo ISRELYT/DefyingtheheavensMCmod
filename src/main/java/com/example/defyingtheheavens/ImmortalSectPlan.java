@@ -39,7 +39,7 @@ import java.util.Map;
  * No way up to it but through the air, as befits immortals (the realm's least are of Entering Nirvana and fly, its people too:
  * CultivatorNpc). The Sect Lord sits in the main hall, the six elders live in the houses on the elders' islands (the nearest the core go to
  * the strongest, SectManager#found), the disciples in the four halls of the courts; the library is the pagoda's (SectPiece#LIBRARY_LOOT, the
- * Immortal Realm's own True Immortal slips). Its posts are a sect's, so its people live as any sect's do (NpcLife, Sect); the bridges are
+ * Immortal Realm's own True Immortal Art Manuals). Its posts are a sect's, so its people live as any sect's do (NpcLife, Sect); the bridges are
  * walked like any way (the WAY posts along them).
  */
 final class ImmortalSectPlan {

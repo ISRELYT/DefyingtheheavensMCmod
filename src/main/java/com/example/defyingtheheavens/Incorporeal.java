@@ -5,7 +5,7 @@ import net.minecraft.world.entity.player.Player;
 /**
  * What a projected nascent soul (SoulProjection) and a ghost (GhostSystem) have in common: neither touches the living world.
  * They break and place nothing, use no item or block (but a ghost may use the dead's own blocks, tagged ghost_usable, drink a
- * Marrow Cleansing Elixir and read a slip: {@link #mayUse}), drop and pick up nothing (but a ghost takes experience, and the
+ * Marrow Cleansing Elixir and read a manual or a technique's slip: {@link #mayUse}), drop and pick up nothing (but a ghost takes experience, and the
  * dead's money and writings: {@link #mayCarry}, SoulPlayerMixin), set off no plate or tripwire, take no portal, push nothing
  * and are pushed by nothing (no current carries them), are passed through by arrows and blasts, and no ordinary mob takes them
  * for prey. Both sides.
@@ -63,7 +63,7 @@ public final class Incorporeal {
 
 	/**
 	 * What a ghost (not a soul) may take up and carry, besides what it buys: the dead's money and writings (spirit stones, Yin Jade,
-	 * the slips) to trade and give with (TalkSystem), and the Marrow Cleansing Elixir. Handed to it (dropped where it is), or kept.
+	 * the manuals and slips) to trade and give with (TalkSystem), and the Marrow Cleansing Elixir. Handed to it (dropped where it is), or kept.
 	 */
 	public static boolean mayCarry(Player player, net.minecraft.world.item.ItemStack stack) {
 		return mayUse(player, stack) || GhostSystem.isGhost(player) && !SoulProjection.isSoul(player)

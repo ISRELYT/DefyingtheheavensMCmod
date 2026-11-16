@@ -104,7 +104,7 @@ public final class ModCreativeTab {
 					ModBlocks.BLUE_SPIRIT_LOG, ModBlocks.BLUE_SPIRIT_WOOD, ModBlocks.BLUE_SPIRIT_PLANKS, ModBlocks.WHITE_BLOSSOM_LEAVES,
 					ModBlocks.SPIRIT_PEACH_LEAVES, ModBlocks.CHAOS_ORIGIN_ORE, ModBlocks.FIRST_FLAME);
 			// The Netherworld: talismans and the exorcist's sword, its herbs (a year old) and what they're grown from, Yin Jade, its
-			// pills at every grade, the slips
+			// pills at every grade
 			add(ModItems.YANG_FIRE_TALISMAN, ModItems.GHOST_QUELLING_TALISMAN, ModItems.PEACH_WOOD_SWORD, ModBlocks.RED_SPIDER_LILY);
 			// The brush's talismans (Talismans): its paper, then each pattern's, as found (of no hand: as strong as whoever uses it).
 			add(ModItems.TALISMAN_PAPER);

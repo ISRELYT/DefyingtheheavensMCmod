@@ -114,7 +114,7 @@ public class MethodManualItem extends Item {
 	/**
 	 * A body sect's chest's manuals (Sect#body; the user's "Go, with body sects", 2026-11-01): the Body Path's ways its faction keeps ({@link #kinds}:
 	 * the bath, the weights and the spars a righteous one's, all four a neutral one's, beasts' blood and the weights a devilish one's), its
-	 * library's one or two always, in place of the heaven path's slips (SectPiece#BODY_LIBRARY_LOOT), its master's hall's one now and then
+	 * library's one or two always, in place of the scriptures' Art Manuals (SectPiece#BODY_LIBRARY_LOOT), its master's hall's one now and then
 	 * ({@link #HALL_CHANCE}); written to a realm as {@link #kept}'s are.
 	 */
 	public static List<ItemStack> keptBody(Alignment.Faction faction, boolean upper, boolean hall, RandomSource random) {

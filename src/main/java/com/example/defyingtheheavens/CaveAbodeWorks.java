@@ -780,7 +780,7 @@ public final class CaveAbodeWorks extends RealmWorks {
 		}
 	}
 
-	/** The library's: manuals of the heaven path's spells, a jade slip of a method now and then, spirit stones. */
+	/** The library's: manuals of the heaven path's spells, a scripture's Art Manual now and then, spirit stones. */
 	static List<ItemStack> libraryTreasures(RandomSource random) {
 		List<ItemStack> out = new ArrayList<>();
 		out.add(new ItemStack(ModItems.MID_SPIRIT_STONE, 3 + random.nextInt(5)));

@@ -47,7 +47,8 @@ import java.util.UUID;
  *   jetty on the tomb's island with a bell to call him back; on the island's mound the Ghost King's tomb, its door the trial's barrier; a
  *   terrace at each arrival.</li>
  *   <li><b>Renewed each time it stirs</b>: the Other Shore Flowers on the islands (older by every year it slept); the city's two vaults
- *   sealed anew for the ancients; the tomb's barrier whole and its king's bones in place; the bones of a few earlier visitors.</li>
+ *   sealed anew for the ancients (now and then a deep foundation in one: {@link #deepFoundation}); the tomb's barrier whole and its king's
+ *   bones in place; the bones of a few earlier visitors.</li>
  *   <li><b>Its guardians</b>: Drowned Shades about the islands and bridges and before the tomb, more risen from the springs on the lantern
  *   night; the Ferryman at his landing.</li>
  *   <li><b>The springs</b>: their deep ring about the tomb's island drags down and withers whoever swims it ({@link #pull}).</li>
@@ -480,7 +481,10 @@ public final class SpringsHollowWorks extends RealmWorks {
 		}
 	}
 
-	/** A drowned house's hoard: Yin Jade, spirit stones, a pill of the dead, now and then a ghost method's slip or a Departure Jade. */
+	/**
+	 * A drowned house's hoard: Yin Jade, spirit stones, a pill of the dead, now and then a ghost art's Art Manual or a Departure Jade; and
+	 * rarely one of the deep foundations ({@link #deepFoundation}) with Netherworld Breathing's manual written to its realm.
+	 */
 	static List<ItemStack> vaultTreasures(RandomSource random) {
 		List<ItemStack> out = new ArrayList<>();
 		out.add(new ItemStack(ModItems.YIN_JADE, 4 + random.nextInt(5)));
@@ -491,7 +495,31 @@ public final class SpringsHollowWorks extends RealmWorks {
 		// Netherworld Breathing's manual as often (2026-11-16: the ghost arts carry none of its volumes).
 		if (random.nextFloat() < 0.3f) out.add(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.NASCENT_SOUL));
 		if (random.nextFloat() < 0.3f) out.add(new ItemStack(ModItems.DEPARTURE_JADE));
+		GhostMethod deep = deepFoundation(random);
+		if (deep != null) {
+			out.add(TechniqueManualItem.of(deep));
+			out.add(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, deep.realm()));
+		}
 		return out;
+	}
+
+	/**
+	 * The deep foundations a vault may keep, Dao Integration's to Entering Nirvana's, and each one's chance in a hundred (fifteen in all).
+	 * The user's pick, 2026-11-16: until that day's methods from manuals the Nine Nether Peaks' steles taught them; a stele holds a method
+	 * now, so the Hollow keeps them instead (True Immortal's, the Netherworld Immortal Canon, the Immortal Realm sells).
+	 */
+	static final GhostMethod[] DEEP_FOUNDATIONS = {GhostMethod.TEN_THOUSAND_GHOSTS_UNION, GhostMethod.VOID_RENDING_NETHER_CANON,
+			GhostMethod.HELL_FORGED_VESSEL_SUTRA, GhostMethod.UNDERWORLD_NIRVANA_SCRIPTURE};
+	static final int[] DEEP_CHANCES = {6, 4, 3, 2};
+
+	/** One draw of a vault's deep foundation: one of {@link #DEEP_FOUNDATIONS} by its chance in a hundred, or none. */
+	static GhostMethod deepFoundation(RandomSource random) {
+		int roll = random.nextInt(100);
+		for (int i = 0; i < DEEP_FOUNDATIONS.length; i++) {
+			if (roll < DEEP_CHANCES[i]) return DEEP_FOUNDATIONS[i];
+			roll -= DEEP_CHANCES[i];
+		}
+		return null;
 	}
 
 	/** The tomb's barrier whole; the king's bones in place. */

@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -34,7 +35,8 @@ import java.util.Set;
  * Circulation's and Netherworld Breathing's too, the scriptures and foundations carrying none of their volumes); the scriptures and ghost
  * foundations Art Manuals, learned whole at once (no layers but the Laws'), each art wielded as the path reaches its stage; the techniques
  * on jade slips; a stele told by a touch and teaching a method of its own, drawn by its place, in seven seconds whatever qi is drawn in;
- * bodies born against some methods; the old worlds' volumes carried over; and the vanilla world's chests holding the mod's goods.
+ * bodies born against some methods; the old worlds' volumes carried over; the vanilla world's chests holding the mod's goods; and the deep
+ * ghost foundations the steles no longer teach kept in the Yellow Springs Hollow's vaults.
  */
 public class ManualsGameTests implements FabricGameTest {
 	/** No body born against anything: five roots, no forms. */
@@ -382,6 +384,45 @@ public class ManualsGameTests implements FabricGameTest {
 					table.getKey() + " keeps no method jade slip");
 		}
 		helper.assertTrue(tables.size() > 10, "Every table read (" + tables.size() + ")");
+		helper.succeed();
+	}
+
+	/**
+	 * The deep ghost foundations, which the Nine Nether Peaks' steles taught before a stele held a method, keep to the Yellow Springs
+	 * Hollow's vaults (the user's pick, 2026-11-16): each now and then, the deeper the rarer, one a hoard at most, with Breathing's manual
+	 * written to its realm beside it.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theDeepGhostFoundationsKeepToTheHollowsVaults(GameTestHelper helper) {
+		RandomSource random = RandomSource.create(1116);
+		Map<GhostMethod, Integer> found = new java.util.EnumMap<>(GhostMethod.class);
+		int hoards = 20000;
+		for (int i = 0; i < hoards; i++) {
+			List<ItemStack> hoard = SpringsHollowWorks.vaultTreasures(random);
+			GhostMethod deep = null;
+			for (ItemStack stack : hoard) {
+				GhostMethod art = stack.is(ModItems.TECHNIQUE_MANUAL) ? TechniqueManualItem.ghostArt(stack) : null;
+				if (art == null || art == GhostMethod.NINE_NETHER_SOUL_SUTRA) continue;
+				helper.assertTrue(deep == null, "One deep foundation a hoard at most");
+				deep = art;
+			}
+			if (deep == null) continue;
+			helper.assertTrue(List.of(SpringsHollowWorks.DEEP_FOUNDATIONS).contains(deep), deep.getId() + " is one of the deep ones");
+			GhostMethod kept = deep;
+			helper.assertTrue(hoard.stream().anyMatch(s -> s.is(ModItems.METHOD_MANUAL) && MethodManualItem.method(s) == CultivationMethod.NETHERWORLD_BREATHING
+					&& MethodManualItem.realm(s) == kept.realm()), deep.getId() + " comes with Breathing's manual of its realm");
+			found.merge(deep, 1, Integer::sum);
+		}
+		int total = 0;
+		for (int i = 0; i < SpringsHollowWorks.DEEP_FOUNDATIONS.length; i++) {
+			GhostMethod deep = SpringsHollowWorks.DEEP_FOUNDATIONS[i];
+			int count = found.getOrDefault(deep, 0);
+			total += count;
+			double expected = hoards * SpringsHollowWorks.DEEP_CHANCES[i] / 100.0;
+			helper.assertTrue(Math.abs(count - expected) < expected * 0.25, deep.getId() + ": " + count + " in " + hoards + " hoards, about " + expected);
+			if (i > 0) helper.assertTrue(count < found.getOrDefault(SpringsHollowWorks.DEEP_FOUNDATIONS[i - 1], 0), deep.getId() + " rarer than the one before");
+		}
+		helper.assertTrue(Math.abs(total - hoards * 0.15) < hoards * 0.015, "About fifteen hoards in a hundred keep one (" + total + ")");
 		helper.succeed();
 	}
 }

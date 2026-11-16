@@ -21,11 +21,11 @@ import net.minecraft.server.level.ServerPlayer;
  * the river), /netherworld leave (down the Soul River to the Nether), /netherworld gate (to the Ghost Gate), /netherworld ghost
  * (become a ghost where you stand), /netherworld revive (return to life, as at the Wheel),
  * /netherworld up (onto the Soul River from its start, going up), /netherworld corruption <percent> (set yin corruption).
- * And for the ghost path and its methods: /method learn <id> [layer] (whether or not it could be taken up yet), /method progress
- * <seconds> (on the ghost path's bar, its methods' layers settling on it too; a stage takes its layers' minutes x 60,
- * GhostMethods#required), /method path <realm> <stage> (the ghost path set there, its methods understood as far:
- * GhostMethods#setPath; /cultivation set ghost and addcultivation ghost do the same, CultivationCommand), /method forget <id>; for
- * the heaven methods the same under /heavenmethod (their progress in cultivation, HeavenMethods#layerCost).
+ * And for the ghost path and its arts: /method learn <id> (known whether or not it could be taken up yet, and understood as far as
+ * the ghost path, as every art is), /method progress <seconds> (on the ghost path's bar, GhostMethods#required), /method path
+ * <realm> <stage> (the ghost path set there: GhostMethods#setPath; /cultivation set ghost and addcultivation ghost do the same,
+ * CultivationCommand), /method forget <id>; for the heaven arts /heavenmethod learn <id> and forget <id> (understood as far as the
+ * realm). Since 2026-11-16 nothing settles and no layer is set by hand: an art's layer is the cultivator's own stage's.
  */
 public final class NetherworldCommand {
 	public static void register() {
@@ -69,10 +69,7 @@ public final class NetherworldCommand {
 						.requires(src -> src.hasPermission(2))
 						.then(Commands.literal("learn")
 								.then(Commands.argument("id", StringArgumentType.word()).suggests(METHOD_IDS)
-										.executes(ctx -> learn(ctx.getSource().getPlayerOrException(), method(ctx), 0))
-										.then(Commands.argument("layer", IntegerArgumentType.integer(1, MethodLayers.layers(Realm.LAST_TAUGHT)))
-												.executes(ctx -> learn(ctx.getSource().getPlayerOrException(), method(ctx),
-														IntegerArgumentType.getInteger(ctx, "layer"))))))
+										.executes(ctx -> learn(ctx.getSource().getPlayerOrException(), method(ctx)))))
 						.then(Commands.literal("progress")
 								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
 										.executes(ctx -> progress(ctx.getSource().getPlayerOrException(), DoubleArgumentType.getDouble(ctx, "amount")))))
@@ -107,20 +104,17 @@ public final class NetherworldCommand {
 	private static final SuggestionProvider<CommandSourceStack> HEAVEN_IDS = (ctx, builder) ->
 			SharedSuggestionProvider.suggest(java.util.Arrays.stream(HeavenMethod.values()).map(HeavenMethod::getId), builder);
 
-	/** /heavenmethod learn <id> [layer], progress <amount>, forget <id>: the heaven methods (HeavenMethods), as /method the ghost ones. */
+	/**
+	 * /heavenmethod learn <id>, forget <id>: the heaven arts (HeavenMethods), as /method the ghost ones. (Its progress <amount> went with
+	 * the settling, 2026-11-16: an art is understood as far as the realm at once.)
+	 */
 	static void registerHeaven() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) ->
 				dispatcher.register(Commands.literal("heavenmethod")
 						.requires(src -> src.hasPermission(2))
 						.then(Commands.literal("learn")
 								.then(Commands.argument("id", StringArgumentType.word()).suggests(HEAVEN_IDS)
-										.executes(ctx -> learnHeaven(ctx.getSource().getPlayerOrException(), heavenMethod(ctx), 0))
-										.then(Commands.argument("layer", IntegerArgumentType.integer(1, MethodLayers.layers(Realm.LAST_TAUGHT)))
-												.executes(ctx -> learnHeaven(ctx.getSource().getPlayerOrException(), heavenMethod(ctx),
-														IntegerArgumentType.getInteger(ctx, "layer"))))))
-						.then(Commands.literal("progress")
-								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
-										.executes(ctx -> progressHeaven(ctx.getSource().getPlayerOrException(), DoubleArgumentType.getDouble(ctx, "amount")))))
+										.executes(ctx -> learnHeaven(ctx.getSource().getPlayerOrException(), heavenMethod(ctx)))))
 						.then(Commands.literal("forget")
 								.then(Commands.argument("id", StringArgumentType.word()).suggests(HEAVEN_IDS)
 										.executes(ctx -> forgetHeaven(ctx.getSource().getPlayerOrException(), heavenMethod(ctx)))))));
@@ -132,32 +126,12 @@ public final class NetherworldCommand {
 		return method;
 	}
 
-	/**
-	 * /heavenmethod learn <id> [layer]: that layer understood (no further than its last, deeper than the realm too: its spells and
-	 * passive still wait on the realm), nothing settling; without one, as a stele teaches it.
-	 */
-	private static int learnHeaven(ServerPlayer p, HeavenMethod method, int layer) {
-		HeavenState s = CultivationManager.get(p).heaven();
-		if (!s.knows(method)) HeavenMethods.give(p, method); // an op's word: whatever stands in the way
-		if (layer > 0) s.setMethod(method, layer, 0);
+	/** /heavenmethod learn <id>: the art known (an op's word: whatever stands in the way), understood as far as the realm as every art is. */
+	private static int learnHeaven(ServerPlayer p, HeavenMethod method) {
+		boolean known = CultivationManager.get(p).heaven().knows(method);
+		if (!known) HeavenMethods.give(p, method); // an op's word: whatever stands in the way
 		HeavenMethods.afterLayer(p);
-		p.sendSystemMessage(Component.literal(method.getId() + " at layer " + s.layer(method) + " of " + method.layers() + "."));
-		return 1;
-	}
-
-	/**
-	 * /heavenmethod progress <amount>: nothing settles since 2026-11-16 (an art is understood as far as the realm at once): it only says where the
-	 * practised art stands.
-	 */
-	private static int progressHeaven(ServerPlayer p, double amount) {
-		HeavenState s = CultivationManager.get(p).heaven();
-		HeavenMethod active = s.activeMethod();
-		if (active == null) {
-			p.sendSystemMessage(Component.literal("No heaven art is being followed."));
-			return 0;
-		}
-		HeavenMethods.afterLayer(p);
-		p.sendSystemMessage(Component.literal(active.getId() + ": layer " + s.layer(active) + ", understood as far as the realm (nothing settles)."));
+		p.sendSystemMessage(Component.literal(method.getId() + (known ? " was already known." : " learned: its arts open as the realm reaches them.")));
 		return 1;
 	}
 
@@ -178,24 +152,21 @@ public final class NetherworldCommand {
 	}
 
 	/**
-	 * /method learn <id> [layer]: the method at that layer (no further than its last, deeper than the ghost path too: an op's word),
-	 * nothing settling; with no layer, learned as a stele teaches it (understood as far as the ghost path), or left as it is if known.
+	 * /method learn <id>: the art known (an op's word: whatever stands in the way), understood as far as the ghost path as every art is;
+	 * left as it is if known.
 	 */
-	private static int learn(ServerPlayer p, GhostMethod method, int layer) {
+	private static int learn(ServerPlayer p, GhostMethod method) {
 		NetherworldState s = CultivationManager.get(p).netherworld();
-		if (!s.knows(method)) GhostMethods.give(p, method); // an op's word: whatever stands in the way
-		if (layer > 0) {
-			s.setMethod(method, layer, 0);
-			GhostMethods.afterLayer(p, s);
-		}
+		boolean known = s.knows(method);
+		if (!known) GhostMethods.give(p, method); // an op's word: whatever stands in the way
 		changed(p);
-		p.sendSystemMessage(Component.literal(method.getId() + " at layer " + s.layer(method) + " of " + method.layers() + "."));
+		p.sendSystemMessage(Component.literal(method.getId() + (known ? " was already known." : " learned: its arts open as the ghost path reaches them.")));
 		return 1;
 	}
 
 	/**
 	 * /method progress <amount> (and /cultivation addcultivation ghost, CultivationCommand): that many seconds of baseline meditation
-	 * on the ghost path's bar (to its next bottleneck), the methods' layers behind it settling on it too.
+	 * on the ghost path's bar (to its next bottleneck); the arts are understood as far as the path then goes (nothing settles).
 	 */
 	static int progress(ServerPlayer p, double amount) {
 		NetherworldState s = CultivationManager.get(p).netherworld();

@@ -628,7 +628,7 @@ public final class CultivationEvents {
 			return treasury ? InteractionResult.PASS : InteractionResult.FAIL;
 		});
 		// Nothing of the living world in the hand of a soul or a ghost; but a ghost may drink a Marrow Cleansing Elixir, its meridians
-		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal), and read a slip.
+		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal), and read a manual or a slip.
 		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayUse(player, player.getItemInHand(hand))
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		// The dead eat nothing (CorpseWalk): a body walked in takes no food (a potion it drinks, as the undead do).

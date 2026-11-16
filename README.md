@@ -34,12 +34,13 @@ Modrinth's maven, JEI from its jar in `libs/` (`jei_version`), the one the user'
 Everything the mod adds has its own creative tab, **Defying The Heavens** (`ModCreativeTab`, shown with a Cultivation
 Fruit; with vanilla's tabs full it sits on the second page, behind the arrows at the top). In order: what cultivation is
 done with (meditation mats, Spirit Pedestal, Heaven Altar, Alchemy Cauldron, Formation Core, Inscription Brush, the
-rings, the storage formations, the Artifact Forge and every artifact at every grade, a banner of each element), what is taken (a one-year Cultivation Fruit, every pill at every grade from Low to Immortal, Spirit Dew), the
+rings, the storage formations, the gathering formations, a Method Manual of each method to its last realm, the Artifact Forge and every artifact at every grade, a banner of each element), what is taken (a one-year Cultivation Fruit, every pill at every grade from Low to Immortal, Spirit Dew), the
 herbs (a year old) and their seeds, spores and pit, spirit stones of every grade and jade, the world's blocks (jade
 stone, ores, qi veins, Blue Spirit Wood, leaves), the clothing (every path's colours, grade and piece), the
 Netherworld's things (Yang Fire Talisman, Ghost-Quelling Talisman, Peach Wood Sword, Red Spider Lily, the Other-Shore Flower and Netherworld Lotus
 a year old with their bulbs and seeds, Yin Jade with its ore and block, the Yang Preservation and Yin Gathering Pills at
-every grade, a Ghost Jade Slip of each method), and the spawn eggs: Cultivator, Ghost Cultivator and Hungry Ghost. An
+every grade), the Art Manuals (every ghost art, every heaven art, every spell that can be written out), a Technique Jade Slip of
+each technique, the Blank Manual, and the spawn eggs: Cultivator, Ghost Cultivator and Hungry Ghost. An
 item added later that the list doesn't name still shows, at the end. The items stay in vanilla's tabs too. The mod's
 other creatures (tribulation clouds, heart demons, the bodies left behind by the Inner Realm and Soul Projection) only
 arise from what makes them, so they have no eggs.
@@ -1148,8 +1149,8 @@ slips teach demons if they are studying heaven path."
 - **Its method** is **Bloodline Purification** (the methods overhaul, 2026-10-31): the blood is its volume, so every realm the
   Demon Path has reached gathers, except Four Axis, where the axes are every path's method (`DemonPath#canGain`, Methods below).
 - **What it teaches:** no scriptures (its blood opens its realms: above). Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
-  the spell wheel): **Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood**. The heaven path's jade slips and methods teach a demon
-  as they teach a man, for the heaven path. **With the heaven path beside it**, it opens the **spells of both paths**, one a
+  the spell wheel): **Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood**. The heaven path's Art Manuals and Method Manuals teach a
+  demon as they teach a man, for the heaven path. **With the heaven path beside it**, it opens the **spells of both paths**, one a
   realm from Foundation Building, heaven's gold light and a demon's crimson qi as one (since 2026-10-24; see The two paths).
 - **Its body:** where the Demon Path stands above the heaven path the body takes its strength from it, 1.2 times; the paths'
   harmony from the two highest. Its qi pool is shared: the larger of the heaven path's and 0.85 of the Demon Path's realm's. A
@@ -1305,8 +1306,8 @@ paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immo
 | Ancient Holy Body | Supreme | 1.25 | Health (the whole of it) and strength 1.3 times; a tribulation's strikes three quarters as strong; tempering twice as fast |
 | Blood Demon Body | Supreme | 1.25 | Heals by 15% of the health its blows take (spells too) |
 | Hundred Refinements Body | Supreme | 1.25 | One stat point more at every breakthrough |
-| Fallen True Immortal | Immortal | 0.6 | Any element; both paths five times as fast; a method's new layers need no settling |
-| Ghost Devil Body | Immortal | 0.6 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper takes the ghost path straight to that realm's Early |
+| Fallen True Immortal | Immortal | 0.6 | Any element; both paths five times as fast |
+| Ghost Devil Body | Immortal | 0.6 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper (its Art Manual) takes the ghost path straight to that realm's Early |
 | Heaven-Defying Body | Immortal | 0.5 | **The heavens can't strike it down**: a tribulation's killing strike leaves it one heart, and the tribulation fails (the dead don't scatter for it). **No failed tribulation costs it a stage** (the user's, 2026-10-20): struck down, fled or killed by something else, it keeps its stage, its cultivation and any breakthrough pill taken, and may face the heavens again at once. The lifespan tribulation (Lifespan) is another thing: it dies to that as anyone does, and its life is ended. No Ritual to the Heavens wanted. Heaven methods 0.75 times as fast, and the righteous think 15 less of it |
 | Primordial Chaos Body | Immortal | 0.4 | Meditation feeds **both paths at once**, each at its full pace (the living, the ghost path begun); no element barred; its spells (the heaven methods' qi, both paths' heaven-and-demon qi, the ghost path's harm) strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again (rounded up: Core Formation's 6 become 9, Four Axis's 100 become 150), at its realm's pace, so it takes the longer; its lifespan tribulation strikes half as often again |
 | Soul-Devouring Body | Immortal | 0.4 | Every cultivator it slays, NPC or player, gives it a tenth of what the victim's stage takes, on the path it cultivates (as far as fits before a bottleneck); a player it slays loses a stage of their own, on their higher path (the user's ask, 2026-10-20: a friend killed again and again to feed one pays for every time); each righteous or neutral one drags its alignment 10 toward the devilish; the righteous think 20 less of it |
@@ -1338,7 +1339,7 @@ once; a mortal on neither path has none. Each point is a share more of what its 
 
 **The stats are the cultivator's, not one path's** (the user's rule, 2026-10-19): every path's pool, gathering and
 cultivation goes through `StatPoints#poolFactor`, `#cultivationFactor` and `#gatherFactor`, and any path added later is to
-do the same. The methods' layers settle from the same gain, so Insight speeds them too.
+do the same.
 
 They're spent on the **Stat Points** page of the Stats tab (the two pages are buttons at its top; the Points button turns
 gold, with the count, while there are points to spend): each stat with its points, what they give, and a **+** (shift-click:
@@ -1516,7 +1517,7 @@ played well, up to x2, and the pace x2 or x3 make it shorter still, the pace at 
   whether it lies above or below you, and its distance in blocks (the user's ask, 2026-10-22; a planet just come down onto says how
   to leave it again). Code: `AstralRealm#travel`, `YEARS_PER_BLOCK`, `#yearsPerBlock`, client `TribulationHud#drawWayHome`.
 - **Meditating faster**: the Cultivation tab's pace button beside Meditate, x1 / x2 / x3. At x2 every gain of a meditation comes
-  twice as fast (both paths, the methods settling, pill and fruit qi refined, a body tempered), but **each bit of it costs twice
+  twice as fast (both paths, pill and fruit qi refined, a body tempered), but **each bit of it costs twice
   the years** (above: four times the years a minute); at x3, three times as fast, each bit for **four times** the years. A reward
   of so many seconds of meditation (a Merit foe's, a fruit's) is still the plain pace's. With 10 years left, and again with one, a
   fast meditation slows to x1 by itself (you may set it faster again). The base pace is unchanged. Code: `Lifespan#pacePrice`,
@@ -1727,8 +1728,8 @@ carries its body, as a life's heaven path would; less for one carried by half it
 so one on the ghost path alone faces it on half a body. One of the common dead, with no hands for armour, turns the bolt
 as an iron set would (`TribulationManager.GHOST_FORM_ARMOR`, what the balance table asks of the living at Core Formation,
 the last tribulation the common dead meet; a ghost path of Core Formation is a Ghost King's, who wears armour as the living
-do). Survived, the ghost path is through to the next stage or realm, its bar empty, its methods' new
-layers to settle in. Failed, **the ghost path falls a stage** and its cultivation there is lost: struck down (the living
+do). Survived, the ghost path is through to the next stage or realm, its bar empty, its arts understood as far
+at once. Failed, **the ghost path falls a stage** and its cultivation there is lost: struck down (the living
 die; the dead scatter and reform at the Gate) or leaving mid-way (marked and saved at once, so you fall as you come back).
 A Heavenly Thunder Body drinks in only the heavens' lightning. The HUD names it "The Netherworld's Tribulation".
 
@@ -1749,7 +1750,7 @@ Breakthrough button asks again.
 | **Longevity** | lifespan x1.2 (all of it: the body's years, the realms', the years taken from the grateful) | the Axis of Longevity fills twice as fast (250 years) |
 | **Fortune** | x0.8 on every price you pay in trade, on top of what regard does | the Axis of Fortune fills twice as fast (100 stones' worth) |
 | **Merit** | +10 regard with everyone (every cultivator's baseline for you) | the Axis of Merit fills twice as fast (100 hearts) |
-| **Enlightenment** | cultivation x1.2, every path's (meditation's gain, the methods' layers settling with it) | the Axis of Enlightenment fills twice as fast (3 stages) |
+| **Enlightenment** | cultivation x1.2, every path's (meditation's gain) | the Axis of Enlightenment fills twice as fast (3 stages) |
 
 "Twice as fast": that axis needs half its measure (below; rounded up). It is **named once, and
 for good**: one obsession for the cultivator, whichever path asked first, never named again; only a spent life loses it, with
@@ -1927,35 +1928,38 @@ passives the scriptures teach).
 - **Volumes.** A method comes in volumes, **one a realm**, and a path gathers only in a realm whose volume it holds
   (`HeavenMethods#canGain`, `GhostMethods#canGain`, `DemonPath#canGain`). Without one it gathers nothing: meditation, a
   teacher's guidance and the refining of pill and fruit qi all stop (the qi waits unrefined), told once a login and again in
-  each new realm ("Your scriptures hold no Qi Circulation volume for Core Formation..."), and the Cultivation tab's card says
-  "no method: gathers nothing". The layers of the scriptures and foundations still settle in as you meditate (understanding
-  what one holds isn't cultivating).
+  each new realm ("You hold no Qi Circulation volume for Core Formation..."), and the Cultivation tab's card says
+  "no method: gathers nothing". Since 2026-11-16 nothing settles: an art is understood as far as its path's stage at once
+  (Methods from manuals, at the end).
 - **Breakthroughs don't wait on a method** on the heaven and ghost paths: without the next realm's volume you may still break
   through, and then gather nothing there until you find one (the Cultivation tab says so in grey at Grand Perfection). Only the
   Laws still hold a breakthrough, past True Immortal. **The Demon Path can't break through without its race's blood** of the
   realm ahead: the blood is its gate and its volume both.
 - **Each path's orthodox method** (phase 1's only one; the others below):
-  - the heaven path's **Qi Circulation**: every heaven scripture carries its volumes from Qi Refining up to its own realm
-    (`HeavenMethods#hasVolume`), and is a volume of its element's **Art**; Circulation follows the Art you practise, by its
-    element's share of the qi where you sit (The rate, below);
-  - the ghost path's **Netherworld Breathing**: every ghost foundation carries its volumes up to its own realm
-    (`GhostMethods#hasVolume`), and teaches its spells (the Netherworld Scripture);
+  - the heaven path's **Qi Circulation**: its volumes come from its own Method Manuals, one a realm, and from steles and
+    teachers (`HeavenMethods#hasVolume`; until 2026-11-16 the scriptures carried them). A heaven scripture is an **Art** now,
+    taught by an Art Manual; Circulation follows the Art you practise, by its element's share of the qi where you sit (The
+    rate, below);
+  - the ghost path's **Netherworld Breathing**: its volumes come from its own Method Manuals the same way
+    (`GhostMethods#hasVolume`); the ghost foundations are Arts, taught by Art Manuals (the Netherworld Scripture);
   - the Demon Path's **Bloodline Purification**: its blood (above).
 - **Four Axis** has no volume of any method: **the four axes are everyone's method there** (`FourAxis#fillBars`). Meditation
   gathers nothing at Four Axis on any path; each Four Axis stage's bar is how far its axis is filled, on every path that stands
   there (one shared set of axes: a lower path rides those its higher one completed), so the bar is full when the axis is
-  complete and its tribulation waits as before. A scripture or foundation of Four Axis carries volumes up to Heavenly Being.
-- **A first method on every path, guaranteed:** any living cultivator teaches one of the living who knows no heaven scripture
-  **the basics** (a new talk topic, "I have no method. Will you teach me the basics?"): the Qi Refining scripture of its own
-  element (or the first element the learner's roots can read), free, no day's guidance spent (`TalkSystem#teachBasics`). The
-  dead are taught **Netherworld Breathing**'s first volume as they die (`GhostMethods#teachTheDead`; a world saved before,
-  when the dead began the ghost path with none, is taught it at its next meditation on ghostly qi). A demon's blood is its own.
-- **Old saves** need no conversion: the volumes are read from the scriptures, foundations and blood already held. A cultivator
-  who climbed with no scripture under the old rules (at three quarters' pace) gathers nothing now until it finds one of its realm.
+  complete and its tribulation waits as before. A stele carved at Four Axis teaches volumes up to Heavenly Being.
+- **A first method on every path, guaranteed:** any living cultivator teaches one of the living **the basics** (a talk topic,
+  "I have no method. Will you teach me the basics?"): Qi Circulation's Qi Refining volume, and, to one who knows no heaven
+  scripture, the Qi Refining scripture of its own element (or the first element the learner's roots can read), free, no day's
+  guidance spent (`TalkSystem#teachBasics`). The dead are taught **Netherworld Breathing**'s first volume and its art as they
+  die (`GhostMethods#teachTheDead`; a world saved before, when the dead began the ghost path with none, is taught it at its next
+  meditation on ghostly qi). A demon's blood is its own.
+- **Old saves:** a save from before 2026-11-16 is given, once, the Qi Circulation and Netherworld Breathing volumes its known
+  scriptures and foundations carried then (the `ManualsModel` mark), and its blood is read as before. A cultivator who climbed
+  with no scripture under the old rules (at three quarters' pace) gathers nothing until it finds a volume of its realm.
 
 **Terminology** (phase 2, the user's ask): in the game the spells are now **arts** (the Arts tab, the art wheel, "New art: ...",
-the Codex's "Methods and Arts"); scriptures and foundations carry a method's volumes and teach arts, and "method" means only how
-a path cultivates. This README and the code (`Spell`, `Spells`, `spellCooldowns`) still say spells in places: the same things.
+the Codex's "Methods and Arts"); scriptures and foundations teach arts (since 2026-11-16 they carry no volumes), and "method" means
+only how a path cultivates. This README and the code (`Spell`, `Spells`, `spellCooldowns`) still say spells in places: the same things.
 
 ### More methods, switching, manuals and formations (phase 2)
 
@@ -2119,7 +2123,8 @@ Tests: `MethodsPhaseTwoGameTests`.
 - **Soul River Feast** (`SoulRiverFeast`; C2S `seize_soul` from the Circulate key on the river): a soul every 120 ticks, 6 to 9 blocks
   ahead near the traveller's line (lasting 100, its particles the feaster's alone), of the path's realm minus 3 (30%), 2 (30%), 1 (25%),
   0 (10%) or plus 1 (5%). Seized within 4.5: 0.05 x2/realm (at most 0.5); one above fights back: 20% of its health (ghostly), half the time it escapes,
-  one in four a memory taken (a random foundation of layer 2 or more loses its top layer).
+  one in four a memory taken (since 2026-11-16 a quarter of the ghost path's stage is gone, to gather again; before, a foundation
+  lost its top layer).
 - **Haunting** (`Haunting`): the common dead practising it may take the Soul River down and portals (`Haunting#crosses`; SoulRiver,
   SoulEntityMixin) and come out where they died (else the world's spawn); at dawn a ruled ghost in a living world is sent back to the
   Ghost Gate. By night every 200 ticks, villagers within 12 not frightened in the last 1,200 panic: 0.02 of the stage each, halved a
@@ -2341,18 +2346,18 @@ mortal: `setBodyCultivator` refuses them, `setRace` to a beast clears it): its r
 named so (`rankLabel`, the talk window via `TALK_OPEN`'s last boolean, the consciousness domain's labels, the Sect tab via `sect_info`'s
 `body`), its body `BodyPath#BODY` x its realm's in everything (`CultivationStats#applyNpc` might with `wholeBody`: armour, toughness,
 footing and speed too, as a Body Path player's share does), Heaven's Leave set (no Ritual to the Heavens). No qi:
-`canFlySustainably`, `canSuppressSustainably`, the domain flag, `domainRadius`, `heavenMethod` (so no spells, slips or teaching), Qi Sense's
+`canFlySustainably`, `canSuppressSustainably`, the domain flag, `domainRadius`, `heavenMethod` (so no spells, Art Manuals or teaching), Qi Sense's
 inflow and `CorpseYin.DrainGoal` all refuse it; it walks wherever others fly (every flight site already falls back to walking).
 
 | Where | What |
 |---|---|
 | Rogues | `NpcSpawner#rollsBody`: 1 in `BODY_IN` (5) living men, lower realms and the Upper Realm (after the demon roll); also eggs/commands (`finalizeSpawn`) |
 | Body sects | `SectStructure#bodySect(seed)`: 1 in `BodyCultivators#SECT_IN` (6) of the lower/Upper Realm sects of men, by the plan's seed apart from its draws (other sects lay out as before); blueprint "Body", every `SectPiece#body` (saved "Body"); `SectManager#found` sets `Sect#body` (saved), names it `SectNames#body` ("Iron Bone Hall", "Vajra Fist Gate"), `spawnMember` makes every member a body cultivator; `findOpening` matches body to body |
-| Chests | library: `chests/body_sect_library` (no heaven slips; herbs for the bath) + 1-2 body manuals always; master's hall: one now and then (`MethodManualItem#keptBody`, `HALL_CHANCE`) |
+| Chests | library: `chests/body_sect_library` (no scriptures' Art Manuals; herbs for the bath) + 1-2 body manuals always; master's hall: one now and then (`MethodManualItem#keptBody`, `HALL_CHANCE`) |
 | Fighting | `BodyCultivators.TechniqueGoal` (priority 2, no flags, like `SpellGoal`): own cooldowns (the players'), a technique every 1.5-3 s: Flesh Reborn < 35 health share, Golden Body struck < 50, Diamond Will harried/pressed, Iron Skin struck, Rebounding Bones struck within 4, Heaven-Shattering Fist foe in sight within 12.8, Comet Charge 6..blocks+2, Leap 5..reach, Stomp 2+ foes or one within 3, Fist within 4, Blood Frenzy after 8 s (15 s, rests 30 s); at the rank it fights at (`fightingRank`: a spar's hold-back) |
 | Techniques | `BodyTechniques` takes any `LivingEntity` user (`#user`: the player list, else `NPCS` of those who acted; `forgetGone` each second); `#npcAct` (no vigor; leap scaled to the foe's distance by `LEAP_BLOCKS_PER_FORWARD` 5.5, measured in game; the charge thrown as a player's is for the distance, `COMET_SPEED` per `COMET_BLOCKS`, to 2 blocks past its foe; shatter faces the foe); NPC frenzy timed (`FRENZY`, `NPC_FRENZY_TICKS`); `#guard`/`#outgoing` (a body cultivator's hand blow is its `MOB_ATTACK`)/`#allowEffect`/`#unshaken` (also `RealmSuppressSystem#canBePressed` for anyone)/`#fallIsSafe` (ALLOW_DAMAGE for anyone) all generic |
 | Talk | `Regard#BODY_KIN` (+15) to Body Path players; `NpcAddress#knowsTheBody`: address, `TalkSystem#standing`, `isSenior`, spars (`CultivatorNpc#weighs`: hold-back, stronger, begging) by the player's body (`TwoPaths#weighedRank`), where others see a mortal (so a Body Path mortal can spar a body cultivator); "self.body"/"self.body_rogue"/"sect.body" lines; `NpcLines` "chat.body.*" in place of "chat.progress" |
-| Goods | `CultivatorNpc#bodyManual` (a body way its path keeps, by UUID, at its realm): sold by elders/rogues (`CultivatorTrades#manualPrice`), dropped as a slip is (`HEAVEN_SLIP_CHANCE`/`_SECT`); a body sect's exchange sells its ways' manuals (Inner Disciple) instead of spells and another element's method |
+| Goods | `CultivatorNpc#bodyManual` (a body way its path keeps, by UUID, at its realm): sold by elders/rogues (`CultivatorTrades#manualPrice`), dropped as a scripture's Art Manual is (`HEAVEN_SLIP_CHANCE`/`_SECT`); a body sect's exchange sells its ways' manuals (Inner Disciple) instead of spells and another element's method |
 | Joining | `SectMembership#refusal`: a body sect takes only Body Path walkers ("join.not_body"), mortals too; `#strength` (titles, too strong, the member list, `SectMissions#rankOf(player, sect)`) by the body in a body sect |
 | Possession | a nascent soul in a body cultivator lives it as a mortal at Peak on the Body Path at its rank (`BodyCultivators#asBody`: no qi, its meridians never forced open); given back, its rank is the Body Path's it came to |
 | Ascending | a body cultivator can't fly up into the rift at 0, 0: standing under it, it leaps in (`CultivatorGoals.JourneyGoal#ascend`) |
@@ -2435,10 +2440,12 @@ The Dharma Body is drawn as the Heaven-Demon Avatar's projection is (the user ha
 ## Heaven methods
 
 The heaven methods are the living's scriptures, cultivated on the qi of the five elements (wood, water, fire, earth and
-metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the scriptures carry Qi Circulation's
-volumes (Methods, above), and bring spells and passives as it climbs. There are **fifty-five**: one of each element for each realm, Qi
+metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was. Since 2026-11-16 a scripture is an
+**Art**, taught whole by its Art Manual, and carries none of Qi Circulation's volumes (those come from Qi Circulation's own
+Method Manuals: Methods, above, and Methods from manuals, at the end); it brings spells and a passive as your cultivation
+climbs, and quickens Circulation where its element runs thick. There are **fifty-five**: one of each element for each realm, Qi
 Refining to True Immortal (the twenty-five of the realms after Four Axis since 2026-10-22, the user's ask: their methods then;
-Dao Integration's and Void Shattering's own spells since 2026-10-24, the realms after them still to come). Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
+Dao Integration's and Void Shattering's own spells since 2026-10-24, the realms after them still to come). Each has a passive that grows with your cultivation, and teaches its element's **spells** of
 its realm and every realm before it. The dead can't take one up (their meridians belong to the ghost path now), nor a mortal,
 nor one whose roots won't take its element (see Physiques).
 
@@ -2450,64 +2457,60 @@ nor one whose roots won't take its element (see Physiques).
 | Earth | Ten Thousand Mountains Return to One Scripture | World-Breaking Ground Canon | Nine Cauldrons Sacred Vessel Sutra | Buried World Nirvana Classic | Houtu Immortal Canon |
 | Metal | Myriad Swords Return to the Dao Scripture | Void-Splitting Sword Canon | Immortal-Forging Vessel Sutra | Sword Heart Nirvana Classic | Heaven-Slaying Immortal Sword Canon |
 
-Their layers past Four Axis strengthen the element's passive as the realms' own might grows (`HeavenPassives#PER_LAYER`: the
+Past Four Axis the element's passive grows as the realms' own might does (`HeavenPassives#PER_LAYER`: the
 healing, the qi and the edge with the realms' health, gathering and strength, Void Shattering's and True Immortal's leaps with
-them; the fury and the ward a little a realm), so a True Immortal method's last layer heals some 1,200 a second, gathers some
+them; the fury and the ward a little a realm), so a True Immortal scripture at True Immortal Grand Perfection heals some 1,200 a second, gathers some
 10,150 qi more, swings 63% faster, turns 47.7% of a blow and edges a blow with some 6,840 more.
 
-**Layers.** A method of a realm spans **Qi Refining up to that realm**, nine layers a realm (`MethodLayers`, the same layout as
-the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54, a True Immortal one 99. Within each realm's nine, layers 1-2 stand
-for Early, 3-5 Mid, 6-8 Late and 9 Grand Perfection.
+**Understanding.** A scripture of a realm spans **Qi Refining up to that realm**, counted inside the code in nine layers a realm
+(`MethodLayers`, the same layout as the ghost foundations: a Qi Refining scripture has 9, a Four Axis one 54, a True Immortal one
+99; within each realm's nine, layers 1-2 stand for Early, 3-5 Mid, 6-8 Late and 9 Grand Perfection). Since 2026-11-16 nothing
+settles and the layers aren't shown: a scripture known is understood as far as your cultivation stands, at once
+(`HeavenState#layer`), its spells and passive following your stage.
 - **Cultivation needs a method** (since 2026-10-31: Methods, above; before, none was needed and one without cultivated at three
   quarters' pace). Meditation fills the bar, the stages step on by themselves, and the gates are the realm's: the Ritual to the
   Heavens at Qi Refining Mid, a tribulation at every Grand Perfection (and every stage from Nascent Soul), Foundation and Core
   Pills, the lower realm's cap.
-- **A method is understood as far as your cultivation has come** (`HeavenMethods#understoodTo`): learned, its layers up to
-  your stage are yours at once. Each time you reach a new stage, **its layers settle in** while you meditate
-  (`HeavenMethods#settle`), on half the stage's own cultivation, gathered by the method's element (so half as long as the
-  stage takes at a plain pace: under a minute at Qi Refining, several minutes in the highest realms), each told as it does
-  ("layer 3 settles in", with the spell it brings). Every method you know settles at once, each by its own element. A
-  method's layers never run ahead of your realm.
-- **Scriptures carry the realms' volumes**: a scripture of a realm carries Qi Circulation's volumes up to it, of any element
-  (`HeavenMethods#hasVolume`). A Qi Refining scripture gathers no further than Qi Refining; broken through into Foundation
-  Building without a deeper one, you gather nothing there until you find one. (Before 2026-10-31 the breakthrough itself waited
-  on it.)
-- **A fall takes the layers past it**: a failed tribulation (a stage down, its cultivation lost), the nascent soul lost (back to
-  Core Formation Grand Perfection), the Chief Judge's gaze (back to Qi Refining Early) leave every method understood no deeper
-  than the stage you fall to (`HeavenMethods#clampTo`); they settle in again as you climb back.
-- **The Cultivation tab's bar** is the cultivation bar, in the colour of the **element** of the method you practise (wood
+- **Qi Circulation's volumes** come from its Method Manuals, steles and teachers (Learning one, below): a volume of a realm
+  lets you gather there, whatever scripture you follow (`HeavenMethods#hasVolume`). Broken through into a realm without its
+  volume, you gather nothing there until you find one. (Before 2026-10-31 the breakthrough itself waited on it; until
+  2026-11-16 the scriptures carried the volumes.)
+- **A fall** (a failed tribulation, a stage down; the nascent soul lost, back to Core Formation Grand Perfection; the Chief
+  Judge's gaze, back to Qi Refining Early) leaves every scripture understood as far as the stage you fall to, its spells and
+  passive with it; they come back as you climb.
+- **The Cultivation tab's bar** is the cultivation bar, in the colour of the **element** of the scripture you practise (wood
   green, water blue, fire red, earth ochre, metal silver; the old cyan with none), the stage's cultivation written on it,
   unrefined pill qi a pale stretch beyond the fill. It is framed in amber while the realm is held (a tribulation's
   bottleneck, the ritual's gate, a breakthrough waiting on a method) and in gold at Four Axis Grand Perfection. Under it, the
-  method you practise, its layer, and what meditating where you are adds a second; a layer still settling is among the
-  details below ("Layer 4 settling: 40%").
+  scripture you practise and what meditating where you are adds a second (or that your method holds no volume of the realm).
 
 Pills and fruit are refused at a bottleneck, at the very peak, or while the realm is suppressed, as they always were. Cultivator
-NPCs advance by their own reckoning. (A save from before keeps its cultivation, and every method it knows is understood as far
-as its realm on loading. `/cultivation set` leaves every method you know understood exactly as far as the stage set;
-`/heavenmethod learn <id> <layer>` sets a method's layer, past the realm too, though its spells and passive still wait on it.)
+NPCs advance by their own reckoning. (A save from before keeps its cultivation, and every scripture it knows is understood as
+far as its realm. `/cultivation set` leaves every scripture you know understood exactly as far as the stage set; `/heavenmethod
+learn <id>` teaches one whatever stands in the way, understood as far as the realm.)
 
 **The rate.** What meditation gathers, every boost to it included (Rings of Power, mats and the other surroundings, Qi
 Harmony, a held spirit stone, a teacher's Insight, Heaven's Favour, the Upper Realm's dense qi, the Inner Realm), goes onto the
-bar x `HeavenMethods#cultivationFactor`, the method you practise's:
+bar x `HeavenMethods#cultivationFactor`, the scripture you practise's:
 - the **element's share** of the qi where you sit (`HeavenMethods#elementFactor`: x0.75 where there is none of it, x1 at an
   even fifth, up to x1.5 where it runs thick (three fifths or more): forests for wood, seas for water, deserts and the Nether
   for fire, mountains and caves for earth and metal);
-- x1.25 within 8 blocks of a **Dao Stele** of the same element (`STELE_BONUS`);
+- x1.25 within 8 blocks of a **stele** that holds the method you practise (`STELE_BONUS`; until 2026-11-16, a Dao Stele of the
+  scripture's element);
 - and a **Qi Gathering Pill**'s and cultivator **clothing**'s boost to qi gathering.
 
-With no scripture, or none with Circulation's volume of your realm, nothing (Methods, above). Refined pill and fruit qi goes onto
-the bar as it is, whatever the scripture, but only while there is a volume. The layers settle in by the same factor, each
-scripture by its own element. While the realm is suppressed (Four Axis in the lower realms), nothing gains. Choose which
-scripture Circulation follows on the Methods tab's **Heaven Path** page (the Ghost Path and Heaven Path buttons at its top switch
-pages): your methods, Qi Circulation's reach among them (and that your realm gathers nothing, if it doesn't), each scripture's layer, its
-realms as pips, its next layer settling (how far, and how long here) or the stage it opens at, the element's share here, and a
-**Practise** button.
+With no Qi Circulation volume of your realm, nothing (Methods, above); with no scripture practised, the plain pace (x1, x1.25
+by such a stele). Refined pill and fruit qi goes onto the bar as it is, whatever the scripture, but only while there is a
+volume. While the realm is suppressed (Four Axis in the lower realms), nothing gains. Choose which scripture Circulation
+follows on the Methods tab's **Heaven Path** page (the Ghost Path and Heaven Path buttons at its top switch pages): your
+methods, Qi Circulation's reach among them (and that your realm gathers nothing, if it doesn't), then each scripture known,
+element by element, with what it brings, its arts (all yours to wield, or how many and the next with the stage it opens at),
+and a **Practise** button; the practised element's share here at the top.
 
 **Learning one.**
 - **Dao Steles** stand on small worn plinths, their heart-stone of their element (moss, prismarine, red nether brick,
   granite, quartz): about one in every 60 chunks across the Overworld and one in 32 in the Upper Realm. The land picks the
-  element; rarity picks the realm (`DaoSteleFeature#WEIGHTS`):
+  element of its look; rarity picks the realm it is carved at (`DaoSteleFeature#WEIGHTS`):
 
   | Where | Qi Refining | Foundation Building | Core Formation | Nascent Soul | Heavenly Being | Four Axis | Dao Integration | Void Shattering | Sacred Vessel | Entering Nirvana | True Immortal |
   |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -2519,23 +2522,25 @@ realms as pips, its next layer settling (how far, and how long here) or the stag
   The realms after Four Axis are carved rarer and rarer, as the user would have their cultivators (below, Sects and
   cultivators); their few cultivators teach and sell their own realm's method too.
 
-  Meditate within 4 blocks of one for 15 seconds and you learn its method; touch it to read what it holds. They can't be
-  broken.
-- **Jade Slips**, read (right-click), teach their method at once and aren't used up. Every living cultivator cultivates a
-  heaven method of its sect's element (or its own, for a rogue), of its own realm (a sect's elders and master always, others
-  four times in ten) or one below it. One struck down leaves its slip a quarter of the time (a tenth for a sect member).
-  Elders and the master sell their sect's slip to one they are Warm to, rogues to one they are Courteous to: 60 stones for a
-  Qi Refining method, three times as much for each realm deeper (180, 540, 1,620, 4,860, 14,580).
-- **Taught**: a sect's elders and master, and rogues, answer "Will you teach me your method?" for one they are Warm to,
-  once a day: the method, or, if you know it, its layers still settling settled at once and ten minutes of your stage's
-  plain meditation on the bar.
+  Since 2026-11-16 a stele holds **one method of any path** whose volumes span its carving's realm, fixed by its place (Methods
+  from manuals, at the end): right-click it to read what it holds and whether you can take it, and meditate within 4 blocks
+  for 7 seconds, whichever qi you draw in, to learn its volumes up to the stele's realm. They can't be broken.
+- **Art Manuals** (the scriptures' jade slips until 2026-11-16, which turn into them), read (right-click), teach their
+  scripture at once and aren't used up. Every living cultivator cultivates a heaven scripture of its sect's element (or its
+  own, for a rogue), of its own realm (a sect's elders and master always, others four times in ten) or one below it. One struck
+  down leaves its Art Manual a quarter of the time (a tenth for a sect member), and as often, rolled apart, the Qi Circulation
+  manual it cultivates by, written to its scripture's realm. Elders and the master sell both to one they are Warm to, rogues to
+  one they are Courteous to: 60 stones for a Qi Refining one, three times as much for each realm deeper (180, 540, 1,620,
+  4,860, 14,580).
+- **Taught**: a sect's elders and master, and rogues, answer "Will you teach me your scripture and your method?" for one they
+  are Warm to, once a day: the Qi Circulation they breathe by as far as their scripture's realm, and the scripture, or, if you
+  know it, ten minutes of your stage's plain meditation on the bar (nothing, without a volume of your realm).
 
 The first method learned is practised, and a deeper one of the same element takes over the practice. Methods of one element
 don't stack (only the deepest counts); methods of different elements do.
 
-**Passives.** Every layer of an element's deepest method strengthens its passive, by the realm the layer stands in
-(`HeavenPassives#PER_LAYER`), once **your cultivation has reached the stage that layer stands for** and the layer has settled in
-(a layer an op set ahead of your realm adds nothing until the realm catches up):
+**Passives.** An element's deepest scripture strengthens its passive layer by layer as your cultivation climbs, each by the
+realm it stands in (`HeavenPassives#PER_LAYER`; since 2026-11-16 every layer up to your stage counts at once):
 
 | Element | Passive | Per layer: QR / FB / CF / NS / HB / FA | At a full Four Axis method |
 |---|---|---|---|
@@ -2547,9 +2552,10 @@ don't stack (only the deepest counts); methods of different elements do.
 
 **Spells.** Every element has its own spells in every realm: **three** in Qi Refining and Foundation Building (at the 2nd, 5th
 and 8th layers of the realm, its Early, Mid and Late), **two** from Core Formation on (the 3rd and 7th, Mid and Late), seventy in
-all. A spell belongs to its element and realm, not to one method: any heaven method of that element **of that realm or
-deeper** teaches it once it is understood to the spell's layer (and your cultivation has reached the stage the layer stands
-for), so a Four Axis fire method carries every fire spell. The Spells tab shows each one locked with both. They go on the spell
+all. A spell belongs to its element and realm, not to one method: any heaven scripture of that element **of that realm or
+deeper** teaches it, wielded once your cultivation reaches the stage its layer stands for, so a Four Axis fire scripture
+carries every fire spell. The Arts tab shows each one locked until then, with the stage it opens at. (The numbers in the
+tables below are those layers, nine a realm, as the realms' notes give them: since 2026-11-16 they only mark the stage.) They go on the spell
 wheel (V) as they come, never the ability wheel, cost heaven qi and have cooldowns (a player's spells wait them out while the
 gamerule `spellCooldowns` is on, its default: off from 2026-10-24 at the user's ask, back on from 2026-11-10, and a world saved
 meanwhile has it turned on once at its next start, `ModGameRules#cooldownsBack`; cultivators always keep theirs). A cooldown is **half
@@ -2902,11 +2908,11 @@ Absolute Zero holds 5 s and shatters for 60, Boundless Sea and Water Prison hold
 12 s, Myriad Vine Binding and Heaven-Piercing Bamboo strike fewer and softer, Lotus of Rebirth and the Spring of Myriad Life heal
 less.
 
-**Commands (op):** `/heavenmethod learn <id> [layer]`, `/heavenmethod progress <amount>` (that much settling on the practised
-method, no further than the realm), `/heavenmethod forget <id>`.
+**Commands (op):** `/heavenmethod learn <id>` (known whatever stands in the way, understood as far as the realm),
+`/heavenmethod forget <id>`. (The layer it once took and `/heavenmethod progress` went with the settling, 2026-11-16.)
 
-Code: `HeavenMethod` (the fifty-five, their ids and realms), `HeavenState` (what you know, saved), `HeavenMethods` (who, how far
-understood, settling, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `Spell` (the ninety element spells, by element,
+Code: `HeavenMethod` (the fifty-five, their ids and realms), `HeavenState` (what you know, saved; how far understood, from your
+stage), `HeavenMethods` (who, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `Spell` (the ninety element spells, by element,
 realm and layer), `HeavenSpells` (the kit: who is spared, targets, what lingers, temporary blocks, the elements' qi harm), `SpellAura`
 and `SpellAuras` (wards and auras, synced), `FireSpells`, `WoodSpells`, `EarthSpells`, `WaterSpells`, `MetalSpells`, the spell
 entities `SpellProjectile`, `SpellField`, `SpellBlock`, `EarthGolem`, `DirtTide`, `SpellFx` (passing moments) and
@@ -3357,7 +3363,7 @@ upkeep**, anywhere in any realm.
   stage** (the user's call, 2026-10-23: half the realm would leave a True Immortal a Four Axis clone), with your methods,
   techniques, spells, physique, stat points and both wheels, but **half your strength**: half your health, the strength of
   your blows, armour, toughness and footing, and half your qi pool (`Clones.STAT_SHARE`). Your speed and flight are your own.
-  **It is you**: it plays your own record, so what it learns, does and earns is yours (methods from slips and steles,
+  **It is you**: it plays your own record, so what it learns, does and earns is yours (methods and arts from manuals and steles,
   techniques, pills and fruit, alignment, wishes granted, stat points; the bug sweep of 2026-10-23: it played a copy, and all of
   that was lost on the way back). Its pool is its own while you play it; your main body's is kept apart (its tag's "MainQi").
   It gathers nothing of itself: what it spends (flight, spells, pressing down) is **made up from your main pool**, which
@@ -3568,7 +3574,7 @@ sustains need that many times their base cultivation: **Void Shattering** on (`P
   - **toppled spires**: a great pillar of rock blasted off at its base, the rest lying broken across the land;
   - **fields of rubble**: boulders, gravel and blackened bricks;
   - heaps of **bones**, a **broken wall** with its banner or a gate's **arch** fallen between its pillars, and a half-sunk
-    **war chest** with its old weapons and slips.
+    **war chest** with its old weapons and Art Manuals.
 - **The Shore of Nirvana** at the void sea's edge.
 
 **Void currents** (`VoidCurrents`). Drifting rifts of streaming starlight that come out of the void near whoever is about, at
@@ -3698,7 +3704,9 @@ full pool lasts 90 seconds. It does not make a spell bigger or longer, only hard
 **Markets** (`CityMarkets`, `CultivatorTrades#immortalGoods`). Six merchants at the capital and four in every city, at their stalls.
 - Immortal-grade pills, herbs five to ten thousand years old, Cultivation Fruit.
 - A Sacred Vessel of their element, to those they are Warm to.
-- Their element's **True Immortal slip** (60 jade) to the courteous. One merchant in five sells the Netherworld Immortal Canon instead.
+- Their element's **True Immortal Art Manual** (60 jade) to the courteous, and beside it Qi Circulation's True Immortal Method Manual
+  (60 jade; the worlds below sell none). One merchant in five sells the Netherworld Immortal Canon instead, with Netherworld
+  Breathing's.
 - **A demon race's True Immortal blood** (60 jade, a race a day) to the courteous, and each realm's of the ladder past it (70 jade for
   an Earth Immortal's, ten more a realm, 120 for a Heavenly Lord's, paid in two stacks of jade; the user's ask, 2026-10-26). Past True
   Immortal the blood alone climbs no realm: the Laws are wanted too.
@@ -3713,7 +3721,7 @@ not above a giant island, every one of the old ground court's buildings on them)
   islands of three houses each.
 - **Twenty members:** an **Earth Immortal** Sect Lord (Early to Late; a True Immortal of Grand Perfection before phase 3), two True
   Immortals Late or Grand Perfection, four Early or Mid, and thirteen of Entering Nirvana. Joinable like any sect.
-- Their libraries keep True Immortal and Entering Nirvana slips. Their elders and Sect Lord sell a race's True Immortal blood to those
+- Their libraries keep True Immortal and Entering Nirvana Art Manuals. Their elders and Sect Lord sell a race's True Immortal blood to those
   they are Warm to.
 - Those who can fly catch themselves when they step off an island.
 
@@ -3733,7 +3741,8 @@ not above a giant island, every one of the old ground court's buildings on them)
   - two for a devilish Entering Nirvana slain in the realm, five for a devilish True Immortal;
   - twenty to each officer who fought a primordial beast that was slain.
 - **Ranks:** Officer, **Captain** at 30, **General** at 100, shown in the Sect tab.
-- **The Quartermaster** trades: a token for 3 Immortal Jade, any element's True Immortal slip for 20, more for Captains and Generals.
+- **The Quartermaster** trades: a token for 3 Immortal Jade, any element's True Immortal Art Manual or Qi Circulation's True Immortal
+  Method Manual for 20 (the Netherworld Immortal Canon and Breathing's for 30, to Generals), more for Captains and Generals.
   Lines not yet open show the rank they want.
 - **A Venerable teaches its element's True Immortal method to Captains and up**, and tells the way to the primordial beasts.
 
@@ -3753,7 +3762,7 @@ not above a giant island, every one of the old ground court's buildings on them)
   - Brought to half its strength, it breaks out as the **Peng**, a white-and-azure bird whose wings span some sixty blocks: blasts
     of wind, volleys of feather blades, dives.
   - Left alone, it goes back into the clouds as the Kun.
-  - It leaves a True Immortal slip of its form's element (water as the Kun, metal as the Peng).
+  - It leaves a True Immortal Art Manual of its form's element (water as the Kun, metal as the Peng).
 - **The True Phoenix:** crimson and gold, its wings some forty blocks across, five streamers of the five colours. It roosts high
   over a peak and fights with fire breathed in a cone, a rain of burning feathers, and the shock of its wings.
   - Slain the first time, it burns down to an **ember** for ten seconds (untouchable) and **rises again whole**. The second time it
@@ -3770,7 +3779,7 @@ not above a giant island, every one of the old ground court's buildings on them)
   - Its moves: lightning called down where its foe stood (it roars, and sparks warn of it first), the sweep of its tail, its coils,
     its dive.
   - It leaves **True Immortal dragon blood**.
-- **What they leave** (cores, Immortal Jade, blood or slip) **hangs glowing in the air where they fell**: over the sea of clouds it
+- **What they leave** (cores, Immortal Jade, blood or manual) **hangs glowing in the air where they fell**: over the sea of clouds it
   would be lost.
 - **The fourth**, the Primordial Chaos (part 3c), keeps its lair out in the Chaos Frontier (below).
 
@@ -4276,9 +4285,10 @@ A ghost:
   Wandering Soul Steps' fourth layer, +10% a layer; Meteor Flight's fast mode from a Core Formation path, see Meteor Flight), spending nothing (`TwoPaths#fliesFreely`; the living in a Ghost King's form fly so too, see "The two paths"); not on the Soul River,
   nor while a Ghost-Quelling Talisman binds it. Holding jump while falling, it drifts down gently.
 - **touches nothing of the living world.** It can't break or place, use items or blocks (but it can use the dead's own:
-  steles, Meng Po's pot, the Wheel, a ghost palace's treasury chests; and read a Ghost Jade Slip or a Jade Slip, though it
-  takes up no heaven method), drop or pick up anything (but the experience that comes to it, which it takes as the living do,
-  and the dead's money and writings: spirit stones, Yin Jade, the slips, a Marrow Cleansing Elixir: `Incorporeal#mayCarry`),
+  steles, Meng Po's pot, the Wheel, a ghost palace's treasury chests; and read an Art Manual, a Method Manual or a technique's
+  slip, though it takes up no heaven art nor method), drop or pick up anything (but the experience that comes to it, which it
+  takes as the living do, and the dead's money and writings: spirit stones, Yin Jade, the manuals and slips, a Marrow Cleansing
+  Elixir: `Incorporeal#mayCarry`),
   ride, take a rift or portal, meditate on the main track, break
   through, fly on qi or a sword (it has its own flight), Realm Suppress, turn inward or project its soul. Arrows, blasts and ordinary mobs pass
   through it. It cultivates only its ghost method, half again as fast as the living do (below).
@@ -4327,19 +4337,19 @@ the dead's cyan), `ClientGhosts`, `mixin/GhostDriftMixin`, `mixin/SoulRenderDisp
 
 The ghost path is cultivated on ghostly qi, by the dead and the living alike, as the heaven path is on qi: **its own
 cultivation bar**, the ghost methods riding on it as the heaven methods ride on the heaven path's (the user's ask,
-2026-10-19; before, the deepest foundation's layers were the path). Each layer brings something, and some bring abilities
-and spells.
+2026-10-19; before, the deepest foundation's layers were the path). The foundations and the two ways of their own are
+**arts** (taught by Art Manuals since 2026-11-16): each brings something as the path climbs, some abilities and spells.
 
 **The ghost path.** A path of its own beside ordinary cultivation, and **neither builds on the other**: your ordinary realm
 neither opens a ghost method nor speeds it, and a Four Axis cultivator who comes down starts the ghost path at Qi Refining
 like anyone else. It **begins**, at Qi Refining Early (`GhostMethods#ghostRank`, saved as `NetherworldState`'s "PathRank"
-and "PathCultivation"), with the first foundation you learn; **the dead are taught the first, the Netherworld Breathing Art,
-as they die** (`GhostMethods#teachTheDead`, since 2026-10-31; before, the dead began the path with none at their first
-meditation on ghostly qi, at three quarters' pace). A ghost path begun in death **stays yours when you are born again**:
-alive, the Path button draws in ghostly qi and you go on with it. Its method is **Netherworld Breathing** (Methods, above):
-each foundation carries its volumes up to its own realm, and **without the volume of the path's realm it gathers nothing**;
-it may break through into Foundation Building with only the Breathing Art, and gathers nothing there until a deeper foundation
-is found. Mortals, alive or dead, still have no ghost path until their meridians are opened. But walking both paths makes you
+and "PathCultivation"), with the first foundation you learn, or Netherworld Breathing itself; **the dead are taught the
+first, the Netherworld Breathing Art, and Breathing's first volume as they die** (`GhostMethods#teachTheDead`, since
+2026-10-31; before, the dead began the path with none at their first meditation on ghostly qi, at three quarters' pace). A
+ghost path begun in death **stays yours when you are born again**: alive, the Path button draws in ghostly qi and you go on
+with it. Its method is **Netherworld Breathing** (Methods, above): its volumes come from its own Method Manuals, one a realm
+(the foundations carried them until 2026-11-16), and **without the volume of the path's realm it gathers nothing**; it may
+break through into a realm without one, and gathers nothing there until one is found. Mortals, alive or dead, still have no ghost path until their meridians are opened. But walking both paths makes you
 stronger than walking either (see **The two paths** below).
 
 **One qi or the other.** A meditation draws in **either** the heavens' qi **or** ghostly qi, never both: on both paths, the
@@ -4363,51 +4373,53 @@ and what meditating here adds a second.
 
 **The bottlenecks: the Netherworld's tribulation.** Leaving Grand Perfection, and from Nascent Soul every stage, takes the
 **ghost path's tribulation** (see Tribulations), as the heaven path's take the Heavenly Tribulation: the bar stops full and
-the Breakthrough button (with the ghost path drawn in) brings it on. **Breaking into a ghost realm also wants a foundation
-of that realm or deeper** (`GhostMethods#opensWay`): the Breathing Art carries the path no further than Qi Refining's Grand
-Perfection, and only a deeper foundation, found, opens the way on (said under the details, in amber once the bar is full).
+the Breakthrough button (with the ghost path drawn in) brings it on. No foundation is wanted to break into a ghost realm any
+more (once, one of that realm or deeper was); past True Immortal the Laws hold the way (`GhostMethods#opensWay`).
 
-**The methods are understood as far as the path has come** (`GhostMethods#understoodTo`), as the heaven methods are: a
-foundation to the layer standing for the path's stage, the fire and the steps three layers a ghost realm (up to the sixth
-at Foundation Building, all nine from Core Formation). Learned, at once; and as the path reaches new stages, their new
-layers **settle in** while you meditate on ghostly qi (`GhostMethods#settle`: half a layer's own cost, gathered on the path,
-quicker by its own stele), every method you know at once, each told as it settles. A fall takes the layers past it
-(`#clampTo`).
+**The arts are understood as far as the path has come** (`NetherworldState#layer`, `GhostMethods#understoodAt`), as the
+heaven scriptures are: a foundation to the layer standing for the path's stage, the fire and the steps three layers a ghost
+realm (up to the sixth at Foundation Building, all nine from Core Formation). Since 2026-11-16 nothing settles: learned, at
+once, and as the path reaches new stages, at once too; a fall leaves them as far as the stage fallen to.
 
-**The foundations** carry the ghost path **from Qi Refining up to their own realm**, nine layers to each realm they span
-(`MethodLayers`): the Netherworld Breathing Art has 9 layers (Qi Refining alone), the Yellow Springs Marrow Art 18 (Qi
-Refining, then Foundation Building), and so on to the Six Paths Reincarnation Canon's 54 (Qi Refining all the way through
-Four Axis). The deeper the foundation, the further its Breathing volumes reach and the rarer it is. Each foundation's spells come in its
-own realm (its last nine layers):
+**The foundations** span the ghost path **from Qi Refining up to their own realm**, nine layers to each realm (`MethodLayers`):
+the Netherworld Breathing Art has 9 layers (Qi Refining alone), the Yellow Springs Marrow Art 18 (Qi Refining, then Foundation
+Building), and so on to the Six Paths Reincarnation Canon's 54 (Qi Refining all the way through Four Axis). The deeper the
+foundation, the rarer it is. Each foundation's spells come in its own realm (its last nine layers). Where their Art Manuals
+are found since 2026-11-16 (until then the Method Steles taught them, the deep ones on the Nine Nether Peaks):
 
-| Foundation | Carries the ghost path | Layers | Spells (layer) | Where it is found |
+| Foundation | Spans the ghost path | Layers | Spells (layer) | Where it is found |
 |---|---|---|---|---|
-| **Netherworld Breathing Art** | Qi Refining | 9 | Ghostly Wail (5); abilities Ghost Eye (3), Netherworld Veil (6) | **only** the stele on the Ghost Gate's plaza (none out in the realm); ghost cultivators teach it and sell its slip; the dead are taught it as they die (since 2026-10-31) |
-| **Yellow Springs Marrow Art** | to Foundation Building | 18 | Yellow Springs Tide (12), Marrow Ward (16) | steles everywhere (uncommon); Foundation Building ghosts teach it, sell its slip (180 stones) and now and then drop it |
-| **Ghost Core Canon** | to Core Formation | 27 | Ghost Core Burst (21), King's Decree (25) | Core Formation Ghost Kings (most palaces); now and then a stele anywhere, more often on the Nine Nether Peaks |
-| **Nine Nether Soul Sutra** | to Nascent Soul | 36 | Soul Rend (30), Nine Nether Step (34) | Nascent Soul kings (about one palace in four); Nine Nether Peaks steles |
-| **Yama's Judgement Scripture** | to Heavenly Being | 45 | Yama's Verdict (39), Chains of Hell (43) | Heavenly Being kings (about one palace in eight); Nine Nether Peaks steles, rare |
-| **Six Paths Reincarnation Canon** | to Four Axis | 54 | Wheel of Samsara (48), Six Paths Annihilation (52) | Four Axis kings (one palace in twenty); Nine Nether Peaks steles, about three in 1,371 |
-| **Ten Thousand Ghosts Union Scripture** | to Dao Integration | 63 | Procession of Ten Thousand Ghosts (57), Gate of Ten Thousand Ghosts (61) | Nine Nether Peaks steles, about two in 1,377; the few Dao Integration ghosts |
-| **Void-Rending Nether Canon** | to Void Shattering | 72 | Rift to the Nine Nethers (66), Bridge of No Return (70) | Peaks steles, about one in 1,377; the handful of Void Shattering ghosts |
-| **Hell-Forged Vessel Sutra** | to Sacred Vessel | 81 | Mirror of Retribution (75), Soul-Locking Pagoda (79) | Peaks steles, about one in 1,377; the one Sacred Vessel of the dead |
-| **Underworld Nirvana Scripture** | to Entering Nirvana | 90 | Black and White Impermanence (84), Book of Life and Death (88) | Peaks steles, about one in 1,377 |
-| **Netherworld Immortal Sovereign Canon** | to True Immortal | 99 | Fengdu's Walls Rise (93), Ten Thousand Souls Ascend (97) | Peaks steles, about one in 1,377 |
+| **Netherworld Breathing Art** | Qi Refining | 9 | Ghostly Wail (5); abilities Ghost Eye (3), Netherworld Veil (6) | the dead are taught it as they die (since 2026-10-31); ghost cultivators teach it and sell its Art Manual |
+| **Yellow Springs Marrow Art** | to Foundation Building | 18 | Yellow Springs Tide (12), Marrow Ward (16) | Foundation Building ghosts teach it, sell its Art Manual (180 stones) and now and then drop it |
+| **Ghost Core Canon** | to Core Formation | 27 | Ghost Core Burst (21), King's Decree (25) | Core Formation Ghost Kings (most palaces); the Yellow Springs Hollow's dead now and then |
+| **Nine Nether Soul Sutra** | to Nascent Soul | 36 | Soul Rend (30), Nine Nether Step (34) | Nascent Soul kings (about one palace in four); the Yellow Springs Hollow |
+| **Yama's Judgement Scripture** | to Heavenly Being | 45 | Yama's Verdict (39), Chains of Hell (43) | Heavenly Being kings (about one palace in eight); the Yellow Springs Hollow |
+| **Six Paths Reincarnation Canon** | to Four Axis | 54 | Wheel of Samsara (48), Six Paths Annihilation (52) | Four Axis kings (one palace in twenty); the Yellow Springs Hollow |
+| **Ten Thousand Ghosts Union Scripture** | to Dao Integration | 63 | Procession of Ten Thousand Ghosts (57), Gate of Ten Thousand Ghosts (61) | the Yellow Springs Hollow's vaults (6 in 100); the few Dao Integration ghosts |
+| **Void-Rending Nether Canon** | to Void Shattering | 72 | Rift to the Nine Nethers (66), Bridge of No Return (70) | the Hollow's vaults (4 in 100); the handful of Void Shattering ghosts |
+| **Hell-Forged Vessel Sutra** | to Sacred Vessel | 81 | Mirror of Retribution (75), Soul-Locking Pagoda (79) | the Hollow's vaults (3 in 100); the one Sacred Vessel of the dead |
+| **Underworld Nirvana Scripture** | to Entering Nirvana | 90 | Black and White Impermanence (84), Book of Life and Death (88) | the Hollow's vaults (2 in 100) |
+| **Netherworld Immortal Sovereign Canon** | to True Immortal | 99 | Fengdu's Walls Rise (93), Ten Thousand Souls Ascend (97) | the Immortal Realm's merchants (one in five) and the Celestial Court's Quartermaster (Generals) |
+
+The vanilla world's deeper chests keep those of Qi Refining to Heavenly Being too (Methods from manuals, at the end). The
+Hollow's two vaults are sealed anew each time it opens, and each keeps one of the four deep foundations 15 times in 100, the
+chance in brackets above, with Netherworld Breathing's manual written to its realm (`SpringsHollowWorks#deepFoundation`; the
+user's pick, 2026-11-16).
 
 **The ghost path goes on to True Immortal** (the user's ask, 2026-10-22), its last five foundations those of the realms after
 Four Axis (Dao Integration's and Void Shattering's spells built, 2026-10-24: `GhostSpells`; the rest still to come), every stage of them longer than the one before as below it (`GhostMethods#required`), and
 its tribulation the heavens' strike counts.
 
-A king teaches its foundation to one it is Warm to, sells its slip to one it is Warm to (60 stones for the Breathing Art,
-three times as much for each foundation deeper: 180, 540, 1,620, 4,860, and 14,580 for the Six Paths Reincarnation Canon),
-and always leaves the slip when it falls.
+A king teaches its foundation to one it is Warm to, sells its Art Manual to one it is Warm to (60 stones for the Breathing
+Art, three times as much for each foundation deeper: 180, 540, 1,620, 4,860, and 14,580 for the Six Paths Reincarnation
+Canon), with Netherworld Breathing's manual written to its realm, and always leaves the Art Manual when it falls.
 
 Every layer of your deepest foundation adds +20 ghostly qi to the pool and a heart as a ghost, and (up to 18 layers) +10%
 to the living's stay among the yin. Foundations don't stack: they all lay out the realms the same way, so only the deepest
 counts (`GhostMethods#foundationDepth`). **A foundation found later is understood where your ghost path already stands**:
-at Qi Refining Grand Perfection the Marrow Art is learned to its ninth layer and opens the way into Foundation Building; a
-lesser foundation you've outgrown is learned whole, perfected at once, its spells in reach. Learning a foundation that goes
-further than the one you practise makes it the one you practise (the one whose stele quickens you).
+at Qi Refining Grand Perfection the Marrow Art is learned to its ninth layer; a lesser foundation you've outgrown is learned
+whole, its spells in reach. (Nothing of a foundation is practised since 2026-11-16: the method practised is Netherworld
+Breathing or another of the path's methods, Methods above.)
 
 Besides the foundations, two methods of their own:
 
@@ -4417,32 +4429,29 @@ Besides the foundations, two methods of their own:
 | **Wandering Soul Steps** (movement) | a ghost +3% swifter; from layer 4, the free flight of the dead and of a Ghost King's form +10% swifter a layer (+60% at 9; `QiFlight#freeSpeed`) | Yin Wind Steps (1) | Soul Dash (2) |
 
 **Learning one.** First your meridians must be open (a Marrow Cleansing Elixir): a mortal, alive or dead, can't take up or
-cultivate a ghost method (`GhostMethods#refusal`); anyone else can take up any of them. Meditate within 4 blocks of a
-**Method Stele** for 15 seconds and you learn its method. Steles
-stand on worn plinths across the Netherworld, one in about every 24 chunks: the fire's most often, then the steps', the
-Marrow Art's, and now and then the Ghost Core Canon's (weights 300 / 200 / 150 / 10, of 660); on the **Nine Nether Peaks**
-the deeper foundations are carved too (the fire 300, the steps 200, the Marrow Art 200, the Ghost Core Canon 40, the Nine
-Nether Soul Sutra 20, Yama's Judgement Scripture 8, the Six Paths Reincarnation Canon 3, of 771; `GhostMethod#steleWeight`,
-`#peakWeight`). **The Netherworld Breathing Art is carved on no stele out in the realm**: only on the one on the Ghost
-Gate's plaza, by where the dead wake (the user's rule, 2026-10-19; worlds generated before keep the ones they have). They're unbreakable; touch one to read what it teaches (the dead can too), and the Ghost Eye shows them
-through walls. A **Ghost Jade Slip**, read (right-click), teaches its method at once and isn't used up: ghost cultivators
-drop them now and then, and Ghost Elders sell their own. A ghost cultivator knows its own realm's foundation five times
-in ten (a Ghost King always), otherwise one of the first three methods, and one struck down leaves its foundation's slip
-15% of the time. One who is Warm to you will **teach** you its method once a day: the method, or, if you know it, its
-layers still settling settled at once and ten minutes on your ghost path's bar (`TalkSystem#teach`).
+cultivate a ghost method (`GhostMethods#refusal`); anyone else can take up any of them. **Method Steles** stand on worn
+plinths across the Netherworld, one in about every 24 chunks, each carved at a foundation's realm: the fire's most often,
+then the steps', the Marrow Art's, and now and then the Ghost Core Canon's (weights 300 / 200 / 150 / 10, of 660); on the
+**Nine Nether Peaks** the deeper foundations' too (the fire 300, the steps 200, the Marrow Art 200, the Ghost Core Canon 40,
+the Nine Nether Soul Sutra 20, Yama's Judgement Scripture 8, the Six Paths Reincarnation Canon 3, of 771;
+`GhostMethod#steleWeight`, `#peakWeight`), and one carved as the Netherworld Breathing Art on the Ghost Gate's plaza, by where
+the dead wake. Since 2026-11-16 a stele holds **one method of any path** whose volumes span its carving's realm (the fire's
+and the steps' Qi Refining's), fixed by its place (Methods from manuals, at the end): right-click it to read what it holds
+(the dead can too), and meditate within 4 blocks for 7 seconds, whichever qi you draw in, to learn its volumes. They're
+unbreakable, and the Ghost Eye shows them through walls. An **Art Manual** of a foundation or a way (a Ghost Jade Slip until
+2026-11-16, which turns into it), read (right-click), teaches it at once and isn't used up: ghost cultivators drop their
+foundation's 15% of the time (a king always), and Ghost Elders sell their own, with Netherworld Breathing's manual written
+to its realm. A ghost cultivator knows its own realm's foundation five times in ten (a Ghost King always), otherwise one of
+the first three methods. One who is Warm to you will **teach** you its foundation once a day, whole, and Breathing as far as
+its realm; if you know it, ten minutes on your ghost path's bar (`TalkSystem#teach`).
 
 **Cultivating.** Meditate with ghostly qi drawn in (the Path button): while ghostly qi flows where you sit, the ghost path's
-bar fills and the methods' new layers settle in on it (a ghost cultivates only this). The **Methods** tab shows where your
-ghost path stands, how far your foundations open its way, every method you know, its layers understood (its next one
-settling, how far, or the stage of the path that opens it), and a **Practise** button (the method practised is the one whose
-stele quickens you). The layers' costs, in minutes of baseline meditation (`GhostMethods#layerCost`):
+bar fills (a ghost cultivates only this). The **Methods** tab shows where your ghost path stands, the path's methods
+(Netherworld Breathing's reach among them, a **Practise** button on each: the method practised is the one whose stele
+quickens you), and every foundation and way you know with its arts (all yours to wield, or how many and the next with the
+stage it opens at). (Until 2026-11-16 each layer took minutes of meditation to settle in, `GhostMethods#layerCost`: gone.)
 
-| Layer | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | All nine |
-|---|---|---|---|---|---|---|---|---|---|---|
-| The fire, the steps (half of it settles one in) | 5 | 8 | 12 | 20 | 30 | 45 | 60 | 90 | 120 | 6.5 h |
-| A foundation, each realm's nine, before the realm's factor | 3 | 4 | 5 | 6 | 8 | 10 | 12 | 15 | 20 | 83 min |
-
-A ghost path's stages no longer go by these layers (see The bar): each realm takes 1.6 times the one before, Qi Refining
+A ghost path's stages (see The bar): each realm takes 1.6 times the one before, Qi Refining
 2 hours, Foundation Building 3.2, Core Formation 5.2, Nascent Soul 8.3, Heavenly Being 13.3 and Four Axis 21.3, about 53
 hours in all at the baseline: a living cultivator in a **Soul Sand Valley** (the realm's factor below is taken back out of
 each stage's cultivation, so the ghost path's realm doesn't change how long a stage takes). The rate is `BASE_RATE` x the density (a Soul Sand Valley's 1 the baseline:
@@ -4466,14 +4475,14 @@ So the Six Paths Reincarnation Canon's layer 10 opens at Foundation Building Ear
 Four Axis Grand Perfection (`GhostMethods#opensAt`). A ghost whose ghost path reaches Core Formation is a Ghost King (below),
 whatever its ordinary cultivation.
 
-**Old worlds.** A ghost path saved before the bar (2026-10-19) starts its bar where its deepest foundation's layers stood,
-that layer's progress the bar's, the foundations' settling afresh (`NetherworldState#load`, once); saves from before the
+**Old worlds.** A ghost path saved before the bar (2026-10-19) starts its bar where its deepest foundation's saved layers
+stood, that layer's progress the bar's (`NetherworldState#load`, once, reading the layers saved then); saves from before the
 foundations spanned the realms below their own are moved over first ("MethodLayout").
 
 Code: `GhostMethod` (the methods, their realms, layers and rarity; ids saved, add new ones at the end), `MethodLayers`
 (the realm-by-realm layout, shared with the heaven methods), `GhostMethods` (the ghost path's bar, its gate and bottlenecks,
-the rate, the layers understood and settling, learning, what each layer grants), `TwoPaths#cultivatesGhost` (which qi is
-drawn in), `MethodSteleBlock`, `MethodSteleFeature` (`NW_STELE_CHUNKS` in `ModPlacedFeatures`), `GhostJadeSlipItem`,
+the rate, the layers understood from the path, learning, what each layer grants), `TwoPaths#cultivatesGhost` (which qi is
+drawn in), `MethodSteleBlock`, `MethodSteleFeature` (`NW_STELE_CHUNKS` in `ModPlacedFeatures`), `SteleTeachings`, `GhostJadeSlipItem` (old slips into Art Manuals),
 `MeditationManager#ghostMethods`, `TalkSystem#teach`, `GhostCultivatorNpc#method`; client `ClientMethods`,
 `CultivationScreen` (the Cultivation tab's ghost column and Path button, the Methods tab); `/method path <realm> <stage>`
 and `/method progress <seconds>` (Commands).
@@ -4607,7 +4616,7 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   2026-10-19, `CultivatorNpc#senses`); in all else it keeps the rules of the dead. Common ghosts have no forms. Dying, or
   born again, you start in your true form (Form Shift switched off).
 - **A mortal has no ghost path.** Its meridians are closed, for the ghost path as for the heaven path, until a **Marrow
-  Cleansing Elixir** opens them: alive or dead, it can't take up a ghost method (steles, slips and teachers say so) or
+  Cleansing Elixir** opens them: alive or dead, it can't take up a ghost method (steles, manuals and teachers say so) or
   cultivate one, and any it knows lie dormant (no ghost path, spells, abilities or harmony). Only the living can drink the
   elixir, so a mortal's ghost must be born again at the Wheel first.
 
@@ -4670,7 +4679,7 @@ once. **C** ("Cast Readied Spell") casts the readied one; its icon, and the seco
 of the hotbar, C in its corner. Each costs ghostly qi (the spells of both paths, above, cost qi instead) and has a cooldown; none can be cast on the
 Soul River or while dispersed. A
 spell you learn goes into the first empty slot. The cultivation menu's **Spells** tab lists every spell (cost, cooldown,
-the layer it needs, whether it's ready), and its **Arrange Wheel** button lays the wheel out as the ability wheel's
+the stage it opens at, whether it's ready), and its **Arrange Wheel** button lays the wheel out as the ability wheel's
 editor does. A mortal, alive or dead, can't shape one: its meridians are closed.
 
 | Spell | From | Ghostly qi | Cooldown | What it does |
@@ -4728,13 +4737,14 @@ Qi Refining Early to Foundation Building Grand Perfection (`WANDERER_CAP`; the s
 mortals; they join no sect and make no journeys. They speak as the
 dead do, tell you how they died if you ask about them, and from Foundation Building on know a ghost method they can teach
 (their realm's foundation four times in ten, else one of the first three methods); **Ghost Elders** (Foundation Building
-and up) sell its Ghost Jade Slip (60 low-grade stones, 180 for the Yellow Springs Marrow Art), and one struck down leaves a
-foundation's slip 15% of the time. The dead fight back against whatever strikes them, Hungry Ghosts included (a king's
-court as one). A ghost talks with cultivators living and dead (in the Netherworld everyone sees the dead, living NPCs too:
-`CultivatorNpc#senses`) and, with the spirit stones and slips it carries, **trades and gives gifts** as the living do, by the
+and up) sell its Art Manual (60 low-grade stones, 180 for the Yellow Springs Marrow Art) with Netherworld Breathing's manual
+written to its realm, and one struck down leaves its foundation's Art Manual 15% of the time. The dead fight back against
+whatever strikes them, Hungry Ghosts included (a king's court as one). A ghost talks with cultivators living and dead (in the
+Netherworld everyone sees the dead, living NPCs too: `CultivatorNpc#senses`) and, with the spirit stones and manuals it
+carries, **trades and gives gifts** as the living do, by the
 same standing (one far above it greets, hears, takes a gift and trades, Ghost Kings too); it makes no demands. The dead sell Yin
 Jade, Other-Shore Flowers and Yang Fire Talismans, to the living and the dead alike. Blows reach
-them as they reach any of the dead. Struck down they scatter in sparks, now and then leaving a jade slip (8%), Yin Jade
+them as they reach any of the dead. Struck down they scatter in sparks, now and then leaving an Art Manual (8%), Yin Jade
 (40%) or an Other-Shore Flower (15%). An NPC cultivator who ascends from the Nether goes to its rift and comes out at
 the Ghost Gate as one of them (a Ghost King, if it was Core Formation or above).
 
@@ -4751,7 +4761,7 @@ dais and the throne set in the back wall. The king stands before its throne, hal
 keeps its realm's foundation: a Core Formation king (most palaces) the Ghost Core Canon, a Nascent Soul king (27%) the Nine
 Nether Soul Sutra, a Heavenly Being king (13%) Yama's Judgement Scripture, a Four Axis king (5%: `GhostPalacePiece`
 `FOUR_AXIS_KING` and the rest, decided by where the palace stands) the Six Paths Reincarnation Canon. It teaches it and
-sells its slip to one it is Warm to, and leaves its slip when it falls. Six
+sells its Art Manual to one it is Warm to, and leaves the Art Manual when it falls. Six
 **Ghost Retainers** (Foundation Building) keep the hall and the gate, all of one path with their king, and allies: a court
 never turns on itself, and no blow of one of its own lands on it. The king greets the dead and warns the living out of its
 palace. A court leaves passers-by alone, but strike the king or any retainer and **the whole court** (everyone within 40
@@ -4762,8 +4772,8 @@ reach, it roams, a king without a court.
 **A palace's treasury** (`PalaceTreasury`, `GhostPalacePiece#treasury`) stands in the courtyard's back corner beside the hall:
 a vault of black stone with red columns at its corners, iron-barred windows, a carved lintel over its door and a low tiled
 roof, four chests inside of the dead's wealth (`chests/ghost_palace_treasury`: middling and high spirit stones, Yin Jade,
-old Other-Shore Flowers and Netherworld Lotus, Yin Gathering Pills, gold, and Ghost Jade Slips, the first three methods
-most, now and then the Yellow Springs Marrow Art or the Ghost Core Canon). **The king's seal** holds the chests shut and
+old Other-Shore Flowers and Netherworld Lotus, Yin Gathering Pills, gold, and Art Manuals, the first three methods'
+most, now and then the Yellow Springs Marrow Art's or the Ghost Core Canon's). **The king's seal** holds the chests shut and
 unbreakable while the king lives and stands in its palace, as a sect's elders keep theirs: one a full realm above the king
 (by the stronger of their two paths) breaks it with a touch and opens it with the next, and it stays broken five minutes
 (`SEAL_RECAST`; a Four Axis king's can't be broken); a king slain, or its throne empty, leaves it open. The dead may open it
@@ -4881,8 +4891,8 @@ All act on yourself.
 /netherworld ghost          become a ghost where you stand
 /netherworld revive         return to life, as at the Wheel
 /netherworld corruption <percent>   set your yin corruption
-/method learn <id> [layer]  a ghost method at that layer (to 54; without one, as a stele teaches it), nothing settling
-/method progress <seconds>  that many seconds of baseline meditation on the ghost path's bar (its layers settling on it too)
+/method learn <id>          a ghost art known, whatever stands in the way (understood as far as the ghost path)
+/method progress <seconds>  that many seconds of baseline meditation on the ghost path's bar
 /method path <realm> <stage>   the ghost path set there (1-11, 1-4), its methods understood as far
 /method forget <id>         as if it had never been learned
 /cultivation set ghost <realm> <stage>        the same as /method path (a mortal's meridians opened: its ghost path would lie dormant)
@@ -4953,7 +4963,8 @@ guardians at the foot of its steps and two great braziers sending up smoke; insi
 bordered carpet to the Sect Master's mat on its dais, between lanterns. The **Meditation Hall** of mats,
 where the disciples live and meditate, and the **Treasury** face the way in across lawns from either side, a **pagoda**
 stands beside the main hall (every storey but the top is the sect's library, shelves and candles and lecterns, with the
-library chest on the ground floor, which keeps **one or two Jade Slips** of heaven methods besides its books: Qi
+library chest on the ground floor, which keeps **one or two Art Manuals** of heaven scriptures besides its books (jade slips
+until 2026-11-16), and a Qi Circulation manual of its world's realms: Qi
 Refining's most often, Foundation Building's now and then, Core Formation's rarely, `chests/sect_library`; in the Upper Realm, Core
 Formation's to Entering Nirvana's, each realm up rarer (since 2026-10-25, see the user's calls on the third sweep's suggestions); a ladder climbs
 to a meditation chamber at the top) with herb gardens (ginseng,
@@ -6253,7 +6264,7 @@ pines round a still lake (`CaveAbode`, `CaveAbodeLand`), its works `CaveAbodeWor
   arrival.
 - **The abode**, hollowed out of the mountain in a frame of its own: its gate at the mountain's foot set into the slope (a porch of
   white jade pillars under dark tiles); a tunnel to a long hall of white jade pillars, a **library** on one side (shelves of books,
-  lecterns, a High vault of manuals and jade slips) and a hall of **spirit springs** on the other (a pool lit from beneath that mends
+  lecterns, a High vault of Art Manuals) and a hall of **spirit springs** on the other (a pool lit from beneath that mends
   whoever bathes in it, a Mid vault of the Spring of the Ancients, old pills and now and then an Earth-grade artifact); the **lecture
   hall** with its red pillars and the master's dais; at the heart the **garden court** under a shaft of sky cut down through the peak
   (its pond of spirit lotuses, four beds of rare herbs a thousand years old and more, a Vine Keeper among them); off the garden the
@@ -6283,7 +6294,8 @@ guardians see and strike them and are struck by them. A drowned city (`SpringsHo
 - **Its land**: murky golden water over the city's sunken streets (mud, gravel and soul sand, broken walls and pillars of black stone
   rising from them, some breaking the water); its islands of soul soil standing out of it, dead bushes and red spider lilies on them,
   joined by **bridges** of black stone lit by soul lanterns; the ruins of its houses on them (two with Mid vaults: Yin Jade, spirit
-  stones, the dead's pills, now and then a ghost method's slip); dark cliffs round it all. At the heart, ringed by the deep water of
+  stones, the dead's pills, now and then a ghost art's Art Manual, and 15 times in 100 one of the deep foundations, Dao Integration's to
+  Entering Nirvana's, with Breathing's manual of its realm: Ghost methods); dark cliffs round it all. At the heart, ringed by the deep water of
   **the Yellow Springs** themselves, the tomb's island: whoever swims the springs is dragged down and withered.
 - **Its flowers**: Other Shore Flowers on its islands, older for every year it slept.
 - **Its guardians**: **Drowned Shades** (soldiers of the city's garrison risen in the springs' light) before its houses, on its
@@ -6590,6 +6602,10 @@ immediately upon using the arts manual)".
   world's seed, so it never changes. **Right-click**: its method and path, its volumes, what it is, and whether you can take it (or why not).
   **Meditate within 4 blocks for 7 seconds, whichever qi you draw in**, and its volumes up to the stele's realm are yours. Practising its
   method within 8 blocks, a quarter faster. The dead's rumours of a Method Stele name the method it holds.
+- **The deep ghost foundations** (Dao Integration's to Entering Nirvana's), which the Nine Nether Peaks' steles taught until steles held
+  methods, keep to the **Yellow Springs Hollow's vaults** (the user's pick, the same evening): each vault, sealed anew at every opening,
+  keeps one 15 times in 100 (Dao Integration's 6, Void Shattering's 4, Sacred Vessel's 3, Entering Nirvana's 2), with Netherworld
+  Breathing's manual written to its realm (`SpringsHollowWorks#deepFoundation`; test `ManualsGameTests#theDeepGhostFoundationsKeepToTheHollowsVaults`).
 - **Bodies born against methods** (`Physique#bars`, `CultivationMethods#barredBy`; a manual, a stele or a teacher refuses and says why):
 
   | Body | Can't take |

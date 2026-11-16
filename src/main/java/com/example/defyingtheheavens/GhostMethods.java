@@ -17,16 +17,17 @@ import java.util.UUID;
  * <b>The ghost path.</b> The ghost methods' path is one of its own beside ordinary cultivation, and neither builds on the other:
  * one's ordinary realm neither opens a ghost method nor speeds it. Since 2026-10-19 (the user's ask) it is cultivated as the
  * heaven path is: <b>its own bar</b> ({@link #ghostRank}, NetherworldState#pathRank), filled by meditating on ghostly qi, its
- * stages stepping on by themselves; the methods ride on it as the heaven methods ride on the heaven path's. It begins (at Qi
- * Refining Early) with the first foundation learned (the dead are taught the first at the Ghost Gate: {@link #teachTheDead}), and
+ * stages stepping on by themselves; the arts ride on it as the heaven scriptures ride on the heaven path's. It begins (at Qi
+ * Refining Early) with the first foundation learned, or Netherworld Breathing itself (the dead are taught both at the Ghost Gate:
+ * {@link #teachTheDead}), and
  * stays begun when it is born again. A meditation draws in one qi or the other (NetherworldState#cultivatingGhost, the Cultivation
  * tab's switch), so the two paths are never cultivated at once; the dead draw in only ghostly qi.
  * <p>
- * <b>Method and Art</b> (the user's overhaul, 2026-10-31). The ghost path's orthodox method is <b>Netherworld Breathing</b>; each
- * foundation (GhostMethod#isFoundation) carries its volumes from Qi Refining up to its own realm ({@link #hasVolume}) and teaches its
- * own spells, a volume of the Netherworld Scripture. Without Breathing's volume for the path's realm it gathers nothing
- * ({@link #ratePerSecond}); it may still break through (only the Laws hold one back, past True Immortal), and gathers nothing in the
- * new realm until a foundation of it is found. At Four Axis the axes are the method (FourAxis#fillBars).
+ * <b>Method and Art</b> (the user's overhaul, 2026-10-31). The ghost path's orthodox method is <b>Netherworld Breathing</b>, its
+ * volumes from its own Method Manuals since 2026-11-16 ({@link #hasVolume}); each foundation (GhostMethod#isFoundation) is an art,
+ * taught by an Art Manual, with its own spells, a volume of the Netherworld Scripture. Without Breathing's volume for the path's
+ * realm it gathers nothing ({@link #ratePerSecond}); it may still break through (only the Laws hold one back, past True Immortal),
+ * and gathers nothing in the new realm until a volume of it is found. At Four Axis the axes are the method (FourAxis#fillBars).
  * <p>
  * <b>The rate.</b> Meditating wherever ghostly qi flows, the bar fills at {@link #BASE_RATE} (a second a second, for a ghost
  * path of Nascent Soul, living, in a Soul Sand Valley) x the density / {@link GhostQi#SOUL_SAND_VALLEY} (so x10 in the Netherworld,
@@ -42,16 +43,17 @@ import java.util.UUID;
  * by themselves, but for the bottlenecks: the <b>ghost path's tribulation</b> at every Grand Perfection and at every stage from
  * Nascent Soul on (TribulationManager, the Netherworld's own: the user's ask, 2026-10-19), as on the heaven path.
  * <p>
- * <b>The volumes.</b> The Breathing Art carries the path no further than Qi Refining: broken through into Foundation Building, it
- * gathers nothing there until a deeper foundation is found ({@link #hasVolume}).
+ * <b>The volumes.</b> Breathing's volumes reach as far as its manuals read (PlayerCultivation#methodReach): broken through into a
+ * realm past them, the path gathers nothing there until a volume of it is found ({@link #hasVolume}).
  * <p>
- * <b>The methods are understood as far as the path has come</b> ({@link #understoodTo}): a foundation to the layer standing for the
- * stage (its realm's nine, as MethodLayers lays them out), the fire and the steps three layers a ghost realm (all nine from Core
- * Formation). Learned, at once; and as the path reaches new stages, their layers settle in over meditation ({@link #settle}: half
- * a layer's own cost, gathered on the path), every method known at once. Their spells, abilities and gains come with their layers.
+ * <b>The arts are understood as far as the path has come</b> (NetherworldState#layer, {@link #understoodAt}): a foundation to the
+ * layer standing for the stage (its realm's nine, as MethodLayers lays them out), the fire and the steps three layers a ghost realm
+ * (all nine from Core Formation). Learned, at once, and as the path reaches new stages, at once too: nothing settles since
+ * 2026-11-16. Their spells, abilities and gains come with their layers.
  * <p>
  * <b>Learning.</b> Meditating within {@link #STELE_LEARN_RADIUS} of a Method Stele for {@link #STELE_LEARN_SECONDS} teaches
- * its method (whichever qi the meditation draws in); a Ghost Jade Slip, read, teaches it at once. Not to a mortal, alive or dead:
+ * the method it holds (SteleTeachings: any path's; whichever qi the meditation draws in); an Art Manual, read, teaches an art at
+ * once. Not to a mortal, alive or dead:
  * its meridians are closed, for the ghost path as for the heaven path, until a Marrow Cleansing Elixir opens them ({@link #refusal});
  * any method a mortal knows lies dormant, its spells and abilities out of reach.
  * <p>

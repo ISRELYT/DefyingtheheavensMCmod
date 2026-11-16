@@ -83,7 +83,7 @@ import java.util.UUID;
  * Each keeps to its lair ({@link #LEASH}, giving chase {@link #CHASE} further), goes for whoever comes within {@link #NOTICE}, shows its
  * strength to those within {@link #BAR_REACH} on a boss bar, and left alone {@link #CALM_TICKS} is whole again (the Phoenix its rebirth
  * with it). Slain it leaves its core, Immortal Jade, the Phoenix's and the Dragon's their races' True Immortal blood (DemonBlood#kin), the
- * Kun-Peng a True Immortal slip of its form's element, all hanging in the air where it fell (over the sea of clouds they would be lost);
+ * Kun-Peng a True Immortal Art Manual of its form's element, all hanging in the air where it fell (over the sea of clouds they would be lost);
  * the Celestial Court pays each of its officers who fought it (CelestialCourt#onPrimordialSlain).
  */
 public class PrimordialBeast extends DemonBeast {
@@ -1101,7 +1101,7 @@ public class PrimordialBeast extends DemonBeast {
 
 	/**
 	 * Its core (of the element it was when it fell), Immortal Jade, its race's True Immortal blood (the Phoenix's the fox's, the Dragon's
-	 * the dragon's), the Kun-Peng a True Immortal slip of its form's element, and its remains. The Primordial Chaos, no beast: Dao
+	 * the dragon's), the Kun-Peng a True Immortal Art Manual of its form's element, and its remains. The Primordial Chaos, no beast: Dao
 	 * Fragments of {@link #CHAOS_FRAGMENTS} Laws, Chaos Origin Stones and Immortal Jade; and Pangu's Axe from its heart, while it is there.
 	 */
 	@Override

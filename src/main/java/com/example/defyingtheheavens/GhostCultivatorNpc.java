@@ -36,7 +36,7 @@ import java.util.UUID;
  * It turns up in the Netherworld instead of living rogues (NpcSpawner), at the high realms' strengths, Qi Refining Early to
  * Four Axis Grand Perfection, never a mortal; it joins no sect, keeps no ledger, makes no journeys. It speaks in the ghost
  * voice (NpcLines), tells how it died when asked about itself ({@link #deathKey}), and from Foundation Building on knows a
- * ghost method it can teach ({@link #method}); Ghost Elders (Foundation Building and above) sell Ghost Jade Slips
+ * ghost method it can teach ({@link #method}); Ghost Elders (Foundation Building and above) sell its Art Manual
  * (CultivatorTrades). Struck down, it scatters in cyan sparks.
  * <p>
  * Three keep the Ghost Gate ({@link Role}): Ox-Head and Horse-Face, Four Axis at Grand Perfection, who greet the dead, warn the

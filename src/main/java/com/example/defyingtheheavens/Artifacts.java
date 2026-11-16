@@ -129,7 +129,7 @@ public final class Artifacts {
 		return null;
 	}
 
-	/** What a cultivator gives for {@code stack} (TalkSystem#worth), as for a slip: two thirds of its price, its work's worth with it. */
+	/** What a cultivator gives for {@code stack} (TalkSystem#worth), as for a manual: two thirds of its price, its work's worth with it. */
 	public static double worth(ItemStack stack) {
 		return priceOf(stack) * power(stack) / 1.5;
 	}

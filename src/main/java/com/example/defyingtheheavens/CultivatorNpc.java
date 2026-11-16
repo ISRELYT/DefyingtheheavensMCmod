@@ -2186,7 +2186,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * What it carries falls when it dies: spirit stones by its realm (SpiritStoneItem; a mortal now and then has a Low one or
-	 * two), whatever it won in spars, and now and then the slip of its heaven method. A demon leaves its demon core besides, always
+	 * two), whatever it won in spars, and now and then its heaven art's Art Manual and Qi Circulation's. A demon leaves its demon core besides, always
 	 * (DemonCoreItem: its rank's, its race's element), unless it is one of the dead, whose body is long gone.
 	 */
 	@Override
@@ -2218,7 +2218,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!manual.isEmpty() && random.nextFloat() < slipChance) spawnAtLocation(manual);
 	}
 
-	/** A cultivator struck down leaves its heaven method's slip this often; a sect member (who keeps its sect's own closer), this often. */
+	/** A cultivator struck down leaves its heaven art's Art Manual this often; a sect member (who keeps its sect's own closer), this often. */
 	public static final float HEAVEN_SLIP_CHANCE = 0.25f, HEAVEN_SLIP_CHANCE_SECT = 0.1f;
 	/** In ten cultivators (not a sect's elders and master, who always do), how many cultivate their own realm's method of their element. */
 	public static final int OWN_HEAVEN_METHOD_IN_TEN = 4;

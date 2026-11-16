@@ -20,7 +20,7 @@ public final class CultivatorLoot {
 	private static final ResourceLocation DWELLING = DefyingTheHeavens.id("chests/sect_dwelling");
 	private static final ResourceLocation ELDER = DefyingTheHeavens.id("chests/sect_elder");
 	private static final ResourceLocation TREASURY = DefyingTheHeavens.id("chests/sect_treasury");
-	/** What the Netherworld's dead have about them: ghostly qi's own treasures, now and then a Ghost Jade Slip. */
+	/** What the Netherworld's dead have about them: ghostly qi's own treasures, now and then a ghost art's Art Manual. */
 	private static final ResourceLocation GHOST = DefyingTheHeavens.id("chests/ghost_cultivator");
 	/** Draws from the table before giving up on finding a stake of like worth. */
 	private static final int STAKE_DRAWS = 8;
