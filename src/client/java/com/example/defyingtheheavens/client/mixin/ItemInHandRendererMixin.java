@@ -40,6 +40,8 @@ public abstract class ItemInHandRendererMixin {
 	@Inject(method = "renderHandsWithItems", at = @At("HEAD"), cancellable = true)
 	private void dth$soulHasNoHands(float partialTick, PoseStack poseStack, MultiBufferSource.BufferSource buffers, LocalPlayer player, int light,
 									CallbackInfo ci) {
+		// (A player's own soul playing a puppet sees what it holds, as the living do: it uses things now, the user's ask of 2026-11-18. Its
+		// bare arm never shows, the rider unseen: vanilla draws no arm for one who is invisible.)
 		if (ClientSoul.isOut()) ci.cancel();
 	}
 }

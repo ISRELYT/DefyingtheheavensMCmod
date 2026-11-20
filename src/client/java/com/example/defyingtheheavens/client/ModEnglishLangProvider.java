@@ -105,6 +105,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModEntities.SPELL_CONSTRUCT, "Art Construct");
 		t.add(ModEntities.SPELL_BLOCK, "Art Block");
 		t.add(ModEntities.EARTH_GOLEM, "Earth Golem");
+		t.add(ModEntities.PUPPET_HUMANOID, "Humanoid Puppet");
+		t.add(ModEntities.PUPPET_BEE, "Bee Puppet");
 		t.add(ModEntities.SWORD_SPIRIT, "Sword Spirit");
 		t.add(ModEntities.COLOSSUS, "Legend Made Vast");
 		t.add(ModEntities.DIRT_TIDE, "Dirt Tide");
@@ -245,6 +247,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_SPATIAL_STORM + ".player", "%1$s was struck down by a spatial storm while fighting %2$s");
 		t.add(ModLang.DEATH_SOUL_SEVERED, "%1$s's nascent soul was severed from their body");
 		t.add(ModLang.DEATH_SOUL_SEVERED + ".player", "%1$s's nascent soul was severed from their body by %2$s");
+		t.add(ModLang.DEATH_SOUL_WENT_ON, "%1$s's soul was pushed out of a puppet by its copy");
+		t.add(ModLang.DEATH_SOUL_WENT_ON + ".player", "%1$s's soul was pushed out of %2$s's puppet by its copy");
+		t.add(ModLang.DEATH_SOUL_LEFT_PUPPET, "%1$s's soul left a puppet");
+		t.add(ModLang.DEATH_SOUL_LEFT_PUPPET + ".player", "%1$s's soul left %2$s's puppet");
+		t.add(ModLang.DEATH_SOUL_INTO_PUPPET, "%1$s gave up their body, their soul gone into a puppet");
+		t.add(ModLang.DEATH_SOUL_INTO_PUPPET + ".player", "%1$s gave up their body to %2$s's puppet");
 		t.add(ModLang.DEATH_OLD_AGE, "%1$s's years ran out");
 		t.add(ModLang.DEATH_OLD_AGE + ".player", "%1$s's years ran out");
 		t.add(ModLang.DEATH_SOUL_SEIZED, "%1$s's body was seized by %2$s's nascent soul");
@@ -423,7 +431,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case BURN_LIFESPAN -> "Set your own years alight for strength: while it burns, your blows and arts strike %2$s%% harder and you move "
 						+ "%3$s%% faster, for %1$s%% of your whole lifespan a second (the same share at every realm). It goes out by itself before "
 						+ "it would leave you fewer than %4$s years, and when you die or log out.";
-				case CLONE -> "A technique (from its manual). Use it to split a clone off your body, at your own realm with your abilities and "
+				case CLONE -> "A technique (from its jade slip). Use it to split a clone off your body, at your own realm with your abilities and "
 						+ "arts but %1$s%% of your strength (health, blows, armour, qi pool); splitting it off takes %2$s%% of your qi. Use it "
 						+ "again to go into the clone (your body sits down in meditation where it was) and again to come back (the clone stays "
 						+ "standing). Sneak and use it within %3$s blocks of the other body to draw the clone back in, its qi and its things "
@@ -464,7 +472,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "to its edge as you go), and all are slowed (Slowness %4$s). Your arts of space strike foes in it %3$s%% harder."
 						+ DOMAIN_TAIL;
 				case TIME_DOMAIN -> "Unfurl the domain of your Law of Time, %1$s blocks round you. Time runs slow for every foe in it (monsters, "
-						+ "whatever attacks you, those you're fighting): they move (Slowness %3$s) and strike more slowly, and their arts cool"
+						+ "whatever attacks you, those you're fighting): they move (Slowness %3$s) and strike more slowly, and their arts cool "
 						+ "%4$s%% more slowly." + DOMAIN_TAIL;
 				case LIFE_AND_DEATH_DOMAIN -> "Unfurl the domain of your Law of Life and Death, %1$s blocks round you. No foe in it (monsters, "
 						+ "whatever attacks you, those you're fighting) can heal at all, and %4$s%% of the harm you deal them comes back to you as "
@@ -476,17 +484,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "goes with you: anyone inside it when you take the Spatial Gap, the Void Breach or the Immortal Gate comes through with you, "
 						+ "whatever their realm, and its gate then leads out beside you. As with Universe in a Sleeve, the spatial pressure on you "
 						+ "doubles for each of them.";
-				case SLEEVE -> "A technique (from its manual). Look at another player within %1$s blocks and use this to offer them a place in "
+				case SLEEVE -> "A technique (from its jade slip). Look at another player within %1$s blocks and use this to offer them a place in "
 						+ "your sleeve (up to %2$s at once). If they accept, they vanish into it: safe, untouchable, seeing what you see. They go "
 						+ "wherever you go, up through the Spatial Gap, the Void Breach and the Immortal Gate, whatever their realm, and come out "
 						+ "beside you when you arrive in a world. You pay for it: the spatial pressure on you doubles for each person you carry "
-						+ "(a True Immortal, which feels none at the Immortal Gate, takes %3$s%% of its body over the climb there, doubled the "
+						+ "(a True Immortal, who feels none at the Immortal Gate, takes %3$s%% of their body over the climb there, doubled the "
 						+ "same way). Sneak and use it to let them out beside you (not partway through a climb). If you die, they're cast out "
 						+ "where you fell.";
-				case SWORD_INTENT -> "A technique (from its manual), the Sunken Sword Tomb's. Switched on, your intent rides your blade: every blow "
+				case SWORD_INTENT -> "A technique (from its jade slip), the Sunken Sword Tomb's. Switched on, your intent rides your blade: every blow "
 						+ "you land with a sword is followed a moment later by a second cut of lingering intent, %1$s%% of the blow. The tomb's own "
 						+ "lingering intent no longer cuts you. Costs %2$s qi/s while on; it goes out when your qi runs short.";
-				case BLOOD_BATTLE -> "A technique (from its manual), the Ancient Battlefield's. Switched on, battle feeds you: every blow you land "
+				case BLOOD_BATTLE -> "A technique (from its jade slip), the Ancient Battlefield's. Switched on, battle feeds you: every blow you land "
 						+ "heals you %1$s%% of it, and with more than one foe set on you within %4$s blocks their blows harm you %2$s%% less for each "
 						+ "one past the first (at most %3$s%% less). Costs %5$s qi/s while on; it goes out when your qi runs short.";
 				case IRON_SKIN -> "A Body Path technique (Copper Skin). Your skin turns to iron for %1$s s: blows harm you %2$s%% less, and "
@@ -1068,7 +1076,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "(-20 regard). No righteous method takes hold of it: Heaven-Petitioning Rites, Incense and Faith, Judgement Hall Service.");
 		physique(t, "eternal_reincarnation_body", "Eternal Reincarnation Body",
 				"The rarest of all, and no gift to cultivation: a Low grade's talent and pace. A soul that never forgets: when its life is spent "
-						+ "or its soul scatters, it is born again with this same body and all its cultivation, every realm, stage, scripture and art on each"
+						+ "or its soul scatters, it is born again with this same body and all its cultivation, every realm, stage, scripture and art on each "
 						+ "path, its years begun anew (a Rebirth Pill has no hold on it). Whoever keeps at it reaches True Immortal in the end.");
 		physique(t, "myriad_form_body", "Myriad Form Body",
 				"As rare as the Eternal Reincarnation Body: born with two more physiques at once, of Mid to Supreme grade and never two that clash, "
@@ -1137,7 +1145,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STORAGE_TOOLTIP_USE, "Place it to use it. It stays where it is set: only an empty one can be taken up (sneak + right-click with an empty hand)");
 		t.add(ModLang.STORAGE_USED, "%s / %s stacks");
 		t.add(ModLang.STORAGE_USED_BOUNDLESS, "%s kinds, no end");
-		t.add(ModLang.STORAGE_TITLE, "%s Storage Formation");
+		t.add(ModLang.STORAGE_TITLE, "%s-Grade Storage Formation");
 		t.add(ModLang.STORAGE_SEARCH, "Search...");
 		t.add(ModLang.STORAGE_EMPTY, "The space is empty.");
 		t.add(ModLang.STORAGE_NO_MATCH, "Nothing here matches.");
@@ -1199,6 +1207,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 					case VINE_WHIP -> "Vine Whip";
 					case MOUNTAIN_HAMMER -> "Mountain Hammer";
 					case GOLDEN_SWORD -> "Golden Light Sword";
+					case HUMANOID_FRAME -> "Humanoid Frame";
+					case BEE_FRAME -> "Bee Frame";
 				};
 				t.add(ModItems.artifact(kind, grade), name + " " + thing);
 			}
@@ -1595,6 +1605,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			case FORGING -> "Forging";
 			case FORMATIONS -> "Formations";
 			case TALISMANS -> "Talismans";
+			case PUPPETRY -> "Puppetry";
 		});
 		for (CraftMastery.Rank rank : CraftMastery.Rank.values()) t.add(ModLang.craftRank(rank.name().toLowerCase(java.util.Locale.ROOT)), switch (rank) {
 			case APPRENTICE -> "Apprentice";
@@ -1635,6 +1646,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CRAFTS_FORGING, "Grown at the Artifact Forge.");
 		t.add(ModLang.CRAFTS_FORMATIONS, "Grown by crafting formations.");
 		t.add(ModLang.CRAFTS_TALISMANS, "Grown by drawing talismans: harder patterns fail less, and from Adept they can come out Fine or Perfect.");
+		t.add(ModLang.CRAFTS_PUPPETRY, "Grown by sealing puppets at the Puppet Workbench (more for bigger frames and better circuits) and by mending their cut lines. Each rank opens new strokes, more of a board's scores to read, and a better Circuit Path.");
+		t.add(ModLang.CRAFTS_PUPPETRY_HOLDS, "At this rank: puppets weighing %s slots (a Mortal frame 1, an Immortal 5), heard within %s blocks.");
 		t.add(ModLang.CRAFTS_HINT, "Every craft grows with practice.");
 		// Talismans (Talismans, TalismanItem)
 		t.add(ModLang.TALISMAN_TITLE, "Draw a Talisman");
@@ -1683,6 +1696,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.talismanTooltip("homeward"), "Stand still and unhurt five seconds: it takes you to your nearest Formation Core in this world");
 		t.add(ModLang.talismanTooltip("qi_sealing"), "Whoever it strikes can't cast or fly for a few seconds, the fewer the stronger they are");
 		t.add(ModLang.talismanTooltip("revealing"), "For half a minute you see through Concealment barriers, and the hidden are outlined");
+		t.add(ModLang.talismanTooltip("circuit_freeze"), "The puppets where it lands stand frozen five seconds, their circuits locked, whatever their realm");
 		t.add(ModItems.TALISMAN_PAPER, "Talisman Paper");
 		t.add(ModItems.FIRE_TALISMAN, "Fire Talisman");
 		t.add(ModItems.FIVE_THUNDER_TALISMAN, "Five Thunder Talisman");
@@ -1695,6 +1709,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModItems.HOMEWARD_TALISMAN, "Homeward Talisman");
 		t.add(ModItems.QI_SEALING_TALISMAN, "Qi-Sealing Talisman");
 		t.add(ModItems.REVEALING_TALISMAN, "Revealing Talisman");
+		t.add(ModItems.CIRCUIT_FREEZE_TALISMAN, "Circuit-Freeze Talisman");
 		t.add(ModEntities.TALISMAN, "Talisman");
 		t.add(ModEffects.BOUND, "Bound");
 		t.add(ModEffects.GOLDEN_LIGHT, "Golden Light");
@@ -2150,6 +2165,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.GAMERULE_LEAVE_CORPSES + ".description", "Players and cultivators lie where they fall with everything they carried, rotting to bones. Off, what they carried drops as usual.");
 		t.add("gamerule.spellCooldowns", "Arts wait out their cooldowns");
 		t.add("gamerule.spellGriefing", "Arts change the land for good");
+		t.add("gamerule.puppetSoulBinding", "Puppets take slain players' souls");
+		t.add("gamerule.puppetSoulBinding.description", "A player slain by a puppeteer or their puppet near one of the puppeteer's puppets with an empty Soul-Binding Ring has their soul drawn into it. Off, no one's soul is taken against their will.");
 		secretRealms(t);
 		cultivationMethods(t);
 		cultivationMethodsPhaseThree(t);
@@ -2171,9 +2188,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BLOOD_PURITY, "The %s's blood in you grows purer: %s%%.");
 		t.add(ModLang.MSG_BLOOD_TURNED, "The blood overwhelms you: you are a %s now, wholly.");
 		t.add(ModLang.JOURNAL_HALF_BLOOD, "A Half-Blood");
-		t.add(ModLang.JOURNAL_HALF_BLOOD_TEXT, "You drank the %s's blood and a demon core formed in you. You are still human to look at, and to every sect and clan, but you walk the Demon Path now, and your blood gives you its race's gifts at half their strength and its inheritance's arts, %s. The more you drink, the purer it grows: at the whole, or drinking blood far above your other paths, you will become one of them, with no way back.");
+		t.add(ModLang.JOURNAL_HALF_BLOOD_TEXT, "I drank the %s's blood and a demon core formed in me. I am still human to look at, and to every sect and clan, but I walk the Demon Path now, and my blood gives me its race's gifts at half their strength and its inheritance's arts, %s. The more I drink, the purer it grows: at the whole, or drinking blood far above my other paths, I will become one of them, with no way back.");
 		t.add(ModLang.JOURNAL_TURNED, "Turned by Blood");
-		t.add(ModLang.JOURNAL_TURNED_TEXT, "The blood you drank has made you a %s, wholly: your body and your look, its gifts at their full strength. Your Demon Path is as it was. There is no going back.");
+		t.add(ModLang.JOURNAL_TURNED_TEXT, "The blood I drank has made me a %s, wholly: my body and my look, its gifts at their full strength. My Demon Path is as it was. There is no going back.");
 		t.add(ModLang.HALF_BLOOD_LINE, "%s half-blood · blood purity %s%%");
 		t.add(ModLang.DEMON_HELD_BY_BLOOD, "Your blood holds your Demon Path at %s: drink %s blood of %s or higher to break through.");
 		t.add(ModLang.CMD_BLOODLINE_HALF, "%s is human, a %s half-blood (blood purity %s%%, awake to %s)");
@@ -2594,18 +2611,18 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.release.righteous", "Senior is merciful. This one thanks you.");
 		t.add("cultivation.defying-the-heavens.talk.line.release.neutral", "...Thank you.");
 		t.add("cultivation.defying-the-heavens.talk.line.release.devilish", "Hah. Generous of you.");
-		t.add("cultivation.defying-the-heavens.talk.line.release.commoner", "Thank you, immortal, thank you!");
+		t.add("cultivation.defying-the-heavens.talk.line.release.commoner", "Thank you, Immortal, thank you!");
 		t.add("cultivation.defying-the-heavens.talk.line.spared.righteous", "This one owes you a life. I will not forget it.");
 		t.add("cultivation.defying-the-heavens.talk.line.spared.neutral", "I owe you. I won't forget.");
 		t.add("cultivation.defying-the-heavens.talk.line.spared.devilish", "...You let me live? Fool. Or perhaps not.");
-		t.add("cultivation.defying-the-heavens.talk.line.spared.commoner", "Bless you, immortal! Bless you!");
+		t.add("cultivation.defying-the-heavens.talk.line.spared.commoner", "Bless you, Immortal! Bless you!");
 		t.add("cultivation.defying-the-heavens.talk.begs", "%s throws themself to the ground and begs for their life. (Right-click them to answer.)");
 		t.add("cultivation.defying-the-heavens.talk.aid", "%s comes to your aid!");
 		t.add("cultivation.defying-the-heavens.talk.gift_back", "%s gives you %s.");
 		t.add("cultivation.defying-the-heavens.message.stone.mortal", "Your meridians are closed; the stone's qi has nowhere to go.");
 		t.add("cultivation.defying-the-heavens.message.stone.qi_full", "Your qi is already full.");
 		t.add("cultivation.defying-the-heavens.message.stone.absorbed", "You draw in the stone's qi: +%s qi.");
-		t.add("cultivation.defying-the-heavens.stone.worth", "Worth %s Low-grade Spirit Stones");
+		t.add("cultivation.defying-the-heavens.stone.worth", "Worth %s Low-Grade Spirit Stones");
 		t.add("cultivation.defying-the-heavens.stone.absorb", "Hold use to absorb: +%s qi");
 		t.add("cultivation.defying-the-heavens.stone.meditate", "Held while meditating: +%s%% cultivation");
 		t.add("cultivation.defying-the-heavens.stone.qi_left", "Qi left in this stone: %s%%");
@@ -2613,13 +2630,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.tab.journal", "Journal");
 		t.add("cultivation.defying-the-heavens.journal.empty", "Nothing yet. Cultivators who think well enough of you (Courteous) will tell you rumours if you ask; what they tell you is noted here.");
 		t.add("cultivation.defying-the-heavens.journal.entry", "Day %s, from %s");
-		t.add("item.defying-the-heavens.low_spirit_stone", "Low-grade Spirit Stone");
-		t.add("item.defying-the-heavens.mid_spirit_stone", "Mid-grade Spirit Stone");
-		t.add("item.defying-the-heavens.high_spirit_stone", "High-grade Spirit Stone");
-		t.add("item.defying-the-heavens.supreme_spirit_stone", "Supreme-grade Spirit Stone");
-		t.add("item.defying-the-heavens.immortal_spirit_stone", "Immortal-grade Spirit Stone");
+		t.add(ModLang.JOURNAL_ENTRY_OWN, "Day %s: %s");
+		t.add("item.defying-the-heavens.low_spirit_stone", "Low-Grade Spirit Stone");
+		t.add("item.defying-the-heavens.mid_spirit_stone", "Mid-Grade Spirit Stone");
+		t.add("item.defying-the-heavens.high_spirit_stone", "High-Grade Spirit Stone");
+		t.add("item.defying-the-heavens.supreme_spirit_stone", "Supreme-Grade Spirit Stone");
+		t.add("item.defying-the-heavens.immortal_spirit_stone", "Immortal-Grade Spirit Stone");
 		t.add("item.defying-the-heavens.immortal_jade", "Immortal Jade");
-		t.add(ModLang.STONE_JADE, "The Immortal Realm's coin: nine Immortal-grade Spirit Stones");
+		t.add(ModLang.STONE_JADE, "The Immortal Realm's coin: nine Immortal-Grade Spirit Stones");
 		t.add("block.defying-the-heavens.spirit_stone_ore", "Spirit Stone Vein");
 		t.add("block.defying-the-heavens.deepslate_spirit_stone_ore", "Deepslate Spirit Stone Vein");
 		t.add("block.defying-the-heavens.rich_spirit_stone_ore", "Rich Spirit Stone Vein");
@@ -2681,6 +2699,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModBlocks.SECT_BARRIER, "Formation Barrier");
 		t.add(ModBlocks.SEAL, "Seal of Qi Ink");
 		t.add(ModItems.INSCRIPTION_BRUSH, "Inscription Brush");
+		puppetry(t);
 		t.add(ModLang.CORE_TOOLTIP, "Raises a protective barrier and a concealment, fed by Qi Veins joined to it with seals");
 		t.add(ModLang.CORE_TITLE, "Formation Core");
 		t.add(ModLang.CORE_OWNER, "Keeper: %s");
@@ -2691,6 +2710,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CORE_VEINS, "Qi Veins joined: %s (+%s qi/s)");
 		t.add(ModLang.CORE_UPKEEP, "Barrier upkeep: %s qi/s");
 		t.add(ModLang.CORE_SHORTFALL, "The veins fall short: the store runs dry in %s s");
+		t.add(ModLang.CORE_SHORTFALL_DRY, "The veins fall short, and the store is dry");
 		t.add(ModLang.CORE_STRENGTH, "Only %s or stronger can break through");
 		t.add(ModLang.CORE_STRENGTH_MORTAL, "Set by a mortal: anyone can break through");
 		t.add(ModLang.CORE_RAISED, "The barrier stands.");
@@ -2733,7 +2753,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SECT_TAB_LOADING, "...");
 		t.add(ModLang.SECT_TAB_NONE, "You belong to no sect.");
 		t.add(ModLang.SECT_TAB_HOW, "To join one, talk to any of its members and ask to join: its disciples send you to an elder, who sets you an entrance trial (a spar, holding back to your realm; win it or stand your ground to the end). A body of High grade or better, or an elder Warm to you, needs no trial. Its disciples cultivate a quarter faster on its grounds, pass its barrier, and are helped by its members.");
-		t.add(ModLang.SECT_TAB_NEAREST, "Nearest: %s (%s), %s blocks to the %s.");
+		t.add(ModLang.SECT_TAB_NEAREST, "Nearest: %s, %s, %s blocks to the %s.");
 		t.add(ModLang.SECT_TAB_NEAREST_NONE, "No sect is known of within 4,000 blocks.");
 		t.add(ModLang.SECT_TAB_BARRED, "It won't hear you for %s more day(s).");
 		t.add(ModLang.SECT_TAB_INVITED, "The %s invites you to join it.");
@@ -2951,6 +2971,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.LAWS_TOTAL, "Laws comprehended: %s levels");
 		t.add(ModLang.LAWS_NEXT, "The way into %s wants %s");
 		t.add(ModLang.LAWS_NEXT_OPEN, "The way into %s is open (it wants %s)");
+		t.add(ModLang.LAWS_LADDER, "Breaking into each realm past True Immortal wants this many levels of the Laws, all together: %s.");
 		t.add(ModLang.LAWS_FOCUS, "Meditating here comprehends the %s");
 		t.add(ModLang.LAWS_FOCUS_AWAY, "The %s in focus: only meditation in the Immortal Realm (or a small world) comprehends it");
 		t.add(ModLang.LAWS_NO_FOCUS, "No Law in focus: choose one below for your meditation in the Immortal Realm (or a small world)");
@@ -2998,8 +3019,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.AXIS_HOW_PREFIX + "longevity", "Heal the sick in the settlements of the Astral Realm's worlds and take years of life from them, "
 				+ "%s in all. Each year taken goes onto your own lifespan too.");
 		t.add(ModLang.AXIS_HOW_PREFIX + "fortune", "Bring the settlements of the Astral Realm's worlds what they lack, and absorb the spirit stones "
-				+ "they share with you in turn: %s Low-grade Spirit Stones' worth in all.");
-		t.add(ModLang.AXIS_HOW_PREFIX + "merit", "Rid the settlements of the Astral Realm's worlds of what preys on them: each of it slain by your "
+				+ "they share with you in turn: %s Low-Grade Spirit Stones' worth in all.");
+		t.add(ModLang.AXIS_HOW_PREFIX + "merit", "Rid the settlements of the Astral Realm's worlds of what preys on them: each one slain by your "
 				+ "own hand counts its hearts, %s in all.");
 		t.add(ModLang.AXIS_HOW_PREFIX + "enlightenment", "Guide the lesser cultivators in the settlements of the Astral Realm's worlds through "
 				+ "their walls, beside them or from within their bodies: %s stages in all.");
@@ -3051,7 +3072,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.WISH_GIVE_LACK, "(You haven't %s %s on you.)");
 		t.add(ModLang.WISH_GIVE_OWED, "You already carry enough of others' fortune to complete your axis. Take it into yourself first; "
 				+ "we would not have you carry what you don't need.");
-		t.add(ModLang.WISH_GIVEN, "You've saved us. Take these, it's little enough: %s Mid-grade Spirit Stones, a share of all we have. "
+		t.add(ModLang.WISH_GIVEN, "You've saved us. Take these, it's little enough: %s Mid-Grade Spirit Stones, a share of all we have. "
 				+ "(Absorb them to fill your Axis of Fortune.)");
 		t.add(ModLang.WISH_THREAT_SLAIN, "The threat to %s's people is slain.");
 		t.add(ModLang.WISH_GUIDED, "Guided by you, %s breaks through to %s.");
@@ -3119,7 +3140,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// The Demon Path.
 		t.add(ModLang.MSG_DEMON_CORE, "A demon core burns in you, as in every %s born: your Demon Path begins at Qi Refining Early. Your blood's inheritance is %s.");
 		t.add(ModLang.JOURNAL_DEMON_PATH, "The Demon Path");
-		t.add(ModLang.JOURNAL_DEMON_PATH_TEXT, "Born of the %s race with a demon core, you walk the Demon Path beside the heavens' own: the same realms, its own bar. No scripture, pill or ritual carries it; your blood does (Bloodline Purification, its method), and as it climbs it teaches you your inheritance's arts, %s. Its body is the mightier and its life the longer, but the heavens strike it the harder. Switch the Cultivation tab's Path to Demon to cultivate it.");
+		t.add(ModLang.JOURNAL_DEMON_PATH_TEXT, "Born of the %s race with a demon core, I walk the Demon Path beside the heavens' own: the same realms, its own bar. No scripture, pill or ritual carries it; my blood does (Bloodline Purification, its method), and as it climbs it teaches me my inheritance's arts, %s. Its body is the mightier and its life the longer, but the heavens strike it the harder. I cultivate it with the Cultivation tab's Path set to Demon.");
 		t.add(ModLang.MSG_DEMON_STAGE_UP, "Demon Path: %s");
 		t.add(ModLang.MSG_DEMON_INHERITS, "Your blood remembers: you have inherited %s.");
 		t.add(ModLang.MSG_DEMON_BOTTLENECK, "Your Demon Path is at its bottleneck: break through in the cultivation menu to face the heavens' tribulation.");
@@ -3753,7 +3774,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("biome.defying-the-heavens.immortal_tomb", "Tomb of a Fallen Immortal");
 		t.add(ModBlocks.MIRAGE_JADE, "Jade Stone");
 		t.add(ModBlocks.MIRAGE_LOTUS, "Spirit Lotus");
-		t.add(ModBlocks.MIRAGE_CASKET, "High Storage Formation");
+		t.add(ModBlocks.MIRAGE_CASKET, "High-Grade Storage Formation");
 		t.add(ModBlocks.JADE_MIRROR, "Jade Mirror");
 		t.add(ModBlocks.FORMATION_EYE, "Formation Eye");
 		t.add(ModBlocks.LAW_SEAL, "Law Seal");
@@ -3851,8 +3872,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "blood toward its ancestors'. Its volumes are your blood itself, in every realm it has reached or awakened to. Your talent counts in "
 				+ "full, and it cleanses any taint in your blood as it gathers.",
 				"meditating");
-		method(t, CultivationMethod.KIN_BLOOD, "Kin Blood Hoarding", "Drink your own race's blood instead of meditating, even blood yours already "
-				+ "holds: a phial is a fifth of your Demon Path's stage, twice as much for each realm the blood stands above your path and half for "
+		method(t, CultivationMethod.KIN_BLOOD, "Kin Blood Hoarding", "Drink your own race's blood instead of meditating, even blood you already "
+				+ "hold: a phial is a fifth of your Demon Path's stage, twice as much for each realm the blood stands above your path and half for "
 				+ "each below, at most three quarters. Talent counts by its square root; its years are a twelfth. Qi Refining to Sacred Vessel.",
 				"drinking phials of your own race's blood");
 		method(t, CultivationMethod.CORE_DEVOURING, "Core Devouring", "Eat the demon cores of slain beasts instead of meditating: a core is a "
@@ -4118,7 +4139,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "volume. Talent counts by its square root; its years are a quarter. Nascent Soul to Heavenly Being.",
 				"meditating among the primeval dragon's bones, in the Primeval Beast Graveyard");
 		method(t, CultivationMethod.BLOODLINE_NIRVANA, "Bloodline Nirvana", "Drink your own race's blood of Entering Nirvana or above, even blood "
-				+ "yours already holds, to burn your blood down and be remade: seven times in ten it is reborn, any taint burnt out of it and half "
+				+ "you already hold, to burn your blood down and be remade: seven times in ten it is reborn, any taint burnt out of it and half "
 				+ "a stage won; else it burns and doesn't rise, the stage's cultivation lost and much of your health with it. Your blood is its "
 				+ "volume. Talent counts for nothing; its years are a sixteenth. Entering Nirvana alone.",
 				"drinking your own race's blood of Entering Nirvana or above");
@@ -4198,7 +4219,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "charged blows, harm you take, foes you slay (more the stronger they are), stone and ore you mine, ground you sprint. The body "
 				+ "is its own volume, every realm of it. Talent counts in full. Copper Skin to the Indestructible Body.",
 				"circulating the blood, and the body's own deeds");
-		t.add(ModLang.MSG_BODY_NOT_PEAK, "Your mortal body must reach Peak before the Body Path can begin");
+		t.add(ModLang.MSG_BODY_NOT_PEAK, "Your mortal body must reach Peak before the Body Path can begin.");
 		t.add(ModLang.MSG_BODY_BEGUN, "You begin the Body Path: %s. Your meditation circulates blood now, and your deeds temper the body.");
 		t.add(ModLang.MSG_BODY_STAGE_UP, "Body Path: %s");
 		t.add(ModLang.MSG_BODY_BOTTLENECK, "Your Body Path's bottleneck: break through to %s (the heavens' lightning on the flesh).");
@@ -4282,6 +4303,583 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		String death = "death.attack." + com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID + ".body_art";
 		t.add(death, "%1$s was crushed by a body technique");
 		t.add(death + ".player", "%1$s was crushed by %2$s's body technique");
+	}
+
+	/**
+	 * Puppetry's words (Puppetry, PuppetFrameItem, the Puppet Workbench, PuppetBoards and its screen, PuppetEntity, the Command Seal and its
+	 * list, the messenger bees).
+	 */
+	private static void puppetry(TranslationBuilder t) {
+		t.add(com.example.defyingtheheavens.ModBlocks.PUPPET_WORKBENCH, "Puppet Workbench");
+		t.add(ModItems.COMMAND_SEAL, "Command Seal");
+		t.add(ModLang.BENCH_TOOLTIP, "Lay a puppet frame on it, set a demon core in it, right-click it to paint the circuits (an Inscription Brush in your pack), and seal the puppet. Left-click takes the frame and its core back");
+		t.add(ModLang.FRAME_GRADE_LINE, "%s-grade puppet frame");
+		t.add(ModLang.FRAME_HUMANOID_ROLE, "A humanoid: it fights and guards; from Spirit grade its art beams from its mouth");
+		t.add(ModLang.FRAME_BEE_ROLE, "A bee: it carries from chest to chest and runs messages; from Spirit grade its art flies from its stinger");
+		t.add(ModLang.FRAME_BAND, "Its puppet stands from %s to %s, as strong as its core");
+		t.add(ModLang.FRAME_BAND_ONE, "Its puppet stands at %s, as strong as its core");
+		t.add(ModLang.FRAME_BOARD, "Circuit board %s x %s, %s flaws (%s work)");
+		t.add(ModLang.FRAME_DRAWN, "%s cells of circuits painted");
+		t.add(ModLang.FRAME_UNDRAWN, "No circuits painted yet");
+		t.add(ModLang.FRAME_USE, "Lay it on a Puppet Workbench");
+		t.add(ModLang.PUPPET_SLOTS, "Puppets: %s of %s slots");
+		t.add(ModLang.BENCH_HAS_FRAME, "A frame already lies on the bench.");
+		t.add(ModLang.BENCH_FRAME_LAID, "The frame is laid on the bench. Set a demon core in it, then right-click the bench to paint its circuits. Left-click takes it back.");
+		t.add(ModLang.BENCH_TOOK_BOTH, "You take the frame and its core back, its circuits kept on the frame.");
+		t.add(ModLang.BENCH_TOOK_CORE, "You take the core back.");
+		t.add(ModLang.BENCH_TOOK_FRAME, "You take the frame back, its circuits kept on it.");
+		t.add(ModLang.BENCH_FRAME_FIRST, "Lay a puppet frame on the bench first.");
+		t.add(ModLang.BENCH_HAS_CORE, "Its heart is already set.");
+		t.add(ModLang.BENCH_CORE_TOO_WEAK, "This frame wants a demon core of %s or stronger.");
+		t.add(ModLang.BENCH_CORE_SET, "The core is set: its puppet will stand at %s.");
+		t.add(ModLang.BENCH_CORE_SET_TOP, "The core is set: its puppet will stand at %s, the most this frame can hold.");
+		t.add(ModLang.BENCH_EMPTY, "Lay a puppet frame on the bench (forged at the Artifact Forge), then set a demon core in it.");
+		t.add(ModLang.BOARD_NO_CORE, "No core yet: set a demon core of %s or stronger in the frame.");
+		t.add(ModLang.BOARD_CORE, "Its puppet will stand at %s.");
+		t.add(ModLang.BOARD_CORE_ELEMENT, "Its puppet will stand at %s; its art of %s.");
+		t.add(ModLang.BOARD_CORE_LIVE, "It stands at %s.");
+		t.add(ModLang.BOARD_CORE_ELEMENT_LIVE, "It stands at %s; its art of %s.");
+		t.add(ModLang.BOARD_WIPED, "The board is wiped clean.");
+		t.add(ModLang.PAINT_RANK, "That stroke wants Puppetry of %s.");
+		t.add(ModLang.PAINT_NO_BRUSH, "You need an Inscription Brush with strokes left in it.");
+		t.add(ModLang.PAINT_NEEDS, "That wants %s from your pack.");
+		t.add(ModLang.boardRefusal("occupied"), "Something is already there.");
+		t.add(ModLang.boardRefusal("empty"), "Nothing to wipe there.");
+		t.add(ModLang.boardRefusal("edge"), "A cooling vent goes on the board's edge.");
+		t.add(ModLang.boardRefusal("art"), "A gathering knot goes against the art's node.");
+		t.add(ModLang.boardRefusal("outlet"), "No bridge beside the core's socket.");
+		t.add(ModLang.boardRefusal("ring"), "The resonance ring runs two cells out from the core.");
+		t.add(ModLang.boardRefusal("relays"), "A board holds two relay knots at most.");
+		t.add(ModLang.boardRefusal("wards"), "A board holds two ward knots at most.");
+		t.add(ModLang.boardRefusal("heart"), "A link knot goes against the heart of command.");
+		t.add(ModLang.boardRefusal("same"), "That is already painted there.");
+		t.add(ModLang.SEAL_NO_CORE, "Set a demon core in the frame first: it is the puppet's heart.");
+		t.add(ModLang.SEAL_HEART_UNFED, "Its heart of command is fed by nothing: paint a line from the core to it.");
+		t.add(ModLang.SEAL_NO_SLOTS, "This puppet weighs %s slots; you keep %s of %s already.");
+		t.add(ModLang.SEAL_NO_STONES, "Sealing takes %s %s.");
+		t.add(ModLang.SEAL_DONE, "%s stands up from the bench: %s circuits (Flow %s, Stability %s, Harmony %s, Clarity %s, Resilience %s).");
+		t.add(ModLang.SEAL_OVER_BUDGET, "Its veins want %s qi; its core gives only %s. Feed fewer veins, or set in a stronger core.");
+		t.add(ModLang.BOARD_QI, "Qi %s / %s");
+		t.add(ModLang.BOARD_QI_ABOUT, "The qi its core gives: by the frame's grade, a point more for each stage past Early its core stands at, 3 more "
+				+ "with the resonance ring closed. Every vein into a part draws that part's load (a limb, the head and the heart 1, the art 2), "
+				+ "and every array its own.");
+		t.add(ModLang.BOARD_QI_OVER, "Its veins want %s: more than its core gives. It won't seal.");
+		t.add(ModLang.BOARD_NODE_VEINS, "Veins: %s");
+		t.add(ModLang.BOARD_NODE_UNFED_VEINS, "%s more unfed: its core's qi runs short");
+		t.add(ModLang.BOARD_NODE_DRAWS, "Draws %s qi");
+		t.add(ModLang.BOARD_NODE_SURE, "Two separate ways in: one cut won't cut it off");
+		t.add(ModLang.BOARD_NODE_WARDED, "Its way in is warded: one cut won't cut it off");
+		t.add(ModLang.BOARD_NODE_FRAIL, "One cut can cut it off");
+		t.add(ModLang.BOARD_NODE_NO_ART, "A Mortal frame has no art: it draws nothing and only passes the qi on");
+		for (String[] power : new String[][] {{"arm", "Blows x%s"}, {"leg", "Pace x%s"}, {"wing", "Flight x%s"}, {"cargo", "Load x%s"},
+				{"head", "Sight %s blocks; takes up a foe in x%s the time"}, {"art", "Art x%s"},
+				{"heart", "Hears you x%s as far; %s more Puppetry rank to seize"}, {"heart_locked", "Hears you x%s as far; no seal can seize it"}}) {
+			t.add(ModLang.boardNodePower(power[0]), power[1]);
+		}
+		String[][] builds = {
+				{"balanced", "Balanced", "Every part fed alike, as far as the qi goes: tough and even. At Saint, an Iron Lock on its heart."},
+				{"brawler", "Brawler", "The arms fed hardest: heavy blows, the rest left thinner. From Master a Guard Coil on an arm (on both at Saint)."},
+				{"scout", "Scout", "The legs and the head fed hardest: swift, far-sighted, quick to act. From Adept an Eye of Discernment, from Master "
+						+ "a Gale Stair on a leg (on both at Saint)."},
+				{"courier", "Courier", "The wings and the legs fed hardest: swift flight, heavy loads. From Master a Gale Stair on a wing (on both at "
+						+ "Saint)."},
+				{"sentinel", "Sentinel", "The head and the heart fed hardest: it sees far, acts at once, hears you from afar and is hard to seize. "
+						+ "From Adept an Eye of Discernment, at Saint an Iron Lock."},
+				{"caster", "Caster", "The art's node fed hardest: a heavy art. From Grandmaster a Gathering Spiral."}};
+		for (String[] build : builds) {
+			t.add(ModLang.pathBuild(build[0]), build[1]);
+			t.add(ModLang.pathBuildAbout(build[0]), build[2]);
+		}
+		t.add(ModLang.BOARD_PATH_BUILD, "%s: %s");
+		t.add(ModLang.BOARD_SEAL_CYCLE, "Click it again (or press 0) for another element.");
+		t.add(ModLang.BOARD_NODE_PHASES, "Elements: %s");
+		t.add(ModLang.BOARD_QI_PHASES, "Its elements: %s qi (its core's own element +2, the one overcoming it -2, a feeding pair close by +1)");
+		t.add(ModLang.boardRefusal("seal_outlet"), "A phase seal goes on one of the core's four outlets.");
+		String[][] effects = {
+				{"blows", "metal", "Metal: its blows bite through a third of their armour"},
+				{"blows", "wood", "Wood: its blows heal it a tenth of their harm"},
+				{"blows", "water", "Water: its blows slow the foe 2 s"},
+				{"blows", "fire", "Fire: its blows set the foe alight 3 s"},
+				{"blows", "earth", "Earth: its blows knock the foe back"},
+				{"art", "metal", "Metal: its art carries on to a second foe, half as hard"},
+				{"art", "wood", "Wood: its art roots the foe 1 s"},
+				{"art", "water", "Water: its art slows the foe 3 s"},
+				{"art", "fire", "Fire: its art sets the foe alight 5 s"},
+				{"art", "earth", "Earth: its art staggers the foe"},
+				{"sting", "metal", "Metal: its sting bites through armour, its art carries on to a second foe"},
+				{"sting", "wood", "Wood: its sting heals it, its art roots the foe"},
+				{"sting", "water", "Water: its sting and its art slow the foe"},
+				{"sting", "fire", "Fire: its sting and its art set the foe alight"},
+				{"sting", "earth", "Earth: its sting knocks back, its art staggers"},
+				{"body", "metal", "Metal: each vein a 15% chance a cut glances off"},
+				{"body", "wood", "Wood: a cut Wood line grows back in 30 s"},
+				{"body", "water", "Water: full speed in water, no fall damage"},
+				{"body", "fire", "Fire: 10% swifter, but each blow heats it 1 more"},
+				{"body", "earth", "Earth: each vein 10% more health and knockback resistance (half again at most)"}};
+		for (String[] e : effects) t.add(ModLang.boardPhaseEffect(e[0], e[1]), e[2]);
+		// The deeper circuits, phase C: arrays.
+		String[][] arrays = {
+				{"eye", "Eye of Discernment", "A relay knot touching the head, lines on its other free sides: it sees the unseen, takes up a foe at "
+						+ "once and sees 16 blocks farther. Draws 2 qi."},
+				{"guard_coil", "Guard Coil", "A two-by-two block of thick lines touching an arm: it turns a foe's blow aside every 8 s. Draws 2 qi."},
+				{"gale_stair", "Gale Stair", "Three diagonals in a slant, one touching a leg or a wing: it dashes up to 8 blocks at a foe out of reach, "
+						+ "every 6 s. Draws 2 qi."},
+				{"gathering_spiral", "Gathering Spiral", "A gathering knot touching the art's node, lines on its other free sides: its art's charges "
+						+ "come back twice as fast. Draws 2 qi."},
+				{"iron_lock", "Iron Lock", "A ward knot touching the heart, bridges on its other free sides: no Command Seal can seize it, and a "
+						+ "Circuit-Freeze Talisman holds it half as long. Draws 3 qi."}};
+		for (String[] a : arrays) {
+			t.add(ModLang.boardArray(a[0]), a[1]);
+			t.add(ModLang.boardArrayAbout(a[0]), a[2]);
+		}
+		t.add(ModLang.BOARD_NODE_ARRAY, "Array: %s (draws %s qi)");
+		t.add(ModLang.BOARD_NODE_ARRAY_TWIN, "Twin Seal: mirrored on its pair, its wait halved");
+		t.add(ModLang.BOARD_NODE_ARRAY_UNREACHED, "Its array isn't reached by the core's qi: it does nothing");
+		t.add(ModLang.BOARD_NODE_ARRAY_UNFED, "Its array is unfed: its core's qi runs short");
+		t.add(ModLang.BOARD_QI_ARRAYS, "Its arrays draw %s qi (a Twin Seal 1 more)");
+		t.add(ModLang.SEIZE_LOCKED, "An Iron Lock holds its heart: no seal can take it.");
+		for (String[] grade : new String[][] {{"crude", "Crude"}, {"normal", "Normal"}, {"fine", "Fine"}, {"perfect", "Perfect"}}) {
+			t.add(ModLang.circuitGrade(grade[0]), grade[1]);
+		}
+		String[][] strokes = {
+				{"line", "Line", "A plain line of qi: it joins whatever touches it and carries what the frame's matter holds: 2 on a Mortal or Spirit "
+						+ "frame, 3 on an Earth or Heaven one, 4 on an Immortal one. Each side of a part a line reaches is a vein into it."},
+				{"thick", "Thick Line", "A line painted twice over: it carries twice a plain line's, so a trunk feeding many veins doesn't heat. Four in "
+						+ "a block touching an arm: a Guard Coil."},
+				{"diagonal", "Diagonal", "A line that also joins the diagonal strokes at its corners: shorter ways across the board. Three in a slant "
+						+ "touching a leg or a wing: a Gale Stair."},
+				{"bridge", "Bridge", "Two lines crossing without joining: the one up and down, the other across. Keeps channels apart."},
+				{"relay", "Relay Knot", "Takes two cells off the length of any route through it. Two to a board. Touching the head, lines round it: an "
+						+ "Eye of Discernment."},
+				{"vent", "Cooling Vent", "On the board's edge, it draws heat off the lines near it. Takes an iron ingot."},
+				{"gather", "Gathering Knot", "Against the art's node: a vein of the art that gathers a second charge of it (it holds no more than a "
+						+ "plain line). Takes a spirit stone of the frame's grade. Lines round it: a Gathering Spiral."},
+				{"ward", "Ward Knot", "The cells round it can't be cut. Two to a board. Touching the heart, bridges round it: an Iron Lock."},
+				{"ring", "Resonance Ring", "Painted on every free cell two out from the core, the closed ring makes the core give 3 qi more. It carries "
+						+ "as much as a thick line, and feeds any part it touches."},
+				{"seal_metal", "Metal Seal", "On an outlet: its channel, and every part it feeds, takes Metal. Seals of two elements in one channel clash."},
+				{"seal_wood", "Wood Seal", "On an outlet: its channel, and every part it feeds, takes Wood. Seals of two elements in one channel clash."},
+				{"seal_water", "Water Seal", "On an outlet: its channel, and every part it feeds, takes Water. Seals of two elements in one channel clash."},
+				{"seal_fire", "Fire Seal", "On an outlet: its channel, and every part it feeds, takes Fire. Seals of two elements in one channel clash."},
+				{"seal_earth", "Earth Seal", "On an outlet: its channel, and every part it feeds, takes Earth. Seals of two elements in one channel clash."},
+				{"link", "Link Knot", "Against the heart of command, a vein of the heart coming in through it: the puppet is linked. Your linked puppets "
+						+ "within 16 blocks of each other strike 3% harder for each (30% at most), pass your orders on beyond your reach, and four or "
+						+ "more lock a foe in a crushing formation. It holds no more than a plain line."}};
+		for (String[] stroke : strokes) {
+			t.add(ModLang.boardStroke(stroke[0]), stroke[1]);
+			t.add(ModLang.boardStrokeAbout(stroke[0]), stroke[2]);
+		}
+		t.add(ModLang.boardStroke("none"), "Nothing");
+		t.add(ModLang.boardStrokeAbout("none"), "");
+		String[][] scores = {
+				{"flow", "Flow", "How directly each part is fed: the best way possible over its nearest vein's, a bend as long as a cell. Its blows and art, x0.8 to x1.1."},
+				{"stability", "Stability", "The lines' load against what they hold (each vein carries its part's load all the way); what's over is heat. "
+						+ "Every blow heats the puppet, an art three times as much: from 85 it never overheats; below, it stalls past 24 heat, below 65 past "
+						+ "12, below 40 past 6."},
+				{"harmony", "Harmony", "Each pair of limbs fed alike: as many veins, the one line the other's mirror. Its pace, aim and dodging, x0.8 to x1.1."},
+				{"clarity", "Clarity", "Channels too close leak into each other, dead ends and unfed lines waste. How quick it is to act, how true its art flies, how far it hears you."},
+				{"resilience", "Resilience", "The share of its load whose part keeps a way to the core whatever single cell is cut: two veins on separate ways."}};
+		for (String[] score : scores) {
+			t.add(ModLang.boardScore(score[0]), score[1]);
+			t.add(ModLang.boardScoreAbout(score[0]), score[2]);
+		}
+		String[][] nodes = {{"head", "Head"}, {"mouth", "Mouth"}, {"heart", "Heart of command"}, {"left_arm", "Left arm"}, {"right_arm", "Right arm"},
+				{"left_leg", "Left leg"}, {"right_leg", "Right leg"}, {"stinger", "Stinger"}, {"left_wing", "Left wing"}, {"right_wing", "Right wing"}};
+		for (String[] node : nodes) t.add(ModLang.puppetNode(node[0]), node[1]);
+		String[] paths = {"Trunk Path", "Adept's Path", "Master's Path", "Grandmaster's Path", "Saint's Path"};
+		for (int r = 0; r < paths.length; r++) t.add(ModLang.pathName(r), paths[r]);
+		t.add(ModLang.BOARD_GRADE, "Circuits: %s");
+		t.add(ModLang.BOARD_GRADE_HIDDEN, "Their grade shows when the puppet is sealed (as you paint, from Grandmaster).");
+		t.add(ModLang.BOARD_SCORE_LOCKED, "Read from %s Puppetry");
+		t.add(ModLang.BOARD_NODE_FED, "Fed");
+		t.add(ModLang.BOARD_NODE_DEAD, "Dead: no line from the core reaches it");
+		t.add(ModLang.BOARD_SOCKET, "The core's socket: a channel begins at each of its four sides");
+		t.add(ModLang.BOARD_OUTLET, "An outlet of the core");
+		t.add(ModLang.BOARD_JOINT, "A joint of the frame: no line crosses it");
+		t.add(ModLang.BOARD_FLAW, "A flaw in the frame's forging: no line crosses it");
+		t.add(ModLang.BOARD_CUT, "Cut: paint it again to mend it");
+		t.add(ModLang.BOARD_UNFED_LINE, "Nothing feeds this line: dead weight");
+		t.add(ModLang.BOARD_WEAK_SPOT, "A weak spot: cut here, a node dies");
+		t.add(ModLang.BOARD_HEAT_AT, "Heat: %s");
+		t.add(ModLang.BOARD_PATH, "Path");
+		t.add(ModLang.BOARD_HEAT, "Heat");
+		t.add(ModLang.BOARD_WEAK, "Weak");
+		t.add(ModLang.BOARD_WIPE, "Wipe");
+		t.add(ModLang.BOARD_SURE, "Sure?");
+		t.add(ModLang.BOARD_SEAL, "Seal");
+		t.add(ModLang.BOARD_SEAL_COST, "Sealing: %s %s; slots %s of %s, this puppet %s");
+		t.add(ModLang.BOARD_SLOTS, "Slots: %s of %s, this puppet %s");
+		t.add(ModLang.BOARD_BRUSH, "Brush: %s strokes left");
+		t.add(ModLang.BOARD_NO_BRUSH, "No Inscription Brush in your pack");
+		t.add(ModLang.BOARD_BRUSH_CREATIVE, "Brush: unworn (creative)");
+		t.add(ModLang.BOARD_HINT, "Left: paint. Right: wipe. 1-9, 0, L: strokes. P: a build's path (again: the next). H: heat. K: weak spots.");
+		t.add(ModLang.BOARD_NODES, "Nodes: %s of %s fed");
+		t.add(ModLang.BOARD_WEAR, "Wears the brush %s");
+		t.add(ModLang.BOARD_NEEDS_RANK, "Painted from %s Puppetry");
+		t.add(ModLang.BOARD_SEALED_NOTE, "Sealed: your strokes take hold at once.");
+		for (String[] order : new String[][] {{"follow", "Follow"}, {"guard", "Guard"}, {"hold", "Hold"}, {"work", "Work"}}) {
+			t.add(ModLang.puppetOrder(order[0]), order[1]);
+		}
+		t.add(ModLang.PUPPET_NAME, "%s %s");
+		t.add(ModLang.PUPPET_WENT_INERT, "%s's heart of command is cut off: it no longer hears you. Mend its lines with the brush.");
+		t.add(ModLang.PUPPET_HEARS_AGAIN, "%s hears you again.");
+		t.add(ModLang.PUPPET_OVERHEATED, "%s overheats and stalls!");
+		t.add(ModLang.PUPPET_WRECKED, "%s was wrecked at %s %s %s.");
+		t.add(ModLang.PUPPET_CHEST_GONE, "%s can't find a chest it was carrying between; it holds where it is.");
+		// Puppetry phase 2a: souls in puppets.
+		t.add(ModLang.PUPPET_SOUL_NAME, "%s (Puppet)");
+		t.add(ModLang.SOUL_BOUND_BEAST, "The soul of the %s is drawn into %s's Soul-Binding Ring.");
+		t.add(ModLang.SOUL_BOUND_CULTIVATOR, "%s's soul is torn into %s's Soul-Binding Ring. A devilish deed.");
+		t.add(ModLang.SOUL_COPY_WHOLE, "%s's circuits have copied %s's soul whole: the real soul has gone on, and the copy is the puppet's own.");
+		t.add(ModLang.SOUL_NONE_REAL, "No real soul in its ring to let go or move.");
+		t.add(ModLang.SOUL_NO_COPY, "No whole copy of a soul in its ring to wipe.");
+		t.add(ModLang.SOUL_NOT_AT_BENCH, "Stand the puppet within %s blocks of a Puppet Workbench.");
+		t.add(ModLang.SOUL_NO_RING, "None of your other puppets within %s blocks of the bench has an empty ring.");
+		t.add(ModLang.SOUL_RELEASED, "You let %s's soul go: it slips free, and the ring is hollow again.");
+		t.add(ModLang.SOUL_MOVED, "%s's soul passes into %s's ring; its copying begins anew there.");
+		t.add(ModLang.SOUL_WIPED, "The copy of %s's soul is wiped away: its mind is lost, and the ring is empty again.");
+		t.add(ModLang.SOUL_FREED_DISMANTLED, "Taken apart, %s lets %s's soul go.");
+		t.add(ModLang.soulKind("beast"), "a beast");
+		t.add(ModLang.soulKind("cultivator"), "a cultivator");
+		t.add(ModLang.soulGives("beast"), "A beast's instincts: 8 blocks more sight, a tenth of blows slipped, a tenth swifter.");
+		t.add(ModLang.soulGives("cultivator"), "A cultivator's mind: its name, a charge more of the core's art, and its own arts in a fight.");
+		t.add(ModLang.BOARD_SOUL_HOLLOW, "Soul: hollow");
+		t.add(ModLang.BOARD_SOUL_REAL, "Soul: %s (%s), copied %s%%");
+		t.add(ModLang.BOARD_SOUL_COPY, "Soul: a copy of %s (%s)");
+		t.add(ModLang.BOARD_SOUL_ABOUT, "Its Soul-Binding Ring. A beast or cultivator slain by you or your puppets within 16 blocks of one of your "
+				+ "puppets with an empty ring is drawn into it. While you are in the world with it, its circuits copy the soul; after an hour the copy "
+				+ "is whole and the real soul goes on. By a Puppet Workbench: let the real soul go, move it into another of your puppets, or wipe a "
+				+ "whole copy.");
+		t.add(ModLang.BOARD_SOUL_ARTS, "Its arts: %s");
+		t.add(ModLang.BOARD_SOUL_RELEASE, "Release");
+		t.add(ModLang.BOARD_SOUL_MOVE, "Move");
+		t.add(ModLang.BOARD_SOUL_WIPE, "Wipe Soul");
+		t.add(ModLang.BOARD_SOUL_AT_BENCH, "Stand it by a Puppet Workbench to let its soul go, move it or wipe a copy.");
+		t.add(ModLang.BOARD_SOUL_NO_RING, "No other puppet of yours by the bench has an empty ring.");
+		// Puppetry phase 2b: bodies of flesh.
+		t.add(ModLang.BODY_NAME, "Body of %s");
+		t.add(ModLang.BODY_WHO, "Once a cultivator of %s");
+		t.add(ModLang.BODY_BOARD, "Its board is its own meridians, %s x %s: they can't be wiped; mend their breaks with a plain line");
+		t.add(ModLang.BODY_REFINED, "Refined %s%% (a day on a Puppet Workbench)");
+		t.add(ModLang.BODY_OWN_CORE, "A demon's body: its own demon core is its heart (%s)");
+		t.add(ModLang.BODY_WANTS_CORE, "Its heart: a demon core of %s or stronger");
+		t.add(ModLang.BODY_NOT_PLAYERS, "A player's body is their own: it can't be taken.");
+		t.add(ModLang.BODY_MORTAL, "A mortal's body has no meridians worth refining.");
+		t.add(ModLang.BODY_TOO_OLD, "This body is too long dead to refine.");
+		t.add(ModLang.BODY_BONES, "Only bones are left: nothing to refine.");
+		t.add(ModLang.BODY_TAKEN, "You take up the body of %s to refine into a puppet. A devilish deed.");
+		t.add(ModLang.BODY_REFINING, "It is still refining (%s%%): a body lies a day on the bench before it can be sealed.");
+		t.add(ModLang.BODY_CORE_TOO_WEAK, "This body wants a demon core of %s or stronger.");
+		t.add(ModLang.BENCH_BODY_LAID, "The body is laid on the bench to refine: a day, and it can be sealed. Set a demon core in it.");
+		t.add(ModLang.BOARD_REFINING, "Refining %s%%: it seals after a day");
+		t.add(ModLang.BOARD_MERIDIAN, "The body's own meridian");
+		t.add(ModLang.boardRefusal("meridian"), "That is the body's own meridian: it can't be wiped or painted over.");
+		t.add(ModLang.boardRefusal("meridian_break"), "A broken meridian is mended with a plain line.");
+		t.add(ModLang.COMMAND_SEAL_TOOLTIP, "Right-click: your puppets. On one of yours: its orders. Held on another's: seize it");
+		t.add(ModLang.COMMAND_SEAL_MARKS, "Sneak and right-click a chest: marks it for a bee's work (first the one to carry from, then the one to carry to)");
+		t.add(ModLang.COMMAND_SEAL_FROM, "Carry from: %s %s %s");
+		t.add(ModLang.COMMAND_SEAL_TO, "Carry to: %s %s %s");
+		t.add(ModLang.SEAL_MARKED_FROM, "Marked to carry from: %s %s %s. Now mark the chest to carry to.");
+		t.add(ModLang.SEAL_MARKED_TO, "Marked to carry to: %s %s %s.");
+		t.add(ModLang.SEIZE_BEGUN, "You bear down on %s's seal...");
+		t.add(ModLang.SEIZE_BROKEN, "The seizing is broken off.");
+		t.add(ModLang.SEIZE_NEVER, "Its seal is beyond any puppeteer's reach.");
+		t.add(ModLang.SEIZE_RANK, "Seizing it wants Puppetry of %s.");
+		t.add(ModLang.SEIZE_DONE, "%s is yours now.");
+		t.add(ModLang.SEIZE_LOST, "%s was seized by %s!");
+		t.add(ModLang.COMMAND_GONE, "That puppet is gone.");
+		t.add(ModLang.COMMAND_AWAY, "It is away on an errand.");
+		t.add(ModLang.COMMAND_UNLOADED, "It stands where your will can't reach it now (an unloaded place).");
+		t.add(ModLang.COMMAND_DISMANTLE_NEAR, "Stand within %s blocks of it to take it apart.");
+		t.add(ModLang.COMMAND_DISMANTLED, "%s is taken apart: its frame (circuits and all) and its core lie where it stood.");
+		t.add(ModLang.COMMAND_OUT_OF_REACH, "It is beyond your reach: come nearer.");
+		t.add(ModLang.COMMAND_INERT, "It is inert: its heart of command is fed by nothing. Mend its lines with the brush.");
+		t.add(ModLang.COMMAND_TOLD, "%s: %s.");
+		t.add(ModLang.COMMAND_BEES_ONLY, "Only a bee does that.");
+		t.add(ModLang.COMMAND_MARK_FIRST, "Mark two chests with the Command Seal first (sneak and right-click them), then give the order with it in hand.");
+		t.add(ModLang.COMMAND_WORKING, "%s carries from %s %s %s to %s %s %s.");
+		t.add(ModLang.COMMAND_NO_MESSAGE, "Write a message first.");
+		t.add(ModLang.COMMAND_NO_ADDRESSEE, "No one named %s is in the world.");
+		t.add(ModLang.COURIER_OTHER_WORLD, "%s is in another world: a bee doesn't fly between worlds.");
+		t.add(ModLang.COURIER_SENT, "%s flies off to %s (some %s seconds).");
+		t.add(ModLang.COURIER_MESSAGE, "A puppet bee alights by you and speaks in %s's words: \"%s\"");
+		t.add(ModLang.COURIER_DELIVERED, "%s has spoken your message to %s.");
+		t.add(ModLang.COURIER_BACK, "%s is back from %s.");
+		t.add(ModLang.COURIER_BACK_UNDELIVERED, "%s is back: %s was gone from the world, your message unspoken.");
+		t.add(ModLang.LIST_TITLE, "Your Puppets");
+		t.add(ModLang.LIST_SLOTS, "Slots %s/%s");
+		t.add(ModLang.LIST_REACH, "Reach %s");
+		t.add(ModLang.LIST_NONE, "You have no puppets. Forge a frame at the Artifact Forge, lay it on a Puppet Workbench with a demon core, paint its circuits and seal it.");
+		t.add(ModLang.LIST_AWAY, "away on an errand");
+		t.add(ModLang.LIST_INERT, "inert");
+		t.add(ModLang.LIST_FAR, "%s blocks away");
+		t.add(ModLang.LIST_OTHER_WORLD, "in %s");
+		t.add(ModLang.LIST_OUT_OF_REACH, "%s blocks away, out of reach");
+		t.add(ModLang.LIST_HEALTH, "Health %s / %s");
+		t.add(ModLang.LIST_PLACE, "At %s %s %s");
+		t.add(ModLang.LIST_ORDER, "Order: %s");
+		t.add(ModLang.LIST_SCORES, "%s circuits: Flow %s, Stability %s, Harmony %s, Clarity %s, Resilience %s");
+		t.add(ModLang.LIST_CUTS, "%s lines cut: mend them with the brush");
+		t.add(ModLang.LIST_UNLOADED, "Its circuits can't be read from here.");
+		t.add(ModLang.LIST_FOLLOW, "Follow");
+		t.add(ModLang.LIST_GUARD, "Guard here");
+		t.add(ModLang.LIST_HOLD, "Hold");
+		t.add(ModLang.LIST_WORK, "Work the marked chests");
+		t.add(ModLang.LIST_WORK_UNMARKED, "Sneak-mark two chests with the seal");
+		t.add(ModLang.LIST_MESSAGE_TO, "To");
+		t.add(ModLang.LIST_MESSAGE, "Message");
+		t.add(ModLang.LIST_SEND, "Send");
+		t.add(ModLang.LIST_DISMANTLE, "Take apart");
+		t.add(ModLang.LIST_MESSENGER, "A bee carries a message to any player in this world, and comes back.");
+		// Puppetry phase 2c: graded seals, Sub-Seals, Generals, a Saint's puppets' minds of their own.
+		t.add(ModLang.COMMAND_SEAL_GRADED, "%s Command Seal");
+		t.add(ModLang.COMMAND_SEAL_GRADE, "Grade: %s. Sneak and right-click a Puppet Workbench to raise it (%s %s)");
+		t.add(ModLang.COMMAND_SEAL_GRADE_TOP, "Grade: %s, the highest");
+		t.add(ModLang.SEAL_RAISED, "Your Command Seal is raised to %s grade.");
+		t.add(ModLang.SEAL_AT_TOP, "Your Command Seal is of the highest grade.");
+		t.add(ModLang.SEAL_RANK_HOLDS, "A %s of Puppetry holds a seal of %s grade at most.");
+		t.add(ModLang.SEAL_RAISE_STONES, "Raising it to %s grade wants %s %s.");
+		t.add(ModLang.SEAL_BOUND, "%s is bound to your %s seal now.");
+		t.add(ModLang.SEIZE_SEAL, "It is bound to a seal of %s grade: seizing it wants a seal above that in your hand.");
+		t.add(ModItems.SUB_SEAL, "Sub-Seal");
+		t.add(ModLang.SUB_SEAL_NAME, "Sub-Seal of %s");
+		t.add(ModLang.SUB_SEAL_BOUND, "Bound to %s, %s's puppet");
+		t.add(ModLang.SUB_SEAL_USE, "Right-click it: it follows you; again, it guards where you stand; again, it holds. Its puppeteer's own order takes it back");
+		t.add(ModLang.SUB_SEAL_BLANK, "Written for a puppet on the Command Seal's page");
+		t.add(ModLang.SUB_SEAL_WRITTEN, "A Sub-Seal for %s is written: whoever holds it commands it, until you order it yourself or revoke it.");
+		t.add(ModLang.SUB_SEAL_NEEDS, "A Sub-Seal is written on a sheet of paper: you have none.");
+		t.add(ModLang.SUB_SEAL_REVOKED, "Every Sub-Seal written for %s is void.");
+		t.add(ModLang.SUB_SEAL_VOID, "This Sub-Seal is void: its puppeteer revoked it, or the puppet is someone else's now.");
+		t.add(ModLang.SUB_SEAL_OTHER, "This Sub-Seal is bound to %s.");
+		t.add(ModLang.SUB_SEAL_FOLLOW, "%s follows you.");
+		t.add(ModLang.SUB_SEAL_GUARD, "%s guards where you stand.");
+		t.add(ModLang.SUB_SEAL_HOLD, "%s holds where it is.");
+		t.add(ModLang.SUB_SEAL_LENT, "%s answers %s's Sub-Seal now.");
+		t.add(ModLang.GENERAL_MADE, "%s is a General: it takes up to %s of your puppets into its ranks.");
+		t.add(ModLang.GENERAL_RANK, "Making a General wants a %s of Puppetry.");
+		t.add(ModLang.GENERAL_FRAME, "Only a humanoid of an Earth frame or better can be made a General.");
+		t.add(ModLang.GENERAL_STONES, "Making it a General wants %s %s.");
+		t.add(ModLang.GENERAL_MUSTERED, "%s takes %s of your puppets into its ranks.");
+		t.add(ModLang.GENERAL_NONE_NEAR, "None of your puppets stands within %s blocks of it.");
+		t.add(ModLang.GENERAL_FULL, "Its ranks are full (%s).");
+		t.add(ModLang.GENERAL_DEPLOYED, "%s sets %s puppets down round it.");
+		t.add(ModLang.GENERAL_EMPTY, "Its ranks are empty.");
+		t.add(ModLang.GENERAL_FELL, "%s fell: the %s puppets in its ranks spill out where it stood.");
+		t.add(ModLang.COMMAND_IN_RANKS, "It is in %s's ranks: deploy them from the General's page.");
+		t.add(ModLang.PUPPET_GREW_A_MIND, "Your puppet has grown a mind of its own: it calls itself %s. It is %s: %s.");
+		t.add(ModLang.puppetTrait("fierce"), "Fierce");
+		t.add(ModLang.puppetTrait("watchful"), "Watchful");
+		t.add(ModLang.puppetTrait("steadfast"), "Steadfast");
+		t.add(ModLang.puppetTrait("swift"), "Swift");
+		t.add(ModLang.puppetTrait("canny"), "Canny");
+		t.add(ModLang.puppetTraitAbout("fierce"), "its blows strike 15%% harder");
+		t.add(ModLang.puppetTraitAbout("watchful"), "it sees 8 blocks farther and takes up a foe twice as quickly");
+		t.add(ModLang.puppetTraitAbout("steadfast"), "a fifth more health");
+		t.add(ModLang.puppetTraitAbout("swift"), "it moves and flies 15%% quicker");
+		t.add(ModLang.puppetTraitAbout("canny"), "it sheds heat twice as fast and its art's charges come back half again as fast");
+		t.add(ModLang.LIST_SEAL, "Seal: %s");
+		t.add(ModLang.LIST_NO_SEAL, "No seal in hand");
+		t.add(ModLang.LIST_BOUND_SEAL, "%s seal");
+		t.add(ModLang.LIST_LENT, "lent to %s");
+		t.add(ModLang.LIST_GENERAL, "General: %s of %s in its ranks");
+		t.add(ModLang.LIST_IN_RANKS, "in %s's ranks");
+		t.add(ModLang.LIST_MIND, "A mind of its own, %s: %s");
+		t.add(ModLang.LIST_MAKE_GENERAL, "Make General (%s %s)");
+		t.add(ModLang.LIST_MAKE_GENERAL_TIP, "A General takes up to %s of your other puppets into its ranks and sets them down again where it stands. Press twice: it costs %s %s.");
+		t.add(ModLang.LIST_MUSTER, "Muster (%s/%s)");
+		t.add(ModLang.LIST_MUSTER_TIP, "Takes up to %s of your puppets within %s blocks of it into its ranks: out of the world, kept in it, still yours. They come out if it falls.");
+		t.add(ModLang.LIST_DEPLOY, "Deploy");
+		t.add(ModLang.LIST_DEPLOY_TIP, "Sets its ranks down round it, each as it went in (a guard guards where it lands).");
+		t.add(ModLang.LIST_SUB_SEAL, "Sub-Seal");
+		t.add(ModLang.LIST_SUB_SEAL_TIP, "Writes a Sub-Seal for it on a sheet of paper. Whoever holds it can order this puppet (follow them, guard, hold) until you order it yourself.");
+		t.add(ModLang.LIST_REVOKE, "Revoke");
+		t.add(ModLang.LIST_REVOKE_TIP, "Voids every Sub-Seal written for it: it answers you alone again.");
+		// Puppetry phase 2d: players' souls in puppets.
+		t.add(ModLang.soulKind("player"), "a player");
+		t.add(ModLang.soulGives("player"), "A player's own soul, held: they watch through it; released, they play it. Its copy pushes them out when whole.");
+		t.add(ModLang.SOUL_BOUND_PLAYER, "%s's soul is torn into %s's Soul-Binding Ring. A devilish deed.");
+		t.add(ModLang.PUPPET_SOUL_A_PUPPET, "a puppet");
+		t.add(ModLang.PUPPET_SOUL_HELD_IN, "Your soul is held in %s: you watch through its eyes, its puppeteer's to steer.");
+		t.add(ModLang.PUPPET_SOUL_FREE_IN, "Your soul is in %s, your own body now.");
+		t.add(ModLang.PUPPET_SOUL_LET_GO_BUTTON, "Let go");
+		t.add(ModLang.PUPPET_SOUL_LET_GO_TIP, "Your soul goes on, as the dead go: out of the puppet for good.");
+		t.add(ModLang.PUPPET_SOUL_LEAVE_BUTTON, "Leave it");
+		t.add(ModLang.PUPPET_SOUL_LEAVE_TIP, "Your soul leaves the puppet, hollow and still yours, and goes on as the dead go.");
+		t.add(ModLang.PUPPET_SOUL_BOARD_BUTTON, "Its board");
+		t.add(ModLang.PUPPET_SOUL_BOARD_TIP, "Opens your puppet body's board: paint its lines with your own qi, no brush needed.");
+		t.add(ModLang.PUPPET_SOUL_STRUGGLE_BUTTON, "Struggle");
+		t.add(ModLang.PUPPET_SOUL_STRUGGLE_TIP, "Cut the line to its heart from within, cell by cell, if your Puppetry is at least your puppeteer's or your realm is above the puppet's. Its heart cut off, you are free.");
+		t.add(ModLang.PUPPET_SOUL_GONE_OUT, "Your soul is out of %s: it goes on.");
+		t.add(ModLang.PUPPET_SOUL_MASTER_FELL, "%s's puppeteer has fallen: %s is free of them.");
+		t.add(ModLang.PUPPET_SOUL_PLAYS, "Released, you play %s: walk and jump with its legs, strike with left-click, loose its art with %s, and use, "
+				+ "take up and carry things as ever. Its circuits, and your struggle, are the first tab of your menu (%s).");
+		t.add(ModLang.PUPPET_SOUL_PLAYS_OWN, "You move as %s, your own body: walk and jump with its legs, strike with left-click, loose its art with %s, "
+				+ "and use, take up and carry things as ever. Its circuits are the first tab of your menu (%s).");
+		t.add(ModLang.PUPPET_SOUL_STRUGGLED_FREE, "%s's heart is cut off from within: %s has struggled free of you.");
+		t.add(ModLang.PUPPET_SOUL_PUSHED_OUT, "The copy of your soul in %s is whole: your own soul is pushed out, and goes on.");
+		t.add(ModLang.PUPPET_SOUL_NOW_FREE, "%s is yours now, your own body: no puppeteer holds you.");
+		t.add(ModLang.PUPPET_SOUL_SEVERED, "%s is severed from your seal: %s is free.");
+		t.add(ModLang.PUPPET_SOUL_NONE, "No player's soul is held in it.");
+		t.add(ModLang.PUPPET_SOUL_RELEASED, "%s is released: %s plays it.");
+		t.add(ModLang.PUPPET_SOUL_CONTROLLED, "%s is under your control again: %s only watches.");
+		t.add(ModLang.PUPPET_SOUL_RELEASED_TOLD, "%s releases you: you play the puppet.");
+		t.add(ModLang.PUPPET_SOUL_CONTROLLED_TOLD, "%s takes control again: you only watch.");
+		t.add(ModLang.PUPPET_SOUL_AWAY, "%s is away: their soul can be severed when they are back.");
+		t.add(ModLang.PUPPET_SOUL_SEVERED_DONE, "You sever %s's soul from your seal: the puppet is theirs now.");
+		t.add(ModLang.PUPPET_SOUL_ALREADY, "Your soul is in a puppet already.");
+		t.add(ModLang.PUPPET_SOUL_NOT_NOW, "Your soul can't go into a puppet now: you must be alive, in your own body.");
+		t.add(ModLang.PUPPET_SOUL_ENTER_NONE, "None of your hollow puppets stands within %s blocks.");
+		t.add(ModLang.PUPPET_SOUL_ENTER_BUTTON, "Enter it");
+		t.add(ModLang.PUPPET_SOUL_ENTER_TIP, "Your body dies; your soul goes into the puppet.");
+		t.add(ModLang.PUPPET_SOUL_TAKEN, "%s's soul is in a puppet already.");
+		t.add(ModLang.PUPPET_SOUL_OFFERED, "%s offers you %s: your body would die, your soul held in their puppet.");
+		t.add(ModLang.PUPPET_SOUL_ACCEPT_BUTTON, "Accept");
+		t.add(ModLang.PUPPET_SOUL_ACCEPT_TIP, "Your body dies; your soul goes into their puppet, theirs to steer.");
+		t.add(ModLang.PUPPET_SOUL_OFFER_SENT, "You offer %s your %s: they have a minute to accept.");
+		t.add(ModLang.PUPPET_SOUL_NO_OFFER, "No offer stands for you.");
+		t.add(ModLang.PUPPET_SOUL_ACCEPTED, "%s accepts: their soul goes into %s.");
+		t.add(ModLang.PUPPET_SOUL_NOT_BOUND, "Your soul isn't held in a puppet.");
+		t.add(ModLang.PUPPET_SOUL_FREE_ALREADY, "You are free already: the puppet is your own.");
+		t.add(ModLang.PUPPET_SOUL_CANT_STRUGGLE, "You can't struggle: it wants Puppetry at least your puppeteer's, or a realm above %s.");
+		t.add(ModLang.PUPPET_SOUL_STRUGGLING, "You struggle: a cell of the line to its heart every %s seconds.");
+		t.add(ModLang.PUPPET_SOUL_STRUGGLE_TOLD, "%s struggles inside %s, cutting the line to its heart: mend it with the brush.");
+		t.add(ModLang.PUPPET_SOUL_NOT_FREE, "Only a soul free in its own puppet can do that.");
+		t.add(ModLang.PUPPET_SOUL_LEFT, "You leave %s: your soul goes on.");
+		t.add(ModLang.PUPPET_SOUL_LET_GO, "You let go of %s: your soul goes on.");
+		t.add(ModLang.PUPPET_SOUL_CUT_FROM_WITHIN, "A line to %s's heart is cut from within!");
+		t.add(ModLang.PUPPET_SOUL_NO_ART, "Its art isn't ready.");
+		t.add(ModLang.PUPPET_SOUL_NO_TARGET, "Nothing in its sight to loose its art at.");
+		t.add(ModLang.PUPPET_SOUL_WRECKED, "%s is wrecked: your soul goes on.");
+		t.add(ModLang.PUPPET_SOUL_DISMANTLED, "%s is taken apart: your soul goes on.");
+		t.add(ModLang.PUPPET_SOUL_RELEASED_AT_BENCH, "%s's puppeteer lets your soul go at the bench: it goes on.");
+		t.add(ModLang.PUPPET_SOUL_NO_ERRANDS, "A player's soul is in it: it runs no errands.");
+		t.add(ModLang.LIST_RELEASE_SOUL, "Release");
+		t.add(ModLang.LIST_RELEASE_SOUL_TIP, "Lets the player held in it play it, under your seal, until you take control again.");
+		t.add(ModLang.LIST_CONTROL_SOUL, "Control");
+		t.add(ModLang.LIST_CONTROL_SOUL_TIP, "Takes control again: the player held in it only watches, and its copy of them grows.");
+		t.add(ModLang.LIST_SEVER_SOUL, "Sever");
+		t.add(ModLang.LIST_SEVER_SOUL_TIP, "Frees the player held in it for good: the puppet becomes their own body. Press twice.");
+		t.add(ModLang.LIST_PERSON_HELD, "A player's soul, held: copied %s%%");
+		t.add(ModLang.LIST_PERSON_RELEASED, "A player's soul, released: copied %s%%, fading");
+		t.add(ModLang.LIST_ENTER_SOUL_TIP, "Your body dies here (what you carry falls with it) and your soul goes into this puppet, free: you play it as your own body. Press twice.");
+		t.add(ModLang.LIST_OFFER_SOUL, "Offer to %s");
+		t.add(ModLang.LIST_OFFER_SOUL_TIP, "Offers this puppet to the player beside you: if they accept, their body dies and their soul is held in it, yours to steer.");
+		t.add(ModLang.LIST_OFFER_NOBODY, "Offer (no one near)");
+		t.add(ModLang.PUPPET_SOUL_OFFER_NONE, "No other player stands within %s blocks of you.");
+		t.add(ModLang.PUPPET_SOUL_DECLINED, "%s declines your offer.");
+		t.add(ModLang.SOUL_SCREEN_TITLE, "Your Soul");
+		t.add(ModLang.SOUL_SCREEN_NONE, "Your soul is in your own body.");
+		t.add(ModLang.SOUL_SCREEN_RELEASED, "Your soul is in %s: %s has released you, and you play it.");
+		t.add(ModLang.SOUL_SCREEN_AWAY, "Your soul is in %s: %s is away, and you play it until they come back.");
+		t.add(ModLang.SOUL_SCREEN_COPIED, "Its copy of you: %s%%. Whole, it pushes your soul out.");
+		t.add(ModLang.SOUL_SCREEN_PLAYING, "Walk and jump with its legs (a bee flies where you look). Left-click: its blow. The cast key: its art. "
+				+ "Everything else as ever: your pack, using and taking things.");
+		t.add(ModLang.SOUL_SCREEN_OFFER, "%s offers you %s: your body would die here, your soul held in their puppet. (%s seconds to answer)");
+		t.add(ModLang.SOUL_SCREEN_DECLINE, "Decline");
+		t.add(ModLang.SOUL_SCREEN_HINT, "Your soul is in a puppet. %s: its screen. %s: its circuits");
+		t.add(ModLang.SOUL_SCREEN_HEALTH, "Its health %s/%s.");
+		t.add(ModLang.SOUL_SCREEN_PUPPETS, "Your puppets");
+		t.add(ModLang.SOUL_SCREEN_PUPPETS_TIP, "Your list of puppets, to order them as with a Command Seal (you keep your Puppetry in your puppet body).");
+		t.add(ModLang.SOUL_HINT_FREE, "%s: its art. %s: its circuits");
+		t.add(ModLang.SOUL_HINT_PLAYING, "%s: its art. %s: its circuits");
+		t.add(ModLang.TAB_CIRCUITS, "Circuits");
+		t.add(ModLang.BOARD_SOUL_OWN, "Soul: your own, free in this body");
+		t.add(ModLang.BOARD_OWN_QI, "Painted with your own qi: no brush");
+		t.add(ModLang.BOARD_CAPTIVE_PAINT, "These lines are your captor's: you can't paint them. Struggle, and cut the line to its heart from within.");
+		t.add(ModLang.BOARD_SOUL_CAPTIVE, "Soul: your own, held by %s");
+		t.add(ModLang.BOARD_CAPTIVE_BRUSH, "Your captor's lines: not yours to paint");
+		t.add(ModLang.BOARD_CAPTIVE_ABOUT, "The violet line is your captor's hold on you: the line from its core to its heart. Struggle cuts it from "
+				+ "within, a cell at a time from the core; a ward holds a cell four times as long. Once its heart is cut off, the puppet is yours.");
+		t.add(ModLang.BOARD_COMMAND_LINE, "Your captor's command line");
+		t.add(ModLang.BOARD_COMMAND_CELL, "Cut from within in %s seconds");
+		t.add(ModLang.BOARD_COMMAND_WARDED, "A ward holds it: four times as long");
+		t.add(ModLang.BOARD_COMMAND_NEXT, "Your struggle is cutting it: %s%%");
+		t.add(ModLang.BOARD_COMMAND_FIRST, "Your struggle would cut it first");
+		t.add(ModLang.BOARD_STRUGGLE_ON, "Struggling");
+		t.add(ModLang.BOARD_CAPTIVE_HINT, "Your captor's board: you can only look. The violet line holds you; Struggle cuts it from within.");
+		t.add(ModLang.PUPPET_SOUL_BOARD_CAPTIVE_TIP, "Opens the puppet's board: its lines as they stand, and your captor's command line, which you struggle against.");
+		t.add(ModLang.MSG_POSSESS_PUPPET_STRONGER, "The soul in %s is as strong as yours or stronger: it holds its place.");
+		t.add(ModLang.MSG_POSSESS_PUPPET_NPC, "%s answers only to its puppeteer's seal: your soul can't take hold of it.");
+		t.add(ModLang.PUPPET_SOUL_DRIVEN_OUT, "A stronger soul drives yours out of %s: it goes on.");
+		t.add(ModLang.PUPPET_SOUL_DROVE_OUT, "Your soul drives %s out of %s.");
+		t.add(ModLang.PUPPET_SOUL_DROVE_OUT_TOLD, "%s's soul drives %s out of %s.");
+		t.add(ModLang.PUPPET_SOUL_PROJECTED_OWN, "Your soul goes into %s for good: your body dies where it sat.");
+		t.add(ModLang.PUPPET_SOUL_PROJECTED_HELD, "Your soul goes into %s, and %s's Soul-Binding Ring holds it: your body dies where it sat. Struggle to break free.");
+		t.add(ModLang.PUPPET_SOUL_ENTERED_TOLD, "%s's soul comes into %s of its own will: your ring holds it, yours to steer.");
+		t.add(ModLang.LIST_PERSON_OWN, "Your own soul is in it: it is your body");
+		t.add(ModLang.DESIGN_LEARNED, "You take %s's wreck apart and know its circuits now: against every puppet built to them you strike %s%% harder, "
+				+ "your blows cut their weakest lines, and seizing them wants a rank less. Its Circuit Diagram lies in the wreck.");
+		t.add(ModLang.PUPPET_HELD_DOWN, "%s is held down where qi is suppressed: half its strength (a shielded core keeps it whole).");
+		t.add(ModLang.PUPPET_WHOLE_AGAIN, "%s stands at its whole strength again.");
+		t.add(ModLang.PUPPET_SPRING_ALREADY, "A spring already flows in %s.");
+		t.add(ModLang.PUPPET_SPRING_POURED, "You pour the Spring of the Ancients into %s: from now on it mends its own cut lines, one every %s seconds.");
+		t.add(ModLang.PUPPET_FUSE_LIT, "%s's core flares: it bursts in a moment.");
+		t.add(ModLang.PUPPET_BURST, "%s bursts, its core with it: %s caught in the blast.");
+		t.add(ModLang.FRAME_SPRING, "A spring flows in it: its puppet mends its own cut lines");
+		t.add(ModLang.CORE_SHIELDED, "Shielded: its puppet keeps its whole strength where qi is suppressed");
+		t.add(ModLang.DIAGRAM_WEAR, "Wear in fights: cut %s times, overheated %s times (kept in an Overseer Core)");
+		t.add(ModLang.BOARD_WEAR_KEY, "Its wear in fights: red where its lines were cut (deeper, more often), orange rings where they ran hot.");
+		t.add(ModLang.LIST_SELF_DESTRUCT, "Self-destruct");
+		t.add(ModLang.LIST_SELF_DESTRUCT_TIP, "It bursts a moment later, its core with it: six times its blow to all round it, less toward the edge, never "
+				+ "you or yours, no block broken. Nothing is left of it. A player's soul in it dies as any death goes. Press twice.");
+		t.add(ModLang.LIST_LINKED, "Linked: %s fellows near, +%s%% to its blows and art");
+		t.add(ModLang.LIST_HELD_DOWN, "Held down here: half its strength (a shielded core keeps it whole)");
+		t.add(ModLang.LIST_SPRING, "A spring flows in it: it mends its own cut lines");
+		t.add(com.example.defyingtheheavens.ModBlocks.PUPPET_FACTORY, "Puppet Factory");
+		t.add(com.example.defyingtheheavens.ModBlocks.OVERSEER_CORE, "Overseer Core");
+		t.add(ModLang.FACTORY_TITLE, "Puppet Factory");
+		t.add(ModLang.FACTORY_TOOLTIP, "Give it a Circuit Diagram, a frame's forging matter and %s spirit stones of its grade, and a demon core for each "
+				+ "puppet: it builds copies of the diagram's layout for you, within your slots. It mends your puppets within %s blocks too.");
+		t.add(ModLang.FACTORY_NOT_YOURS, "This Puppet Factory answers to %s.");
+		t.add(ModLang.FACTORY_BUILT, "Your Puppet Factory at %s %s %s builds %s: %s circuits.");
+		t.add(ModLang.FACTORY_BUILT_COUNT, "Built so far: %s");
+		t.add(ModLang.FACTORY_DIAGRAM, "Diagram");
+		t.add(ModLang.FACTORY_MATTER, "Matter");
+		t.add(ModLang.FACTORY_CORES, "Demon cores");
+		t.add(ModLang.FACTORY_NEEDS, "Each copy (%s) takes:");
+		t.add(ModLang.FACTORY_MODE_BUILD, "Builds copies");
+		t.add(ModLang.FACTORY_MODE_REPAIR, "Repair only");
+		t.add(ModLang.FACTORY_MODE_TIP, "Builds copies of the diagram while you are in the world, and mends your puppets within %s blocks: a cut line every 5 "
+				+ "seconds, and their health for a piece of their frame's matter. Repair only: it mends, and builds nothing.");
+		t.add(ModLang.FACTORY_BUILDING, "Building a copy: %s%%");
+		t.add(ModLang.FACTORY_NO_DIAGRAM, "Lay a Circuit Diagram in it: it builds copies of its layout.");
+		t.add(ModLang.FACTORY_NO_RANK, "The diagram wants Puppetry of %s.");
+		t.add(ModLang.FACTORY_NO_SLOTS, "You keep no slot free for one more puppet.");
+		t.add(ModLang.FACTORY_NO_MATTER, "It wants more matter (below).");
+		t.add(ModLang.FACTORY_NO_CORE, "It wants a demon core of %s or stronger.");
+		t.add(ModLang.FACTORY_WONT_SEAL, "Its layout won't seal with these cores: its heart unfed, or its veins want more qi than they give.");
+		t.add(ModLang.FACTORY_AWAY, "Its maker is away: it builds only while you are in the world.");
+		t.add(ModLang.FACTORY_REPAIRING, "Repair only: it mends your puppets within %s blocks.");
+		t.add(ModLang.FACTORY_NO_OWNER, "No one's yet: open it to make it yours.");
+		t.add(ModLang.OVERSEER_TITLE, "Overseer Core");
+		t.add(ModLang.OVERSEER_TOOLTIP, "Keeps your Circuit Diagrams. Every cut and overheating your puppets suffer in fights is recorded by their design, "
+				+ "and shows on the diagrams here as a wear map: on its screen, and over the board when you hold the diagram at the bench.");
+		t.add(ModLang.OVERSEER_NOT_YOURS, "This Overseer Core watches over %s's puppets.");
+		t.add(ModLang.OVERSEER_EMPTY, "Lay your Circuit Diagrams in it. Each shows where your puppets built to it were cut, and where they ran hot, in fights.");
+		t.add(ModLang.OVERSEER_NO_WEAR, "No puppet of this design has been cut or overheated yet.");
+		t.add(ModLang.OVERSEER_CUTS, "Cut %s times in fights (%s at most on one cell)");
+		t.add(ModLang.OVERSEER_HEAT, "Overheated %s times");
+		t.add(ModLang.OVERSEER_KEY, "Red: cut, deeper the more. Orange rings: ran hot. Redraw it so they don't.");
+		t.add(ModLang.PUPPET_SOUL_NO_SLEEP, "A puppet never sleeps.");
+		t.add(ModLang.PUPPET_SOUL_DORMANT, "Your own cultivation lies dormant while your soul is in a puppet.");
+		t.add(ModItems.CIRCUIT_DIAGRAM, "Circuit Diagram");
+		t.add(ModItems.CIRCUIT_FRAGMENT, "Circuit Fragment");
+		t.add(ModLang.DIAGRAM_NAME, "Circuit Diagram");
+		t.add(ModLang.DIAGRAM_ANCIENT_NAME, "Ancient Circuit Diagram");
+		t.add(ModLang.DIAGRAM_FOR, "For a %s (board %s x %s)");
+		t.add(ModLang.DIAGRAM_ANCIENT, "Drawn by a puppeteer of old: a Saint's layout");
+		t.add(ModLang.DIAGRAM_AUTHOR, "Drawn by %s");
+		t.add(ModLang.DIAGRAM_CELLS, "%s cells; painted whole from %s Puppetry");
+		t.add(ModLang.DIAGRAM_USE, "Hold it while painting a board of its make: the Path button lays it over the board");
+		t.add(ModLang.FRAGMENT_OF, "Quarter %s of 4 of an ancient circuit diagram for a %s");
+		t.add(ModLang.FRAGMENT_USE, "With all four quarters in your pack, right-click to join them");
+		t.add(ModLang.FRAGMENT_MISSING, "You have quarters %s of 4 of this diagram.");
+		t.add(ModLang.FRAGMENT_JOINED, "The four quarters join: %s.");
+		t.add(ModLang.BOARD_COPY, "Copy");
+		t.add(ModLang.BOARD_COPIED, "The board is copied onto paper: a Circuit Diagram.");
+		t.add(ModLang.BOARD_COPY_NEEDS, "Copying the board takes a sheet of paper and four strokes of the brush.");
+		t.add(ModLang.BOARD_DIAGRAM, "Plan");
+		t.add(ModLang.BOARD_DIAGRAM_ABOVE, "The diagram in your hand, laid over the board: what is above your rank, greyed");
 	}
 
 	private static void method(TranslationBuilder t, CultivationMethod method, String name, String description, String how) {

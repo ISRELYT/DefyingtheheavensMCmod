@@ -40,7 +40,8 @@ public class RankingsGameTests implements FabricGameTest {
 					"The weaker beats the stronger in a spar: it takes the first place");
 			helper.assertTrue(!Rankings.won(server, weak.getUUID(), strong.getUUID()) || data.placeOf(weak.getUUID()) == 1, "Beating one already below changes nothing");
 			Rankings.tick(server); // (the players noted again: nothing lost)
-			helper.assertTrue(data.placeOf(weak.getUUID()) == 1, "The place won is kept");
+			helper.assertTrue(data.placeOf(weak.getUUID()) == 1, "The place won is kept (place " + data.placeOf(weak.getUUID()) + "; online: "
+					+ server.getPlayerList().getPlayers().stream().map(pl -> pl.getGameProfile().getName()).toList() + ", tick " + server.getTickCount() + ")");
 			TestMethods.setAt(CultivationManager.own(strong), Realm.CORE_FORMATION, Stage.MID);
 			Rankings.note(strong);
 			helper.assertTrue(data.placeOf(strong.getUUID()) == 1, "A breakthrough passes them back");

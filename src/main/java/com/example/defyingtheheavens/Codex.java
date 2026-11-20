@@ -387,7 +387,7 @@ public final class Codex {
 				requirements of their own.""");
 		page("ritual", ModBlocks.HEAVEN_ALTAR, QR, "Ritual to the Heavens", """
 				At Qi Refining Mid your bar fills up and stops: to go further, you need the heavens' permission to cultivate.
-				- Craft a Heaven Altar (smooth stone, jade, a Low-grade spirit stone and copper), place it under the open sky, and build \
+				- Craft a Heaven Altar (smooth stone, jade, a Low-Grade Spirit Stone and copper), place it under the open sky, and build \
 				around it: a grander altar earns more favour.
 				@craft heaven_altar
 				- Right-click it and place your offerings in its ring. The dial shows your chance of success; richer offerings raise it.
@@ -630,8 +630,10 @@ public final class Codex {
 				Methods): the Medicinal Bath, Weighted Training and Hundred Battles in righteous sects, all four in neutral ones, Beast Blood \
 				Bathing and Weighted Training in devilish ones. The higher a sect, the higher its manuals. The dead can read them too, and a \
 				mortal on the Body Path can read the body's.
-				- The ways of Entering Nirvana and True Immortal no sect keeps: their manuals lie in the ancients' vaults, in the Fallen \
-				Holy Land and the Fallen Immortal's Tomb.
+				- The Great Void's Holy Lands and Demon Palaces keep manuals as deep as Entering Nirvana, its ways among them; the ancients' \
+				vaults in the Fallen Holy Land keep those ways too. True Immortal's volumes are the Immortal Realm's alone: its sects keep \
+				manuals of Entering Nirvana and True Immortal, the Celestial Court's Quartermaster sells one way's True Immortal volume each \
+				day to Captains, and the Fallen Immortal's Tomb keeps the ways that begin there.
 				- A Demon Path manual teaches its whole method at once, since your blood is its volume. You need a demon core to take one \
 				up.
 				- The dead can't learn the heaven path's.
@@ -687,7 +689,7 @@ public final class Codex {
 		page("demon_methods", ModItems.DEMON_CORE, "sects/bloodline", Hint.BLOOD, "The Blood's Other Ways", """
 				Beside Bloodline Purification, the Demon Path has methods of its own, each learned whole from its Method Manual (Beast \
 				Deity Worship is in Shrines and Incense, the later realms' in The Ancestors' Ways). These three:
-				- Kin Blood Hoarding (Qi Refining to Sacred Vessel): drink your own race's blood, even blood yours already holds. A phial is \
+				- Kin Blood Hoarding (Qi Refining to Sacred Vessel): drink your own race's blood, even blood you already hold. A phial is \
 				a fifth of your stage, twice as much for each realm the blood stands above your path, at most three quarters.
 				- Core Devouring (Foundation Building to Entering Nirvana): eat demon cores. Each is a share of your stage by its realm \
 				against yours. A core of another element than your race's taints your blood: every gain on the path is that much smaller \
@@ -974,6 +976,9 @@ public final class Codex {
 				A projected soul can take over a body at least one realm below the highest of your paths: right-click it. In a \
 				cultivator's body you play as yourself, with everything it carries, and others see its face and name.
 				Let go, or call your soul home, to leave the body. If the body dies, your soul is thrown out unharmed.
+				A player's puppet is gone into for good, whatever its realm: right-click it and your body dies where it sits, your soul \
+				held in the puppet. Your own you play freely; another's holds you for its puppeteer until you struggle free. A soul \
+				already in it is driven out if it stands below you, and one as strong or stronger keeps you out (see Players in Puppets).
 				The dead can be walked in too. Right-click a body lying where it fell, fresh, rotting or bare bones, and you rise in it. \
 				The dead have their own way in: Ghostly Possession, every ghost's ability from the lowest realm. Look at a body and use it: \
 				one of the dead lying where it fell, or a living player or cultivator, at least a realm below your highest path. No soul goes \
@@ -986,7 +991,7 @@ public final class Codex {
 				The righteous fall on the walking dead, mortals run from them, and a sect that sees its own dead walk turns on you for good. \
 				Meditating in a body refines Corpse Yin Refining for your own ghost path, yours when you leave it.""");
 		page("clone", ModItems.BLANK_MANUAL, NS, "Clone", """
-				A technique for Nascent Soul and above, learned from its manual. Use it to split off a second body at the cost of half your \
+				A technique for Nascent Soul and above, learned from its jade slip. Use it to split off a second body at the cost of half your \
 				qi; use it again to move into the clone while your main body sits in meditation.
 				The clone is you, at your own realm, but with half your strength.""");
 		page("spatial_tear", Items.OBSIDIAN, HB, "The Spatial Tear", """
@@ -994,7 +999,7 @@ public final class Codex {
 				where it leads: violet into the Spatial Gap, green out to the Overworld, gold out to the Jade Firmament.
 				Each tear costs part of your qi.""");
 		page("sleeve", Items.ENDER_EYE, HB, "Universe in a Sleeve", """
-				A technique for Heavenly Beings and above, learned from its manual. Look at another player close by and use it to offer \
+				A technique for Heavenly Beings and above, learned from its jade slip. Look at another player close by and use it to offer \
 				them a place in your sleeve. Up to four can be inside at once. Anyone who accepts vanishes into it: safe, untouchable, and \
 				seeing what you see.
 				They go wherever you go, up through the Spatial Gap, the Void Breach and the Immortal Gate, whatever their realm, and step \
@@ -1110,7 +1115,7 @@ public final class Codex {
 				@craft ranking_stele
 				- Cultivators know their world's list: one of its hundred is greeted by their place, and thought the better of. When a \
 				place in its top ten changes hands, people talk of it for a few days.
-				- The Sects tab shows each world's ten strongest sects. A sect's score is the strength of its ten strongest people added \
+				- The lists' Sects page (beside Cultivators) shows each world's ten strongest sects. A sect's score is the strength of its ten strongest people added \
 				up, and more for each of them on that world's list, the more the higher they stand. A sect a player founded is on it too, \
 				so yours climbs as its disciples grow. The members of a top-ten sect are thought the better of, and when a sect rises \
 				into the top three, it is talked of.""");
@@ -1128,7 +1133,7 @@ public final class Codex {
 				- Stay within 5 blocks while it works: it draws qi from you every second, more for higher grades. If you walk away or run \
 				out of qi, it stops until you are back.
 				Right-click with an empty hand to see what is inside or how far along it is. Sneak and right-click to take the materials \
-				back out; a working in progress stops, and the qi it used is lost.""");
+				back out; a work in progress stops, and the qi it used is lost.""");
 		page("forging", ModItems.artifact(ArtifactKind.FLYING_SWORD, ArtifactGrade.SPIRIT), null, "Forging Artifacts", """
 				Every artifact is forged at one of five grades: Mortal, Spirit, Earth, Heaven or Immortal. A grade takes its own metal, two \
 				spirit stones of its own grade and, from Spirit up, a demon core:
@@ -1159,7 +1164,8 @@ public final class Codex {
 				- Flying sword: made to be ridden. Sword Flight on it costs less qi: 10 percent less at Mortal grade, up to 50 percent \
 				at Immortal.
 				- Saber: heavy and slow, the hardest-hitting blade.
-				- Spear: each blow also strikes up to 1 to 3 foes standing behind your target.
+				- Spear: each blow also strikes the foes standing behind your target: one at Mortal and Spirit grade, two at Earth and \
+				Heaven, three at Immortal.
 				- Glaive: each blow also strikes everyone close around you.
 				- From Spirit grade up, every blade also makes all your blows stronger: 5 percent more at Spirit, up to 25 percent at \
 				Immortal (a saber a little more).
@@ -1258,6 +1264,271 @@ public final class Codex {
 				- A Dao Fragment is a shard of one Law. An immortal can use it to gain half a level of insight into that Law.
 				- A Chaos Origin Stone is hardened chaos, the material of a small world's seed. Chaos Fiends drop them, and Chaos Origin Ore \
 				in the Frontier's land holds them.""");
+
+		// ======================================================= Puppetry ======================================================
+		chapter("puppetry", ModItems.COMMAND_SEAL, Hint.FIND, "Puppetry");
+		page("puppetry", ModBlocks.PUPPET_WORKBENCH, null, "Making a Puppet", """
+				A puppet is a body of wood or metal with a demon core for its heart, moved by lines of qi you paint on its circuit board. \
+				It never cultivates, never tires and never mends by itself, but it stands as strong as its core: a puppeteer of Qi \
+				Refining can make a Heavenly Being's puppet, given the materials.
+				1. Forge a frame at the Artifact Forge: a humanoid (it fights and guards) or a bee (it carries and runs messages). No demon \
+				core goes into the forge. At Mortal grade:
+				@items minecraft:oak_log*3 + minecraft:iron_ingot + minecraft:string*2 + low_spirit_stone*2 > mortal_humanoid_frame
+				@items minecraft:oak_log*2 + minecraft:iron_ingot + minecraft:feather*2 + low_spirit_stone*2 > mortal_bee_frame
+				Higher grades are built of copper (bronze), iron with jade, quartz (silver-white) and gold, with the grade's own metal \
+				and stones.
+				2. Lay the frame on a Puppet Workbench, then set a demon core in it. The frame's grade decides the realms its puppet \
+				can stand at, and the core decides where within them: Mortal Qi Refining to Foundation Building, Spirit Core \
+				Formation, Earth Nascent Soul to Heavenly Being, Heaven Four Axis to Void Shattering, Immortal Sacred Vessel to True \
+				Immortal. A core too weak for the frame won't go in; one too strong runs at the frame's top.
+				@craft puppet_workbench
+				3. Right-click the bench to open its board, and paint the circuits with an Inscription Brush in your pack (see The \
+				Circuit Board).
+				4. Press Seal. Sealing takes four spirit stones of the frame's grade and a free slot, and the heart of command must be \
+				fed. The puppet stands up from the bench.
+				Left-click the bench to take the frame and its core back (it doesn't break while something lies on it): the drawing \
+				stays on the frame.
+				Puppetry is a craft of its own. It grows when you seal puppets (more for bigger frames and better circuits) and when you \
+				mend their cut lines.""");
+		page("circuit_board", ModItems.INSCRIPTION_BRUSH, null, "The Circuit Board", """
+				A frame's board is a square of cells: 9 x 9 at Mortal grade up to 17 x 17 at Immortal. The core's socket sits in the \
+				middle, with an outlet on each side. The nodes are the puppet's parts: limbs, head, its art (mouth or stinger) and its \
+				heart of command. Joints and flaws block cells; a Normal frame has three random flaws, a Fine frame one, a Perfect frame none.
+				Left-click paints the chosen stroke, right-click wipes. Each stroke wears the brush. Lines that touch join; a line from an \
+				outlet carries qi to every node it reaches, through the node's four sides, and a node passes the qi on to whatever else \
+				touches it: a line from the mouth feeds the head beyond it. A node no line reaches is dead: a dead leg slows the puppet, \
+				a dead arm weakens it, a dead head blinds it, a dead art node leaves it no art, and a dead heart leaves it inert, deaf to \
+				you. Each side a line reaches a node by is a vein into it (see Qi and Veins).
+				The board is weighed on five scores, each 0 to 100:
+				- Flow: how directly each node is fed (a bend counts as a cell). Raises its blows and its art.
+				- Stability: each vein carries its node's load all the way from the core. A plain line holds as much as the frame's \
+				matter: 2 on a Mortal or Spirit frame, 3 on an Earth or Heaven one, 4 on an Immortal one; a thick line twice that. \
+				What is over turns to heat (the eight cells round the core carry whatever it gives).
+				- Harmony: paired limbs fed alike, with as many veins, the one line the other's mirror. Its pace, aim and dodging.
+				- Clarity: different channels too close leak, dead ends and unfed lines waste. How quickly it acts, how true its art \
+				flies, and how far it hears you.
+				- Resilience: how much of it keeps a way to the core whatever single cell is cut: two veins on separate ways.
+				Their average is its grade, Crude, Normal, Fine or Perfect, and never more than one grade above its weakest score.
+				Your Puppetry rank gives you strokes and readings:
+				- Apprentice: plain lines; the nodes, fed or dead; the trunk path.
+				- Adept: relay knots; reads Flow.
+				- Master: thick lines, bridges and diagonals; reads Stability and Harmony.
+				- Grandmaster: cooling vents (an iron ingot) and gathering knots (a spirit stone); reads Clarity, Resilience and the grade \
+				as you paint; a heat map.
+				- Saint: ward knots and the resonance ring; shows the weak spots, where a single cut kills a node.
+				The Path button lays your rank's Circuit Path over the board as a ghost, every stroke in its own colour: a layout for a \
+				flawless frame, and each press shows another build (Balanced, Brawler, Scout, Sentinel, Caster; a bee's Courier). Paint \
+				over it by hand, working round your frame's own flaws.""");
+		page("circuit_veins", ModItems.DEMON_CORE, null, "Qi and Veins", """
+				The core gives the board its qi: 14 on a Mortal frame, 18 on a Spirit, 22 on an Earth, 24 on a Heaven and 26 on an \
+				Immortal one, a point more for each stage past Early its core stands at, and 3 more with the resonance ring closed. The \
+				Qi bar on the board shows what the veins want of it. A board whose veins want more than its core gives won't seal.
+				Every vein into a part draws that part's load: a limb, the head and the heart 1 each, the mouth or stinger 2. A Mortal \
+				frame has no art: its mouth or stinger draws nothing and only passes the qi on.
+				Every vein makes its part stronger, one vein to four:
+				- Arms: blows x1, x1.2, x1.35, x1.5.
+				- Legs: pace x1, x1.1, x1.2, x1.3. A bee's legs: load x1 to x2.5.
+				- Wings: flight x1, x1.15, x1.3, x1.45.
+				- Head: sight 32, 40, 52, 64 blocks; it takes up a foe in all, three quarters, half, a quarter of the time.
+				- Mouth or stinger: its art x1, x1.25, x1.5, x1.75 (a bee's sting too).
+				- Heart: it hears you x1 to x1.75 as far, and a seizer needs a rank more for each vein past the first.
+				So the qi is a choice: two veins to every part make a tough, even puppet, while feeding the arms hardest makes a brawler \
+				whose legs die to one cut. Only veins on separate ways keep a part alive through a cut; veins sharing one line all fall \
+				together, and heat it besides.
+				A puppet made before the veins drew qi keeps its drawing: if its veins want more than its core gives, the ones farthest \
+				from the core go unfed.""");
+		page("circuit_elements", Items.BLAZE_POWDER, null, "Elements in the Circuits", """
+				From Master, paint a phase seal on one of the core's four outlets (the palette's last slot: click it again, or press 0, for \
+				another element). It takes the element's token, as an element banner does at the forge: an iron nugget for Metal, a \
+				sapling for Wood, a prismarine shard for Water, blaze powder for Fire, a clay ball for Earth.
+				The seal tunes the lines joined to it (never across a part) to its element, and every vein those lines bring a part \
+				carries it; a part fed by two elements gets both. Seals of two elements in one set of lines clash: they lose their \
+				element, and the lines show red.
+				- Metal: blows bite through a third of the foe's armour; the art carries on to a second foe; on the body, each vein a \
+				15 percent chance a cut glances off.
+				- Wood: blows heal the puppet a tenth of their harm; the art roots the foe; on the body, a cut Wood line grows back in \
+				30 seconds.
+				- Water: blows and the art slow the foe; on the body, full speed in water and no fall damage.
+				- Fire: blows and the art set the foe alight; on the body, a tenth swifter, but every blow heats it more.
+				- Earth: blows knock the foe back, the art staggers it; on the body, each vein a tenth more health and knockback \
+				resistance (half again at most).
+				The arms carry the blows (a bee's stinger its sting), the mouth or stinger the art, and the legs, wings, head and heart \
+				the body.
+				A seal of the core's own element gives 2 qi more, one of the element that overcomes it 2 less. Lines of two elements \
+				close to each other, where Clarity reads a leak, don't leak if the one feeds the other (Wood feeds Fire, Fire Earth, \
+				Earth Metal, Metal Water, Water Wood), and give 1 qi more a pair; if the one overcomes the other they leak twice over and \
+				heat.""");
+		page("circuit_arrays", ModItems.INSCRIPTION_BRUSH, null, "Arrays", """
+				A small shape of strokes drawn touching a part gives the puppet a technique. The board knows each by its shape, outlines \
+				it in its colour, and tells of it when you point at the part. Each draws its qi from the core's after every vein: short of \
+				qi, the arrays go unfed first. Whoever can paint the strokes can draw them. None stands in the eight cells round the core: \
+				those are the core's own.
+				- Eye of Discernment: a relay knot touching the head, lines on its other free sides. It sees the unseen, takes up a foe at \
+				once and sees 16 blocks farther. 2 qi.
+				- Guard Coil: four thick lines in a block, two by two, touching an arm. It turns a foe's blow aside every 8 seconds. 2 qi.
+				- Gale Stair: three diagonals in a slant, one touching a leg or a wing. It dashes up to 8 blocks at a foe out of its reach, \
+				every 6 seconds. 2 qi.
+				- Gathering Spiral: a gathering knot touching the mouth or stinger, lines on its other free sides. Its art's charges come \
+				back twice as fast. 2 qi.
+				- Iron Lock: a ward knot touching the heart, bridges on its other free sides. No Command Seal can seize it, and a \
+				Circuit-Freeze Talisman holds it half as long. 3 qi.
+				A knot's sides on the frame's matter, past the edge or in the core's square are left as they are; it wants two lines at \
+				least (a ward, one bridge). An array works while its part is fed and the core's qi reaches its strokes.
+				Twin Seal: the same Guard Coil or Gale Stair drawn on both halves of a pair, each the other's mirror, halves its wait for \
+				1 qi more.
+				Without an Eye a puppet doesn't see an invisible foe at all.
+				The Circuit Paths draw them where the frame has room: the Scout and the Sentinel an Eye from Adept; the Brawler a Guard \
+				Coil, and the Scout (the Courier on a wing) a Gale Stair, from Master; the Caster a Gathering Spiral from Grandmaster; \
+				the Balanced and the Sentinel an Iron Lock at Saint, and a Saint's coil or stair mirrored.""");
+		page("puppet_souls", Items.SOUL_LANTERN, null, "Souls in Puppets", """
+				Every puppet has a Soul-Binding Ring. Empty, the puppet is hollow: it does as it is told and fights plainly.
+				- Catching a soul: a beast (an animal or a demon beast) or a cultivator slain by you or one of your puppets within 16 blocks \
+				of one of your puppets whose ring is empty is drawn into the nearest such ring. Binding a cultivator's soul is a devilish \
+				deed.
+				- A beast's soul gives its instincts: 8 blocks more sight, a tenth of blows slipped, a tenth swifter.
+				- A cultivator's soul gives its mind: the puppet goes by its name, holds a charge more of its core's art, and casts one or \
+				two of the cultivator's own arts in a fight, every ten seconds, at the puppet's own realm.
+				- The copy: while you are in the world with it and it can act, its circuits copy the soul. After an hour (three of the \
+				world's days) the copy is whole: the real soul goes on, and the puppet keeps all it gave.
+				- At a Puppet Workbench: open the puppet's board with the brush, the puppet within 8 blocks of a bench. Release lets the \
+				real soul go before its copy is whole (letting a cultivator go draws you back toward the righteous a little); Move puts it \
+				into another of your puppets with an empty ring by the same bench, its copying begun anew there; Wipe Soul wipes a whole \
+				copy, its mind lost.
+				A soul is never an item: it goes only from ring to ring.""");
+		page("puppet_bodies", Items.BONE, null, "Bodies of Flesh", """
+				A slain cultivator's body, fresh or rotting, can become a puppet's body. Sneak and right-click it with the Inscription Brush: \
+				what it held spills where it lay, and you carry the Body of the dead, a humanoid frame of the grade whose realms hold \
+				theirs. It is a devilish deed. Never a player's body, a mortal's, bones, or one too long dead.
+				- Its board is the body's own meridians: a well-balanced layout already drawn, in the colour of flesh. They can't be \
+				wiped or painted over. Rot has broken some of them (two when fresh, more the longer it lay, up to twelve): mend a break \
+				with a plain line. Add what else you will, as on a frame.
+				- Laid on a Puppet Workbench it refines for a day of the world's (twenty minutes) before it can be sealed; the board tells \
+				how far. Taken off the bench, it keeps what it refined.
+				- Its heart: a demon core of at least the dead's realm. A demon's body comes with its own core.
+				- Sealed, the puppet stands at the dead's own realm and stage whatever its core, at a cultivator's whole strength (a \
+				frame's is seven tenths), in the dead's likeness; its art is the dead's element where they had one.
+				- Wrecked, it leaves its core and bones; taken apart, its body, still refined.
+				Righteous cultivators who see you with one take you for an enemy.""");
+		page("puppets", ModItems.artifact(ArtifactKind.HUMANOID_FRAME, ArtifactGrade.SPIRIT), null, "Puppets", """
+				A puppet is seven tenths as strong as a cultivator of its realm, as its circuits allow. It never gains a stage.
+				- A humanoid fights and guards. From Spirit grade its art is a beam from its mouth in its core's element.
+				- A bee carries goods between two chests and runs messages. From Spirit grade its art flies from its stinger. A Heaven or \
+				Immortal bee steps through space instead of flying.
+				Its art has a charge (two with a gathering knot) that comes back by itself. Every blow heats its lines, every art three \
+				times as much, and it sheds a point of heat every two seconds. Past what its Stability bears (from 85 it never does; \
+				below that, past 24 heat; below 65, past 12; below 40, past 6) it overheats: it stalls, smoking, and its art is locked a while.
+				Every fifth of its health it loses cuts a line of its board, and every blow of Metal qi cuts one more and strikes half \
+				again as hard. Right-click your puppet with the Inscription Brush to open its board and paint the cuts again (this \
+				teaches Puppetry). Right-click it with its frame's body matter (an oak log for a Mortal frame, copper for Spirit, iron \
+				for Earth, quartz for Heaven, gold for Immortal) to mend a quarter of its health.
+				A wrecked puppet leaves its core and some of its matter. With Qi Sense on, you see the circuits glowing on any puppet's \
+				back, its own or an enemy's.
+				Some wandering cultivators are puppeteers, a puppet or two at their side. With their maker gone, such puppets fall apart.""");
+		page("command_seal", ModItems.COMMAND_SEAL, null, "The Command Seal", """
+				@craft command_seal
+				- Right-click at the air: the list of your puppets, with their orders, health and where they are.
+				- Right-click one of your puppets: its page. Follow, Guard (where you stand), Hold.
+				- Sneak and right-click a chest: marks it for a bee's work, first the chest to carry from, then the one to carry to. Then \
+				give the bee Work with the seal in hand.
+				- A bee's page also sends a message to any player in this world: the bee flies off, speaks it beside them, and comes back.
+				- Take apart: stand beside it and press twice. Its frame (drawing and all) and its core drop where it stood.
+				Your rank decides how many puppets you keep: their weight in slots, a Mortal puppet 1 up to an Immortal one 5 (Apprentice \
+				2, Adept 4, Master 7, Grandmaster 11, Saint 16, one more for every 20 points of Spirit). A puppet hears you within your \
+				reach (Apprentice 32 blocks up to Saint 128, or your Consciousness Domain if wider), less with poor Clarity, more with \
+				more veins to its heart. Out of reach, it stands still.
+				Hold the seal on someone else's puppet to seize it: your Puppetry must stand a rank above its maker's (two for Fine \
+				circuits, three for Perfect, and one more for each vein to its heart past the first), your seal must be of a grade above \
+				the one it is bound to (see Ranks of Command), and it takes longer the clearer its circuits.
+				A Circuit-Freeze Talisman, drawn with the brush, freezes the puppets where it lands for five seconds.""");
+		page("puppet_ranks", ModItems.SUB_SEAL, null, "Ranks of Command", """
+				- The seal's grade: a Command Seal is Mortal when made. Sneak and right-click a Puppet Workbench with it to raise it a \
+				grade, for 4 spirit stones of the new grade. Your Puppetry holds a seal so high at most: Apprentice Mortal, Adept \
+				Spirit, Master Earth, Grandmaster Heaven, Saint Immortal. A puppet is bound to the best seal you carry when you seal \
+				it, and to a better one you give it an order with. Seizing it wants a seal above that grade in hand; a wandering \
+				puppeteer's puppets are bound at Spirit.
+				- Sub-Seals: the Sub-Seal button on a puppet's page writes one on a sheet of paper. Whoever holds it right-clicks the \
+				puppet: it follows them and fights for them; again, it guards where they stand; again, it holds. Any order you give it \
+				yourself takes it back, and Revoke voids every Sub-Seal written for it so far.
+				- Generals: a Grandmaster or a Saint can make a humanoid of an Earth frame or better a General on its page, for 8 \
+				spirit stones of its frame's grade. Muster takes up to 8 of your other puppets within 16 blocks of it into its ranks: \
+				out of the world, kept in it as they were, still on your list and in your slots. Deploy sets them down round it, a \
+				guard guarding where it lands. A General wrecked or taken apart lets its ranks out where it stood.
+				- A mind of its own: once a Saint's puppet has copied its soul whole, three more of the world's days under your control \
+				(an hour) grow a mind of its own. It takes a name of its own and a bent from what it did most while it grew: Fierce \
+				(blows landed; strikes harder), Watchful (time on guard or holding; sees farther and takes up a foe sooner), Steadfast \
+				(harm borne; a fifth more health), Swift (ground covered; quicker on foot and wing) or Canny (arts cast; sheds heat \
+				twice as fast, its art comes back sooner).""");
+		page("puppet_players", Items.PLAYER_HEAD, null, "Players in Puppets", """
+				A player's soul can be held in a puppet's Soul-Binding Ring.
+				- Against their will: a player slain by you or one of your puppets within 16 blocks of one of your puppets whose ring is \
+				empty. Their body falls as any body does; at the respawn they are in the puppet. A devilish deed. The gamerule \
+				puppetSoulBinding turns this off.
+				- Willingly: on a hollow puppet's Command Seal page, beside it, Enter it (pressed twice): your body dies and your soul \
+				goes in, free. Or Offer to the player beside you: their screen shows the offer, to Accept or Decline, and if they accept \
+				their soul is held in it.
+				- By Soul Projection: your nascent soul, out of its body, right-clicks a puppet (the reach and the qi of a possession; its \
+				realm is no bar). Your own hollow puppet you enter for good, as Enter it does; another's hollow puppet holds you in its \
+				ring, its puppeteer's to steer, until you struggle free (only a player's puppet: an NPC puppeteer's seal holds its own \
+				shut). A soul in it already you drive out if it stands below your highest path, realm and stage (a beast's or a \
+				cultivator's soul, or a copy, is gone; a player's goes on as from a wrecked puppet, and only where players may fight); \
+				one as strong as you or stronger holds its place. Your soul goes home first and your body dies where it sat.
+				- Your soul's screen opens as you wake in the puppet. While you are held your inventory key opens it. On it: Let go, \
+				Struggle and Its board, and once the puppet is yours, Leave it, Its board, and Your puppets (your list, to order your \
+				other puppets).
+				- Circuits: the first tab of your menu, in the Cultivation tab's place (a puppet never cultivates), is the puppet's \
+				board. Your own body's you paint with your own qi, with Leave it and Your puppets under its Soul line. Your captor's you \
+				only look at: its command line, the line from its core to its heart that holds you, glows violet, the cell your \
+				struggle cuts next fills as you cut it (each cell's seconds shown as you point at it), and Struggle and Let go wait \
+				under its Soul line.
+				- Held: you watch through its eyes and can't look away; chat is your voice. Let go at any time and you die as any death \
+				goes (a nascent soul lingers there, free to take another body as the dead do). While your puppeteer controls it (they in \
+				the world with it; you, logged out or not), its circuits copy you: after an hour (three of the world's days) the copy is \
+				whole, your own soul is pushed out to the Netherworld, and the puppet keeps your name and your look.
+				- Struggle (Puppetry at least your puppeteer's, or your own realm above the puppet's): from within you take its command \
+				line, from the core toward its heart, a cell every 30 seconds, half that for each rank or realm above, four times as long \
+				where a ward keeps it. Your puppeteer is told and can paint the cells again. With no line of theirs left to its heart, you \
+				are free.
+				- Your puppeteer's page: Release (you play it), Control (you watch again), Sever (free for good). With your puppeteer \
+				away you play it until they come back; with your puppeteer slain you are free.
+				- Playing it: you ride inside it and move it as your own body, a bee flying where you look; left-click strikes with its \
+				blow, the cast key looses its art. Everything else as ever: your pack, doors, chests and beings to use, digging, taking \
+				things up (a puppet never sleeps, and rides nothing else). No one sees you, nothing strikes you but through it, and you \
+				neither hunger, age nor cultivate. A free soul's board paints its lines with its own qi, no brush needed. Leave it \
+				steps you out of it (it stays yours, hollow), and your soul goes on as after any death; wrecked, it sends your soul on the same way.
+				Seizing a puppet that is a player's own body takes half a minute of the seal held on it.""");
+		page("circuit_diagrams", ModItems.CIRCUIT_DIAGRAM, null, "Circuit Diagrams", """
+				The Copy button on a board copies it onto a sheet of paper with four strokes of the brush: a Circuit Diagram. Hold a \
+				diagram while painting a board of the same make and grade, and the Path button lays it over the board after your own \
+				Circuit Path. Strokes above your rank show grey.
+				The Bronze Puppets of the secret realms carry torn Circuit Fragments: quarters of the diagrams the puppeteers of old drew. \
+				With all four quarters of one diagram in your pack, right-click one to join them into an Ancient Circuit Diagram, the \
+				best layout there is for its frame.""");
+		page("puppet_army", ModBlocks.PUPPET_FACTORY, null, "The Linked Army", """
+				Puppets of a Grandmaster's making can stand together as one army.
+				- Link Knot (Grandmaster; key L on the board): painted against the heart of command, a vein of the heart coming in through it. \
+				Your linked puppets within 16 blocks of each other strike harder for each other, 3 in a hundred for each, 30 at most. They pass \
+				your orders on too: a linked puppet beyond your reach hears you through a chain of your linked puppets, each within 16 blocks of \
+				the next, from one that hears you itself. A Grandmaster's or a Saint's Circuit Path draws one.
+				- Formations: four or more of your linked puppets fighting one foe spread round it. Standing close round it on every side, they \
+				lock it: it can't move, jump or fly, and each second it is crushed for a quarter of their blows together.
+				- Puppet Factory: give it a Circuit Diagram, a frame's forging matter and 4 spirit stones of its grade, and a demon core for each \
+				puppet. While you are in the world it builds copies of the diagram's layout, within your slots and your Puppetry, and stands \
+				them on itself. It mends your puppets within 8 blocks too: a cut line every 5 seconds, and their health for a piece of their \
+				frame's matter. Its button switches it to repair only.
+				@craft puppet_factory
+				- Overseer Core: keeps your Circuit Diagrams. Every cut and every overheating of your puppets in fights is recorded by their \
+				design, and shows on its diagrams as a wear map: on its screen, and over the board when you hold the diagram at the bench. \
+				Puppets get better as you redraw them, not on their own.
+				@craft overseer_core
+				- Knowing the enemy's circuits: wreck a puppet that isn't yours and you know its design. Against every puppet built to it you \
+				strike a quarter harder, your blows cut its weakest lines, and seizing it wants a rank less. Its Circuit Diagram lies in its wreck.
+				- Self-repair: pour a Spring of the Ancients into your puppet (right-click it with the bottle). From then on it mends its own cut \
+				lines, one every 20 seconds. The spring stays in its frame if you take it apart.
+				- Shielded core: a demon core crafted with 4 Jade and 4 Obsidian is shielded. In the lower realms a puppet above Heavenly Being \
+				Grand Perfection stands at half its strength, and another's Realm Suppress halves any puppet; a shielded core keeps it whole.
+				- Self-destruct: the button at the head of a puppet's page (pressed twice). A moment later it bursts, six times its blow to all \
+				round it (a quarter of that at the edge, wider for higher frames), never you or yours, no block broken. Its core goes with it; \
+				a player's soul in it dies as any death goes.""");
 
 		// ======================================================= Legends =======================================================
 		chapter("legends", ModItems.legend(Legend.GANJIANG), Hint.SEEK, "Legends");
@@ -1735,7 +2006,7 @@ public final class Codex {
 				roughly how far, but never exactly where.
 				- Half a day later its gate fills with light and stays open for the first quarter of its time. Walk into it to go in.
 				- Each realm has a lowest realm it lets in. There is no upper limit: anyone at or above it may enter, by their strongest \
-				path. Only the living may enter (but the Yellow Springs Hollow, a realm of the dead), in their own bodies, carrying no one \
+				path. Only the living may enter (except the Yellow Springs Hollow, a realm of the dead), in their own bodies, carrying no one \
 				in a sleeve or a world.
 				- Inside, its qi is three times as dense as its world's, and that world's law still holds you.
 				- The sky presses down. You can fly no higher than a few blocks above the ground, unless you stand two whole realms above \
@@ -1778,8 +2049,8 @@ public final class Codex {
 				art's manual or spirit stones. The wraiths about it wake.
 				- Some time into each opening the swords wake: for a minute, blades rise from the gorge and fall like rain about everyone \
 				inside. A glint marks where each will land.
-				- The spire at its heart: the Sword Path winds up its face to the Sleeping Sword's shrine on the summit. Walk it on foot \
-				from its foot to the top. Its intent bears down harder the higher you climb, drags fliers down onto its steps and cuts \
+				- The spire at its heart: the Sword Path winds up its face to the Sleeping Sword's shrine on the summit. Walk it on foot, \
+				from the bottom to the top. Its intent bears down harder the higher you climb, drags fliers down onto its steps and cuts \
 				now and then; step off it and you must begin again.
 				- Then the sword's spirit meets you before the shrine as an equal, at your own strength. Defeat it, then right-click the \
 				sword in the shrine's stone.
@@ -1982,12 +2253,16 @@ public final class Codex {
 		chapter("laws", Items.NETHER_STAR, Hint.IMMORTAL, "Laws and Immortality");
 		page("laws", Items.WRITTEN_BOOK, TI, "The Laws", """
 				Metal, Wood, Water, Fire and Earth, and the greater Laws of Space, Time, and Life and Death, each with nine levels. Past \
-				True Immortal, every realm needs a certain total of Law levels.
+				True Immortal, breaking into each realm needs a total of Law levels, every Law's levels added together: Earth Immortal \
+				%d, Heaven Immortal %d, Golden Immortal %d, Taiyi Golden Immortal %d, Profound Sovereign %d and Heavenly Lord %d. Until \
+				you hold them, the breakthrough waits at Grand Perfection.
 				- Meditate in the Immortal Realm to comprehend the Law you are focusing on.
 				- Slay strong foes with an element's arts for glimpses of that element's Law.
 				- Survive the Five Decays to gain a level of your choice.
 				Each Law strengthens its own arts. The greater Laws open at Golden Immortal. You'll find them on the Methods tab's Laws \
-				page. A body of the Indestructible Body or past it comprehends them too (see The Body Path).""");
+				page, with how many levels the realm ahead wants. A body of the Indestructible Body or past it comprehends them too (see \
+				The Body Path).""".formatted(Laws.needed(Realm.EARTH_IMMORTAL), Laws.needed(Realm.HEAVEN_IMMORTAL), Laws.needed(Realm.GOLDEN_IMMORTAL),
+				Laws.needed(Realm.TAIYI_GOLDEN_IMMORTAL), Laws.needed(Realm.PROFOUND_SOVEREIGN), Laws.needed(Realm.HEAVENLY_LORD)));
 		page("law_domains", Items.END_CRYSTAL, "cultivation/law", "Law Domains", """
 				Once you comprehend a Law's first level, you awaken its domain: the Law's own ground spread out around you. Only one domain \
 				can be lit at a time, and it burns immortal essence. Foes inside it suffer the Law's effects, and your arts of that Law \

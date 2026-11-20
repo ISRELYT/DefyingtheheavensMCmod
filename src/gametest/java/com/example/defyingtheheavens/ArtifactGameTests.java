@@ -76,7 +76,8 @@ public class ArtifactGameTests implements FabricGameTest {
 		List<ArtifactRecipes.Recipe> all = ArtifactRecipes.all();
 		int forged = 0;
 		for (ArtifactKind kind : ArtifactKind.values()) for (ArtifactGrade grade : ArtifactGrade.values()) if (kind.has(grade)) forged++;
-		helper.assertTrue(all.size() == forged && forged == 7 * 5 + 5 * 4, "A working for every kind at every grade it is forged at");
+		// The seven first kinds and the two puppets' frames at every grade, the five elemental weapons from Spirit up.
+		helper.assertTrue(all.size() == forged && forged == 9 * 5 + 5 * 4, "A working for every kind at every grade it is forged at");
 		Set<Item> outputs = new HashSet<>();
 		for (ArtifactRecipes.Recipe recipe : all) {
 			helper.assertTrue(outputs.add(recipe.output()), recipe.output() + " has one working");
@@ -84,7 +85,8 @@ public class ArtifactGameTests implements FabricGameTest {
 			int count = recipe.materials().values().stream().mapToInt(Integer::intValue).sum() + (recipe.core() ? 1 : 0) + (recipe.token() ? 1 : 0);
 			helper.assertTrue(count <= ArtifactRecipes.MAX_MATERIALS, recipe.output() + " fits in the forge");
 			helper.assertTrue(recipe.materials().getOrDefault(recipe.grade().stone(), 0) == 2, recipe.output() + " takes two of its grade's stones");
-			helper.assertTrue(recipe.core() == (recipe.grade() != ArtifactGrade.MORTAL), "A demon core from Spirit grade up");
+			// A puppet's frame never: its core goes in at the Puppet Workbench.
+			helper.assertTrue(recipe.core() == (recipe.grade() != ArtifactGrade.MORTAL && !recipe.kind().isFrame()), "A demon core from Spirit grade up");
 			helper.assertTrue(recipe.token() == (recipe.kind() == ArtifactKind.BANNER && recipe.grade() == ArtifactGrade.MORTAL),
 					"Only a Mortal banner takes a token");
 			for (ArtifactRecipes.Recipe other : all) {

@@ -446,6 +446,12 @@ public class RealmGuardian extends PathfinderMob implements GeoEntity, Enemy {
 			case DECAYED_IMMORTAL -> {
 				// His spirit, gone back into his decay: nothing is left of it.
 			}
+			case BRONZE_PUPPET, MASTER_PUPPET -> {
+				spawnAtLocation(new ItemStack(Items.COPPER_INGOT, 1 + random.nextInt(3)));
+				if (random.nextFloat() < 0.5f) spawnAtLocation(new ItemStack(ModItems.LOW_SPIRIT_STONE, 1 + random.nextInt(2)));
+				// A torn quarter of its makers' circuit diagrams (Puppetry: CircuitFragmentItem); the Cave Abode master's own puppet always has one.
+				if (kind() == Kind.MASTER_PUPPET || random.nextFloat() < 0.35f) spawnAtLocation(CircuitFragmentItem.random(random));
+			}
 			default -> {
 				spawnAtLocation(new ItemStack(Items.COPPER_INGOT, 1 + random.nextInt(3)));
 				if (random.nextFloat() < 0.5f) spawnAtLocation(new ItemStack(ModItems.LOW_SPIRIT_STONE, 1 + random.nextInt(2)));

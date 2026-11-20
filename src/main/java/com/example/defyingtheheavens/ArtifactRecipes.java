@@ -102,9 +102,33 @@ public final class ArtifactRecipes {
 				list.add(recipe(ArtifactKind.MOUNTAIN_HAMMER, grade, true, false, Items.OBSIDIAN, 2, ModBlocks.JADE_STONE.asItem(), 1, stone, 2));
 				list.add(recipe(ArtifactKind.GOLDEN_SWORD, grade, true, false, Items.GOLD_INGOT, 2, Items.GLOWSTONE_DUST, 1, stone, 2));
 			}
+			// Puppets' frames (Puppetry), every grade and no core (it goes in at the Puppet Workbench): the body's matter as the grade looks
+			// (the user's pick, "Material by grade": wood, bronze, dark iron with jade inlay, silver-white, gold), the grade's metal for its
+			// joints, string for a humanoid's sinews or feathers for a bee's wings, and the grade's two stones.
+			for (ArtifactGrade grade : ArtifactGrade.values()) {
+				Item body = frameBody(grade), metal = grade.metal(), stone = grade.stone();
+				if (grade == ArtifactGrade.EARTH) {
+					list.add(recipe(ArtifactKind.HUMANOID_FRAME, grade, false, false, body, 3, metal, 1, ModItems.JADE, 1, Items.STRING, 2, stone, 2));
+					list.add(recipe(ArtifactKind.BEE_FRAME, grade, false, false, body, 2, metal, 1, ModItems.JADE, 1, Items.FEATHER, 2, stone, 2));
+				} else {
+					list.add(recipe(ArtifactKind.HUMANOID_FRAME, grade, false, false, body, 3, metal, 1, Items.STRING, 2, stone, 2));
+					list.add(recipe(ArtifactKind.BEE_FRAME, grade, false, false, body, 2, metal, 1, Items.FEATHER, 2, stone, 2));
+				}
+			}
 			recipes = List.copyOf(list);
 		}
 		return recipes;
+	}
+
+	/** What a puppet's frame of {@code grade} is built of: oak, copper (bronze), iron, quartz (silver-white), gold. */
+	public static Item frameBody(ArtifactGrade grade) {
+		return switch (grade) {
+			case MORTAL -> Items.OAK_LOG;
+			case SPIRIT -> Items.COPPER_INGOT;
+			case EARTH -> Items.IRON_INGOT;
+			case HEAVEN -> Items.QUARTZ;
+			case IMMORTAL -> Items.GOLD_INGOT;
+		};
 	}
 
 	/** Pairs of (item, count) after what it forges and whether it wants a core or a token. */

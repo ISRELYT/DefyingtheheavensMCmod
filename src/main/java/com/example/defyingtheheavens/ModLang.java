@@ -569,6 +569,8 @@ public final class ModLang {
 	public static final String TAB_JOURNAL = k("tab.journal");
 	public static final String JOURNAL_EMPTY = k("journal.empty");
 	public static final String JOURNAL_ENTRY = k("journal.entry");
+	/** An entry of the player's own (a method learned, their body, their blood): "Day 11: A method of cultivation". */
+	public static final String JOURNAL_ENTRY_OWN = k("journal.entry_own");
 	public static final String MSG_SECLUSION_REPULSE = k("message.seclusion.repulse");
 
 	// Cultivator clothing (see ClothingItem)
@@ -595,6 +597,8 @@ public final class ModLang {
 	public static final String CORE_STRENGTH_MORTAL = k("core.strength_mortal");
 	public static final String CORE_OWNER = k("core.owner");
 	public static final String CORE_SHORTFALL = k("core.shortfall");
+	/** The veins fall short with nothing stored ("runs dry in 0 s" said nothing: 2026-11-18). */
+	public static final String CORE_SHORTFALL_DRY = k("core.shortfall_dry");
 	public static final String CORE_HINT = k("core.hint");
 	// Its concealment (Concealments), the core's second function
 	public static final String CORE_TAB_BARRIER = k("core.tab.barrier");
@@ -1485,6 +1489,8 @@ public final class ModLang {
 	public static final String CRAFTS_FORGING = k("crafts.forging");
 	public static final String CRAFTS_FORMATIONS = k("crafts.formations");
 	public static final String CRAFTS_TALISMANS = k("crafts.talismans");
+	public static final String CRAFTS_PUPPETRY = k("crafts.puppetry");
+	public static final String CRAFTS_PUPPETRY_HOLDS = k("crafts.puppetry_holds");
 	public static final String CRAFTS_HINT = k("crafts.hint");
 	// Talismans (Talismans, TalismanItem, TalismanPattern): drawing them, their tooltips, what they do
 	public static final String TALISMAN_TITLE = k("talisman.title");
@@ -1961,6 +1967,8 @@ public final class ModLang {
 	public static final String LAWS_TOTAL = k("laws.total");
 	public static final String LAWS_NEXT = k("laws.next");
 	public static final String LAWS_NEXT_OPEN = k("laws.next_open");
+	/** Every realm of the ladder with the Laws it wants (Laws#ladderLine): %s the list. */
+	public static final String LAWS_LADDER = k("laws.ladder");
 	public static final String LAWS_FOCUS = k("laws.focus");
 	public static final String LAWS_FOCUS_AWAY = k("laws.focus_away");
 	public static final String LAWS_NO_FOCUS = k("laws.no_focus");
@@ -2503,6 +2511,450 @@ public final class ModLang {
 	public static final String JEI_TALISMAN_QI = k("jei.talisman_qi");
 	public static final String JEI_TALISMAN_HOW = k("jei.talisman_how");
 	public static final String JEI_BRUSH = k("jei.brush");
+
+	// Puppetry (Puppetry, PuppetFrameItem, PuppetWorkbenchBlock, PuppetBoards, PuppetEntity, CommandSealItem, PuppetCommands, PuppetCouriers;
+	// the client's PuppetBoardScreen and CommandSealScreen)
+	public static final String FRAME_GRADE_LINE = k("frame.grade_line");
+	public static final String FRAME_HUMANOID_ROLE = k("frame.humanoid_role");
+	public static final String FRAME_BEE_ROLE = k("frame.bee_role");
+	public static final String FRAME_BAND = k("frame.band");
+	public static final String FRAME_BAND_ONE = k("frame.band_one");
+	public static final String FRAME_BOARD = k("frame.board");
+	public static final String FRAME_DRAWN = k("frame.drawn");
+	public static final String FRAME_UNDRAWN = k("frame.undrawn");
+	public static final String FRAME_USE = k("frame.use");
+	public static final String PUPPET_SLOTS = k("puppet.slots");
+	public static final String BENCH_TOOLTIP = k("tooltip.puppet_workbench");
+	public static final String BENCH_HAS_FRAME = k("bench.has_frame");
+	public static final String BENCH_FRAME_LAID = k("bench.frame_laid");
+	public static final String BENCH_FRAME_FIRST = k("bench.frame_first");
+	public static final String BENCH_HAS_CORE = k("bench.has_core");
+	public static final String BENCH_CORE_TOO_WEAK = k("bench.core_too_weak");
+	public static final String BENCH_CORE_SET = k("bench.core_set");
+	public static final String BENCH_CORE_SET_TOP = k("bench.core_set_top");
+	public static final String BENCH_EMPTY = k("bench.empty");
+	public static final String BENCH_TOOK_BOTH = k("bench.took_both");
+	public static final String BENCH_TOOK_CORE = k("bench.took_core");
+	public static final String BENCH_TOOK_FRAME = k("bench.took_frame");
+	public static final String BOARD_NO_CORE = k("board.no_core");
+	public static final String BOARD_CORE = k("board.core");
+	public static final String BOARD_CORE_ELEMENT = k("board.core_element");
+	/** A live puppet's board: where it stands now (not "its puppet will stand": 2026-11-18). */
+	public static final String BOARD_CORE_LIVE = k("board.core_live");
+	public static final String BOARD_CORE_ELEMENT_LIVE = k("board.core_element_live");
+	public static final String BOARD_WIPED = k("board.wiped");
+	public static final String PAINT_RANK = k("board.paint_rank");
+	public static final String PAINT_NO_BRUSH = k("board.paint_no_brush");
+	public static final String PAINT_NEEDS = k("board.paint_needs");
+	public static String boardRefusal(String reason) { return k("board.refusal." + reason); }
+	public static final String SEAL_NO_CORE = k("seal.no_core");
+	public static final String SEAL_HEART_UNFED = k("seal.heart_unfed");
+	public static final String SEAL_NO_SLOTS = k("seal.no_slots");
+	public static final String SEAL_NO_STONES = k("seal.no_stones");
+	public static final String SEAL_DONE = k("seal.done");
+	public static final String SEAL_OVER_BUDGET = k("seal.over_budget");
+	// The deeper circuits, phase A: the core's qi, a part's veins, the builds.
+	public static final String BOARD_QI = k("board.qi");
+	public static final String BOARD_QI_ABOUT = k("board.qi_about");
+	public static final String BOARD_QI_OVER = k("board.qi_over");
+	public static final String BOARD_NODE_VEINS = k("board.node_veins");
+	public static final String BOARD_NODE_UNFED_VEINS = k("board.node_unfed_veins");
+	public static final String BOARD_NODE_DRAWS = k("board.node_draws");
+	public static final String BOARD_NODE_SURE = k("board.node_sure");
+	public static final String BOARD_NODE_WARDED = k("board.node_warded");
+	public static final String BOARD_NODE_FRAIL = k("board.node_frail");
+	public static final String BOARD_NODE_NO_ART = k("board.node_no_art");
+	public static String boardNodePower(String kind) { return k("board.node_power." + kind); }
+	public static String pathBuild(String id) { return k("board.build." + id); }
+	public static String pathBuildAbout(String id) { return k("board.build_about." + id); }
+	public static final String BOARD_PATH_BUILD = k("board.path_build");
+	// The deeper circuits, phase B: phase seals on the outlets.
+	public static final String BOARD_SEAL_CYCLE = k("board.seal_cycle");
+	public static final String BOARD_NODE_PHASES = k("board.node_phases");
+	public static final String BOARD_QI_PHASES = k("board.qi_phases");
+	public static String boardPhaseEffect(String role, String phase) { return k("board.phase_effect." + role + "." + phase); }
+	// The deeper circuits, phase C: arrays.
+	public static String boardArray(String id) { return k("board.array." + id); }
+	public static String boardArrayAbout(String id) { return k("board.array_about." + id); }
+	public static final String BOARD_NODE_ARRAY = k("board.node_array");
+	public static final String BOARD_NODE_ARRAY_TWIN = k("board.node_array_twin");
+	public static final String BOARD_NODE_ARRAY_UNREACHED = k("board.node_array_unreached");
+	public static final String BOARD_NODE_ARRAY_UNFED = k("board.node_array_unfed");
+	public static final String BOARD_QI_ARRAYS = k("board.qi_arrays");
+	public static final String SEIZE_LOCKED = k("command.seize_locked");
+	public static String circuitGrade(String id) { return k("circuit_grade." + id); }
+	public static String boardStroke(String id) { return k("board.stroke." + id); }
+	public static String boardStrokeAbout(String id) { return k("board.stroke_about." + id); }
+	public static String boardScore(String id) { return k("board.score." + id); }
+	public static String boardScoreAbout(String id) { return k("board.score_about." + id); }
+	public static String puppetNode(String id) { return k("puppet.node." + id); }
+	public static String pathName(int rank) { return k("board.path." + rank); }
+	public static final String BOARD_GRADE = k("board.grade");
+	public static final String BOARD_GRADE_HIDDEN = k("board.grade_hidden");
+	public static final String BOARD_SCORE_LOCKED = k("board.score_locked");
+	public static final String BOARD_NODE_FED = k("board.node_fed");
+	public static final String BOARD_NODE_DEAD = k("board.node_dead");
+	public static final String BOARD_SOCKET = k("board.socket");
+	public static final String BOARD_OUTLET = k("board.outlet");
+	public static final String BOARD_JOINT = k("board.joint");
+	public static final String BOARD_FLAW = k("board.flaw");
+	public static final String BOARD_CUT = k("board.cut");
+	public static final String BOARD_UNFED_LINE = k("board.unfed_line");
+	public static final String BOARD_WEAK_SPOT = k("board.weak_spot");
+	public static final String BOARD_HEAT_AT = k("board.heat_at");
+	public static final String BOARD_PATH = k("board.path");
+	public static final String BOARD_HEAT = k("board.heat");
+	public static final String BOARD_WEAK = k("board.weak");
+	public static final String BOARD_WIPE = k("board.wipe");
+	public static final String BOARD_SURE = k("board.sure");
+	public static final String BOARD_SEAL = k("board.seal");
+	public static final String BOARD_SEAL_COST = k("board.seal_cost");
+	public static final String BOARD_SLOTS = k("board.slots");
+	public static final String BOARD_BRUSH = k("board.brush");
+	public static final String BOARD_NO_BRUSH = k("board.no_brush");
+	public static final String BOARD_BRUSH_CREATIVE = k("board.brush_creative");
+	public static final String BOARD_HINT = k("board.hint");
+	public static final String BOARD_NODES = k("board.nodes");
+	public static final String BOARD_WEAR = k("board.wear");
+	public static final String BOARD_NEEDS_RANK = k("board.needs_rank");
+	public static final String BOARD_SEALED_NOTE = k("board.sealed_note");
+	public static String puppetOrder(String id) { return k("puppet.order." + id); }
+	public static final String PUPPET_NAME = k("puppet.name");
+	public static final String PUPPET_WENT_INERT = k("puppet.went_inert");
+	public static final String PUPPET_HEARS_AGAIN = k("puppet.hears_again");
+	public static final String PUPPET_OVERHEATED = k("puppet.overheated");
+	public static final String PUPPET_WRECKED = k("puppet.wrecked");
+	public static final String PUPPET_CHEST_GONE = k("puppet.chest_gone");
+	// Puppetry phase 2a: souls in puppets (PuppetSouls).
+	public static final String PUPPET_SOUL_NAME = k("puppet.soul_name");
+	public static final String SOUL_BOUND_BEAST = k("soul.bound_beast");
+	public static final String SOUL_BOUND_CULTIVATOR = k("soul.bound_cultivator");
+	public static final String SOUL_COPY_WHOLE = k("soul.copy_whole");
+	public static final String SOUL_NONE_REAL = k("soul.none_real");
+	public static final String SOUL_NO_COPY = k("soul.no_copy");
+	public static final String SOUL_NOT_AT_BENCH = k("soul.not_at_bench");
+	public static final String SOUL_NO_RING = k("soul.no_ring");
+	public static final String SOUL_RELEASED = k("soul.released");
+	public static final String SOUL_MOVED = k("soul.moved");
+	public static final String SOUL_WIPED = k("soul.wiped");
+	public static final String SOUL_FREED_DISMANTLED = k("soul.freed_dismantled");
+	public static String soulKind(String id) { return k("soul.kind." + id); }
+	public static String soulGives(String id) { return k("soul.gives." + id); }
+	public static final String BOARD_SOUL_HOLLOW = k("board.soul_hollow");
+	public static final String BOARD_SOUL_REAL = k("board.soul_real");
+	public static final String BOARD_SOUL_COPY = k("board.soul_copy");
+	public static final String BOARD_SOUL_ABOUT = k("board.soul_about");
+	public static final String BOARD_SOUL_ARTS = k("board.soul_arts");
+	public static final String BOARD_SOUL_RELEASE = k("board.soul_release");
+	public static final String BOARD_SOUL_MOVE = k("board.soul_move");
+	public static final String BOARD_SOUL_WIPE = k("board.soul_wipe");
+	public static final String BOARD_SOUL_AT_BENCH = k("board.soul_at_bench");
+	public static final String BOARD_SOUL_NO_RING = k("board.soul_no_ring");
+	// Puppetry phase 2b: bodies of flesh (PuppetBodies).
+	public static final String BODY_NAME = k("body.name");
+	public static final String BODY_WHO = k("body.who");
+	public static final String BODY_BOARD = k("body.board");
+	public static final String BODY_REFINED = k("body.refined");
+	public static final String BODY_OWN_CORE = k("body.own_core");
+	public static final String BODY_WANTS_CORE = k("body.wants_core");
+	public static final String BODY_NOT_PLAYERS = k("body.not_players");
+	public static final String BODY_MORTAL = k("body.mortal");
+	public static final String BODY_TOO_OLD = k("body.too_old");
+	public static final String BODY_BONES = k("body.bones");
+	public static final String BODY_TAKEN = k("body.taken");
+	public static final String BODY_REFINING = k("body.refining");
+	public static final String BODY_CORE_TOO_WEAK = k("body.core_too_weak");
+	public static final String BENCH_BODY_LAID = k("bench.body_laid");
+	public static final String BOARD_REFINING = k("board.refining");
+	public static final String BOARD_MERIDIAN = k("board.meridian");
+	// Puppetry phase 2c: graded seals, Sub-Seals, Generals, a Saint's puppets' minds of their own.
+	public static final String COMMAND_SEAL_GRADED = k("item.command_seal_graded");
+	public static final String COMMAND_SEAL_GRADE = k("tooltip.command_seal_grade");
+	public static final String COMMAND_SEAL_GRADE_TOP = k("tooltip.command_seal_grade_top");
+	public static final String SEAL_RAISED = k("command.seal_raised");
+	public static final String SEAL_AT_TOP = k("command.seal_at_top");
+	public static final String SEAL_RANK_HOLDS = k("command.seal_rank_holds");
+	public static final String SEAL_RAISE_STONES = k("command.seal_raise_stones");
+	public static final String SEAL_BOUND = k("command.seal_bound");
+	public static final String SEIZE_SEAL = k("command.seize_seal");
+	public static final String SUB_SEAL_NAME = k("item.sub_seal_named");
+	public static final String SUB_SEAL_BOUND = k("tooltip.sub_seal_bound");
+	public static final String SUB_SEAL_USE = k("tooltip.sub_seal_use");
+	public static final String SUB_SEAL_BLANK = k("tooltip.sub_seal_blank");
+	public static final String SUB_SEAL_WRITTEN = k("command.sub_seal_written");
+	public static final String SUB_SEAL_NEEDS = k("command.sub_seal_needs");
+	public static final String SUB_SEAL_REVOKED = k("command.sub_seal_revoked");
+	public static final String SUB_SEAL_VOID = k("command.sub_seal_void");
+	public static final String SUB_SEAL_OTHER = k("command.sub_seal_other");
+	public static final String SUB_SEAL_FOLLOW = k("command.sub_seal_follow");
+	public static final String SUB_SEAL_GUARD = k("command.sub_seal_guard");
+	public static final String SUB_SEAL_HOLD = k("command.sub_seal_hold");
+	public static final String SUB_SEAL_LENT = k("command.sub_seal_lent");
+	public static final String GENERAL_MADE = k("command.general_made");
+	public static final String GENERAL_RANK = k("command.general_rank");
+	public static final String GENERAL_FRAME = k("command.general_frame");
+	public static final String GENERAL_STONES = k("command.general_stones");
+	public static final String GENERAL_MUSTERED = k("command.general_mustered");
+	public static final String GENERAL_NONE_NEAR = k("command.general_none_near");
+	public static final String GENERAL_FULL = k("command.general_full");
+	public static final String GENERAL_DEPLOYED = k("command.general_deployed");
+	public static final String GENERAL_EMPTY = k("command.general_empty");
+	public static final String GENERAL_FELL = k("command.general_fell");
+	public static final String COMMAND_IN_RANKS = k("command.in_ranks");
+	public static final String PUPPET_GREW_A_MIND = k("puppet.grew_a_mind");
+	public static String puppetTrait(String id) { return k("puppet.trait." + id); }
+	public static String puppetTraitAbout(String id) { return k("puppet.trait_about." + id); }
+	public static final String LIST_SEAL = k("puppet_list.seal");
+	public static final String LIST_NO_SEAL = k("puppet_list.no_seal");
+	public static final String LIST_BOUND_SEAL = k("puppet_list.bound_seal");
+	public static final String LIST_LENT = k("puppet_list.lent");
+	public static final String LIST_GENERAL = k("puppet_list.general");
+	public static final String LIST_IN_RANKS = k("puppet_list.in_ranks");
+	public static final String LIST_MIND = k("puppet_list.mind");
+	public static final String LIST_MAKE_GENERAL = k("puppet_list.make_general");
+	public static final String LIST_MAKE_GENERAL_TIP = k("puppet_list.make_general_tip");
+	public static final String LIST_MUSTER = k("puppet_list.muster");
+	public static final String LIST_MUSTER_TIP = k("puppet_list.muster_tip");
+	public static final String LIST_DEPLOY = k("puppet_list.deploy");
+	public static final String LIST_DEPLOY_TIP = k("puppet_list.deploy_tip");
+	public static final String LIST_SUB_SEAL = k("puppet_list.sub_seal");
+	public static final String LIST_SUB_SEAL_TIP = k("puppet_list.sub_seal_tip");
+	public static final String LIST_REVOKE = k("puppet_list.revoke");
+	public static final String LIST_REVOKE_TIP = k("puppet_list.revoke_tip");
+	// Puppetry phase 2d: players' souls in puppets (PuppetPlayers).
+	public static final String DEATH_SOUL_WENT_ON = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_went_on";
+	public static final String DEATH_SOUL_INTO_PUPPET = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_into_puppet";
+	public static final String DEATH_SOUL_LEFT_PUPPET = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_left_puppet";
+	public static final String SOUL_BOUND_PLAYER = k("soul.bound_player");
+	public static final String PUPPET_SOUL_A_PUPPET = k("puppet_soul.a_puppet");
+	public static final String PUPPET_SOUL_HELD_IN = k("puppet_soul.held_in");
+	public static final String PUPPET_SOUL_FREE_IN = k("puppet_soul.free_in");
+	public static final String PUPPET_SOUL_LET_GO_BUTTON = k("puppet_soul.let_go_button");
+	public static final String PUPPET_SOUL_LET_GO_TIP = k("puppet_soul.let_go_tip");
+	public static final String PUPPET_SOUL_LEAVE_BUTTON = k("puppet_soul.leave_button");
+	public static final String PUPPET_SOUL_LEAVE_TIP = k("puppet_soul.leave_tip");
+	public static final String PUPPET_SOUL_BOARD_BUTTON = k("puppet_soul.board_button");
+	public static final String PUPPET_SOUL_BOARD_TIP = k("puppet_soul.board_tip");
+	public static final String PUPPET_SOUL_STRUGGLE_BUTTON = k("puppet_soul.struggle_button");
+	public static final String PUPPET_SOUL_STRUGGLE_TIP = k("puppet_soul.struggle_tip");
+	public static final String PUPPET_SOUL_GONE_OUT = k("puppet_soul.gone_out");
+	public static final String PUPPET_SOUL_MASTER_FELL = k("puppet_soul.master_fell");
+	public static final String PUPPET_SOUL_PLAYS = k("puppet_soul.plays");
+	public static final String PUPPET_SOUL_PLAYS_OWN = k("puppet_soul.plays_own");
+	public static final String PUPPET_SOUL_STRUGGLED_FREE = k("puppet_soul.struggled_free");
+	public static final String PUPPET_SOUL_PUSHED_OUT = k("puppet_soul.pushed_out");
+	public static final String PUPPET_SOUL_NOW_FREE = k("puppet_soul.now_free");
+	public static final String PUPPET_SOUL_SEVERED = k("puppet_soul.severed");
+	public static final String PUPPET_SOUL_NONE = k("puppet_soul.none");
+	public static final String PUPPET_SOUL_RELEASED = k("puppet_soul.released");
+	public static final String PUPPET_SOUL_CONTROLLED = k("puppet_soul.controlled");
+	public static final String PUPPET_SOUL_RELEASED_TOLD = k("puppet_soul.released_told");
+	public static final String PUPPET_SOUL_CONTROLLED_TOLD = k("puppet_soul.controlled_told");
+	public static final String PUPPET_SOUL_AWAY = k("puppet_soul.away");
+	public static final String PUPPET_SOUL_SEVERED_DONE = k("puppet_soul.severed_done");
+	public static final String PUPPET_SOUL_ALREADY = k("puppet_soul.already");
+	public static final String PUPPET_SOUL_NOT_NOW = k("puppet_soul.not_now");
+	public static final String PUPPET_SOUL_ENTER_NONE = k("puppet_soul.enter_none");
+	public static final String PUPPET_SOUL_ENTER_BUTTON = k("puppet_soul.enter_button");
+	public static final String PUPPET_SOUL_ENTER_TIP = k("puppet_soul.enter_tip");
+	public static final String PUPPET_SOUL_TAKEN = k("puppet_soul.taken");
+	public static final String PUPPET_SOUL_OFFERED = k("puppet_soul.offered");
+	public static final String PUPPET_SOUL_ACCEPT_BUTTON = k("puppet_soul.accept_button");
+	public static final String PUPPET_SOUL_ACCEPT_TIP = k("puppet_soul.accept_tip");
+	public static final String PUPPET_SOUL_OFFER_SENT = k("puppet_soul.offer_sent");
+	public static final String PUPPET_SOUL_NO_OFFER = k("puppet_soul.no_offer");
+	public static final String PUPPET_SOUL_ACCEPTED = k("puppet_soul.accepted");
+	public static final String PUPPET_SOUL_NOT_BOUND = k("puppet_soul.not_bound");
+	public static final String PUPPET_SOUL_FREE_ALREADY = k("puppet_soul.free_already");
+	public static final String PUPPET_SOUL_CANT_STRUGGLE = k("puppet_soul.cant_struggle");
+	public static final String PUPPET_SOUL_STRUGGLING = k("puppet_soul.struggling");
+	public static final String PUPPET_SOUL_STRUGGLE_TOLD = k("puppet_soul.struggle_told");
+	public static final String PUPPET_SOUL_NOT_FREE = k("puppet_soul.not_free");
+	public static final String PUPPET_SOUL_LEFT = k("puppet_soul.left");
+	public static final String PUPPET_SOUL_LET_GO = k("puppet_soul.let_go");
+	public static final String PUPPET_SOUL_CUT_FROM_WITHIN = k("puppet_soul.cut_from_within");
+	public static final String PUPPET_SOUL_NO_ART = k("puppet_soul.no_art");
+	public static final String PUPPET_SOUL_NO_TARGET = k("puppet_soul.no_target");
+	public static final String PUPPET_SOUL_WRECKED = k("puppet_soul.wrecked");
+	public static final String PUPPET_SOUL_DISMANTLED = k("puppet_soul.dismantled");
+	public static final String PUPPET_SOUL_RELEASED_AT_BENCH = k("puppet_soul.released_at_bench");
+	public static final String PUPPET_SOUL_NO_ERRANDS = k("puppet_soul.no_errands");
+	public static final String LIST_RELEASE_SOUL = k("puppet_list.release_soul");
+	public static final String LIST_RELEASE_SOUL_TIP = k("puppet_list.release_soul_tip");
+	public static final String LIST_CONTROL_SOUL = k("puppet_list.control_soul");
+	public static final String LIST_CONTROL_SOUL_TIP = k("puppet_list.control_soul_tip");
+	public static final String LIST_SEVER_SOUL = k("puppet_list.sever_soul");
+	public static final String LIST_SEVER_SOUL_TIP = k("puppet_list.sever_soul_tip");
+	public static final String LIST_PERSON_HELD = k("puppet_list.person_held");
+	public static final String LIST_PERSON_RELEASED = k("puppet_list.person_released");
+	public static final String LIST_ENTER_SOUL_TIP = k("puppet_list.enter_soul_tip");
+	public static final String LIST_OFFER_SOUL = k("puppet_list.offer_soul");
+	public static final String LIST_OFFER_SOUL_TIP = k("puppet_list.offer_soul_tip");
+	public static final String LIST_OFFER_NOBODY = k("puppet_list.offer_nobody");
+	public static final String PUPPET_SOUL_OFFER_NONE = k("puppet_soul.offer_none");
+	public static final String PUPPET_SOUL_DECLINED = k("puppet_soul.declined");
+	public static final String SOUL_SCREEN_TITLE = k("soul_screen.title");
+	public static final String SOUL_SCREEN_NONE = k("soul_screen.none");
+	public static final String SOUL_SCREEN_RELEASED = k("soul_screen.released");
+	public static final String SOUL_SCREEN_AWAY = k("soul_screen.away");
+	public static final String SOUL_SCREEN_COPIED = k("soul_screen.copied");
+	public static final String SOUL_SCREEN_PLAYING = k("soul_screen.playing");
+	public static final String SOUL_SCREEN_OFFER = k("soul_screen.offer");
+	public static final String SOUL_SCREEN_DECLINE = k("soul_screen.decline");
+	public static final String SOUL_SCREEN_HINT = k("soul_screen.hint");
+	public static final String SOUL_SCREEN_HEALTH = k("soul_screen.health");
+	public static final String SOUL_SCREEN_PUPPETS = k("soul_screen.puppets");
+	public static final String SOUL_SCREEN_PUPPETS_TIP = k("soul_screen.puppets_tip");
+	/** Playing a puppet (the user, 2026-11-18: "live like normal"): the hint over the hotbar, the menu's first tab, what a puppet can't do. */
+	public static final String SOUL_HINT_FREE = k("soul_screen.hint_free");
+	public static final String SOUL_HINT_PLAYING = k("soul_screen.hint_playing");
+	public static final String TAB_CIRCUITS = k("tab.circuits");
+	public static final String BOARD_SOUL_OWN = k("board.soul_own");
+	public static final String BOARD_OWN_QI = k("board.own_qi");
+	/** A held soul's own look at its puppet's board (the user, 2026-11-18: "a non-free puppet should see circuits too so they can takeover/struggle free"). */
+	public static final String BOARD_CAPTIVE_PAINT = k("board.captive_paint");
+	public static final String BOARD_SOUL_CAPTIVE = k("board.soul_captive");
+	public static final String BOARD_CAPTIVE_BRUSH = k("board.captive_brush");
+	public static final String BOARD_CAPTIVE_ABOUT = k("board.captive_about");
+	public static final String BOARD_COMMAND_LINE = k("board.command_line");
+	public static final String BOARD_COMMAND_CELL = k("board.command_cell");
+	public static final String BOARD_COMMAND_WARDED = k("board.command_warded");
+	public static final String BOARD_COMMAND_NEXT = k("board.command_next");
+	public static final String BOARD_COMMAND_FIRST = k("board.command_first");
+	public static final String BOARD_STRUGGLE_ON = k("board.struggle_on");
+	public static final String BOARD_CAPTIVE_HINT = k("board.captive_hint");
+	public static final String PUPPET_SOUL_BOARD_CAPTIVE_TIP = k("puppet_soul.board_captive_tip");
+	/** A nascent soul out of its body going into a puppet (the user, 2026-11-18: "can someone posses a puppet with nascent soul projection?"). */
+	public static final String MSG_POSSESS_PUPPET_STRONGER = k("message.possess.puppet_stronger");
+	public static final String MSG_POSSESS_PUPPET_NPC = k("message.possess.puppet_npc");
+	public static final String PUPPET_SOUL_DRIVEN_OUT = k("puppet_soul.driven_out");
+	public static final String PUPPET_SOUL_DROVE_OUT = k("puppet_soul.drove_out");
+	public static final String PUPPET_SOUL_DROVE_OUT_TOLD = k("puppet_soul.drove_out_told");
+	public static final String PUPPET_SOUL_PROJECTED_OWN = k("puppet_soul.projected_own");
+	public static final String PUPPET_SOUL_PROJECTED_HELD = k("puppet_soul.projected_held");
+	public static final String PUPPET_SOUL_ENTERED_TOLD = k("puppet_soul.entered_told");
+	/** Puppet phase 3, the linked army. */
+	public static final String DESIGN_LEARNED = k("puppet.design_learned");
+	public static final String PUPPET_HELD_DOWN = k("puppet.held_down");
+	public static final String PUPPET_WHOLE_AGAIN = k("puppet.whole_again");
+	public static final String PUPPET_SPRING_ALREADY = k("puppet.spring_already");
+	public static final String PUPPET_SPRING_POURED = k("puppet.spring_poured");
+	public static final String PUPPET_FUSE_LIT = k("puppet.fuse_lit");
+	public static final String PUPPET_BURST = k("puppet.burst");
+	public static final String FRAME_SPRING = k("tooltip.frame_spring");
+	public static final String CORE_SHIELDED = k("tooltip.core_shielded");
+	public static final String DIAGRAM_WEAR = k("tooltip.diagram_wear");
+	public static final String BOARD_WEAR_KEY = k("board.wear_key");
+	public static final String LIST_SELF_DESTRUCT = k("list.self_destruct");
+	public static final String LIST_SELF_DESTRUCT_TIP = k("list.self_destruct_tip");
+	public static final String LIST_LINKED = k("list.linked");
+	public static final String LIST_HELD_DOWN = k("list.held_down");
+	public static final String LIST_SPRING = k("list.spring");
+	public static final String FACTORY_TITLE = k("factory.title");
+	public static final String FACTORY_TOOLTIP = k("tooltip.puppet_factory");
+	public static final String FACTORY_NOT_YOURS = k("factory.not_yours");
+	public static final String FACTORY_BUILT = k("factory.built");
+	public static final String FACTORY_BUILT_COUNT = k("factory.built_count");
+	public static final String FACTORY_DIAGRAM = k("factory.diagram");
+	public static final String FACTORY_MATTER = k("factory.matter");
+	public static final String FACTORY_CORES = k("factory.cores");
+	public static final String FACTORY_NEEDS = k("factory.needs");
+	public static final String FACTORY_MODE_BUILD = k("factory.mode_build");
+	public static final String FACTORY_MODE_REPAIR = k("factory.mode_repair");
+	public static final String FACTORY_MODE_TIP = k("factory.mode_tip");
+	public static final String FACTORY_BUILDING = k("factory.building");
+	public static final String FACTORY_NO_DIAGRAM = k("factory.no_diagram");
+	public static final String FACTORY_NO_RANK = k("factory.no_rank");
+	public static final String FACTORY_NO_SLOTS = k("factory.no_slots");
+	public static final String FACTORY_NO_MATTER = k("factory.no_matter");
+	public static final String FACTORY_NO_CORE = k("factory.no_core");
+	public static final String FACTORY_WONT_SEAL = k("factory.wont_seal");
+	public static final String FACTORY_AWAY = k("factory.away");
+	public static final String FACTORY_REPAIRING = k("factory.repairing");
+	public static final String FACTORY_NO_OWNER = k("factory.no_owner");
+	public static final String OVERSEER_TITLE = k("overseer.title");
+	public static final String OVERSEER_TOOLTIP = k("tooltip.overseer_core");
+	public static final String OVERSEER_NOT_YOURS = k("overseer.not_yours");
+	public static final String OVERSEER_EMPTY = k("overseer.empty");
+	public static final String OVERSEER_NO_WEAR = k("overseer.no_wear");
+	public static final String OVERSEER_CUTS = k("overseer.cuts");
+	public static final String OVERSEER_HEAT = k("overseer.heat");
+	public static final String OVERSEER_KEY = k("overseer.key");
+	public static final String LIST_PERSON_OWN = k("list.person_own");
+	public static final String PUPPET_SOUL_NO_SLEEP = k("puppet_soul.no_sleep");
+	public static final String PUPPET_SOUL_DORMANT = k("puppet_soul.dormant");
+	public static final String COMMAND_SEAL_TOOLTIP = k("tooltip.command_seal");
+	public static final String COMMAND_SEAL_MARKS = k("tooltip.command_seal_marks");
+	public static final String COMMAND_SEAL_FROM = k("tooltip.command_seal_from");
+	public static final String COMMAND_SEAL_TO = k("tooltip.command_seal_to");
+	public static final String SEAL_MARKED_FROM = k("command.marked_from");
+	public static final String SEAL_MARKED_TO = k("command.marked_to");
+	public static final String SEIZE_BEGUN = k("command.seize_begun");
+	public static final String SEIZE_BROKEN = k("command.seize_broken");
+	public static final String SEIZE_NEVER = k("command.seize_never");
+	public static final String SEIZE_RANK = k("command.seize_rank");
+	public static final String SEIZE_DONE = k("command.seize_done");
+	public static final String SEIZE_LOST = k("command.seize_lost");
+	public static final String COMMAND_GONE = k("command.gone");
+	public static final String COMMAND_AWAY = k("command.away");
+	public static final String COMMAND_UNLOADED = k("command.unloaded");
+	public static final String COMMAND_DISMANTLE_NEAR = k("command.dismantle_near");
+	public static final String COMMAND_DISMANTLED = k("command.dismantled");
+	public static final String COMMAND_OUT_OF_REACH = k("command.out_of_reach");
+	public static final String COMMAND_INERT = k("command.inert");
+	public static final String COMMAND_TOLD = k("command.told");
+	public static final String COMMAND_BEES_ONLY = k("command.bees_only");
+	public static final String COMMAND_MARK_FIRST = k("command.mark_first");
+	public static final String COMMAND_WORKING = k("command.working");
+	public static final String COMMAND_NO_MESSAGE = k("command.no_message");
+	public static final String COMMAND_NO_ADDRESSEE = k("command.no_addressee");
+	public static final String COURIER_OTHER_WORLD = k("courier.other_world");
+	public static final String COURIER_SENT = k("courier.sent");
+	public static final String COURIER_MESSAGE = k("courier.message");
+	public static final String COURIER_DELIVERED = k("courier.delivered");
+	public static final String COURIER_BACK = k("courier.back");
+	public static final String COURIER_BACK_UNDELIVERED = k("courier.back_undelivered");
+	public static final String LIST_TITLE = k("puppet_list.title");
+	public static final String LIST_SLOTS = k("puppet_list.slots");
+	public static final String LIST_REACH = k("puppet_list.reach");
+	public static final String LIST_NONE = k("puppet_list.none");
+	public static final String LIST_AWAY = k("puppet_list.away");
+	public static final String LIST_INERT = k("puppet_list.inert");
+	public static final String LIST_FAR = k("puppet_list.far");
+	public static final String LIST_OTHER_WORLD = k("puppet_list.other_world");
+	public static final String LIST_OUT_OF_REACH = k("puppet_list.out_of_reach");
+	public static final String LIST_HEALTH = k("puppet_list.health");
+	public static final String LIST_PLACE = k("puppet_list.place");
+	public static final String LIST_ORDER = k("puppet_list.order");
+	public static final String LIST_SCORES = k("puppet_list.scores");
+	public static final String LIST_CUTS = k("puppet_list.cuts");
+	public static final String LIST_UNLOADED = k("puppet_list.unloaded");
+	public static final String LIST_FOLLOW = k("puppet_list.follow");
+	public static final String LIST_GUARD = k("puppet_list.guard");
+	public static final String LIST_HOLD = k("puppet_list.hold");
+	public static final String LIST_WORK = k("puppet_list.work");
+	public static final String LIST_WORK_UNMARKED = k("puppet_list.work_unmarked");
+	public static final String LIST_MESSAGE_TO = k("puppet_list.message_to");
+	public static final String LIST_MESSAGE = k("puppet_list.message");
+	public static final String LIST_SEND = k("puppet_list.send");
+	public static final String LIST_DISMANTLE = k("puppet_list.dismantle");
+	public static final String LIST_MESSENGER = k("puppet_list.messenger");
+	public static final String DIAGRAM_NAME = k("diagram.name");
+	public static final String DIAGRAM_ANCIENT_NAME = k("diagram.ancient_name");
+	public static final String DIAGRAM_FOR = k("diagram.for");
+	public static final String DIAGRAM_ANCIENT = k("diagram.ancient");
+	public static final String DIAGRAM_AUTHOR = k("diagram.author");
+	public static final String DIAGRAM_CELLS = k("diagram.cells");
+	public static final String DIAGRAM_USE = k("diagram.use");
+	public static final String FRAGMENT_OF = k("fragment.of");
+	public static final String FRAGMENT_USE = k("fragment.use");
+	public static final String FRAGMENT_MISSING = k("fragment.missing");
+	public static final String FRAGMENT_JOINED = k("fragment.joined");
+	public static final String BOARD_COPY = k("board.copy");
+	public static final String BOARD_COPIED = k("board.copied");
+	public static final String BOARD_COPY_NEEDS = k("board.copy_needs");
+	public static final String BOARD_DIAGRAM = k("board.diagram");
+	public static final String BOARD_DIAGRAM_ABOVE = k("board.diagram_above");
 
 	private ModLang() {}
 }

@@ -168,6 +168,22 @@ public final class ModEntities {
 					.updateInterval(Integer.MAX_VALUE)
 					.build("spell_block"));
 
+	/** A humanoid puppet (see {@link PuppetEntity}, Puppetry): it fights and guards. */
+	public static final EntityType<PuppetEntity> PUPPET_HUMANOID = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("puppet_humanoid"),
+			EntityType.Builder.<PuppetEntity>of(PuppetEntity::new, MobCategory.MISC)
+					.sized(0.7f, 1.9f)
+					.clientTrackingRange(10)
+					.build("puppet_humanoid"));
+
+	/** A bee puppet (see {@link PuppetEntity}, Puppetry): it carries and runs messages. */
+	public static final EntityType<PuppetEntity> PUPPET_BEE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("puppet_bee"),
+			EntityType.Builder.<PuppetEntity>of(PuppetEntity::new, MobCategory.MISC)
+					.sized(0.8f, 0.7f)
+					.clientTrackingRange(10)
+					.build("puppet_bee"));
+
 	/** An earth golem summoned by its caster (see {@link EarthGolem}); the Earthen Titan is one three times as large. */
 	public static final EntityType<EarthGolem> EARTH_GOLEM = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("earth_golem"),
@@ -427,6 +443,8 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(CLONE_BODY, CloneBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_VESSEL, SoulVesselEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(EARTH_GOLEM, EarthGolem.createAttributes());
+		FabricDefaultAttributeRegistry.register(PUPPET_HUMANOID, PuppetEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(PUPPET_BEE, PuppetEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SWORD_SPIRIT, SwordSpirit.createAttributes());
 		FabricDefaultAttributeRegistry.register(VINE_KEEPER, RealmGuardian.createAttributes());
 		FabricDefaultAttributeRegistry.register(BRONZE_PUPPET, RealmGuardian.createAttributes());

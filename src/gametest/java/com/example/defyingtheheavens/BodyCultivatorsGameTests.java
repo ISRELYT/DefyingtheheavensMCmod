@@ -219,14 +219,14 @@ public class BodyCultivatorsGameTests implements FabricGameTest {
 		// Its library's and master's hall's manuals: the body's ways, of its path's.
 		RandomSource random = RandomSource.create(7);
 		for (int i = 0; i < 40; i++) {
-			List<ItemStack> library = MethodManualItem.keptBody(Alignment.Faction.RIGHTEOUS, false, false, random);
+			List<ItemStack> library = MethodManualItem.keptBody(Alignment.Faction.RIGHTEOUS, MethodManualItem.World.LOWER, false, random);
 			helper.assertTrue(!library.isEmpty() && library.size() <= 2, "A body sect's library always keeps one or two");
 			for (ItemStack manual : library) {
 				CultivationMethod way = MethodManualItem.method(manual);
 				helper.assertTrue(way != null && way.path() == TwoPaths.Path.BODY && way != CultivationMethod.BEAST_BLOOD_BATHING,
 						"...of the body's ways a righteous sect keeps: " + way);
 			}
-			for (ItemStack manual : MethodManualItem.keptBody(Alignment.Faction.DEVILISH, true, true, random)) {
+			for (ItemStack manual : MethodManualItem.keptBody(Alignment.Faction.DEVILISH, MethodManualItem.World.UPPER, true, random)) {
 				CultivationMethod way = MethodManualItem.method(manual);
 				helper.assertTrue(way == CultivationMethod.BEAST_BLOOD_BATHING || way == CultivationMethod.WEIGHTED_TRAINING, "A devilish one's: blood and weights");
 			}

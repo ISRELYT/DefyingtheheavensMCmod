@@ -26,6 +26,10 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.RANKING_STELE);
 		// A Sect Plaque (PlayerSects): lacquered wood, taken down with an axe.
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.SECT_PLAQUE);
+		// The Puppet Workbench (Puppetry): dark wood, taken up with an axe.
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.PUPPET_WORKBENCH);
+		// The Puppet Factory (dark iron) and the Overseer Core (jade), puppet phase 3: a pickaxe.
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PUPPET_FACTORY).add(ModBlocks.OVERSEER_CORE);
 		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
 		// Spirit stone veins: an iron pickaxe; the Upper Realm's rich veins a diamond one. (Their drops are hand-written loot
 		// tables in resources, not generated: they roll several grades.)

@@ -20,7 +20,18 @@ import net.minecraft.world.entity.player.Player;
 public final class Incorporeal {
 	/** Touches nothing of the living world: a soul, or a ghost the dead's rules hold (not a Ghost King). */
 	public static boolean is(Player player) {
-		return SoulProjection.isSoul(player) || isRuledGhost(player);
+		// (And a player's own soul playing the puppet it is held in: no foe's, no blast's, no portal's, PuppetPlayers; its hands are its own
+		// though: touchesNothing.)
+		return SoulProjection.isSoul(player) || isRuledGhost(player) || PuppetPlayers.isPilot(player);
+	}
+
+	/**
+	 * Whether {@code player} lays no hand on anything of the living world: breaks, uses, takes up and drops nothing. One who {@link #is}
+	 * incorporeal, but a soul playing a puppet uses its hands as the living do (PuppetPlayers; the user, 2026-11-18: "as a free puppet you
+	 * should be able to live like normal").
+	 */
+	public static boolean touchesNothing(Player player) {
+		return is(player) && !PuppetPlayers.isPilot(player);
 	}
 
 	/**
@@ -47,7 +58,7 @@ public final class Incorporeal {
 	 * a Ghost King too.
 	 */
 	public static boolean untouchable(Player player) {
-		return SoulProjection.isSoul(player) || isGhost(player);
+		return SoulProjection.isSoul(player) || isGhost(player) || PuppetPlayers.isPilot(player);
 	}
 
 	/**

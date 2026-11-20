@@ -700,6 +700,172 @@ falls or the prey gets 128 blocks away; the hunts aren't saved). Their arts cost
 /legend brand <player> <percent>      set heaven's brand on a player (0 lifts it)
 ```
 
+## Puppetry (phase 1, 2026-11-17)
+
+Puppetry is the fifth craft (Stats tab, Crafts page). A puppet is a **frame**, a **demon core** for its heart and fuel (it never runs
+out), and the **circuits** its puppeteer paints on the frame's board with the Inscription Brush. Nothing depends on the puppeteer's own
+realm: the frame's grade and the core decide how strong a puppet is.
+
+**Making one.** Forge a frame at the Artifact Forge (no core goes in there): a **humanoid** (fights and guards) or a **bee** (carries
+between chests, runs messages), in five grades of the grade's own matter and look: Mortal oak, Spirit copper (bronze), Earth iron with
+jade, Heaven quartz (silver-white), Immortal gold, each with the grade's metal for the joints, string (humanoid) or feathers (bee), and
+two of the grade's stones. Lay it on a **Puppet Workbench** (crafted: string, a Low stone, planks and a crafting table), set a demon core
+in it, right-click the bench to open its board, paint (an Inscription Brush in your pack), and press **Seal** (four of the grade's stones,
+a free slot, the heart of command fed). Left-click takes the frame (its drawing kept) and its core back off the bench without breaking it.
+
+| Frame grade | Puppet's realms | Board | Slots |
+|---|---|---|---|
+| Mortal | Qi Refining to Foundation Building | 9 x 9 | 1 |
+| Spirit | Core Formation | 11 x 11 | 2 |
+| Earth | Nascent Soul to Heavenly Being | 13 x 13 | 3 |
+| Heaven | Four Axis to Void Shattering | 15 x 15 | 4 |
+| Immortal | Sacred Vessel to True Immortal | 17 x 17 | 5 |
+
+The core sets the exact realm and stage (one too weak won't go in, one too strong runs at the frame's top). A frame's forged quality
+places random **flaws** on its board: 3 Normal, 1 Fine, 0 Perfect.
+
+**The board.** Nodes (limbs, head, art, heart of command) are fed by lines of qi from the core's four outlets; lines that touch join, and
+a node passes the qi on to whatever else touches it (a line from the mouth feeds the head beyond it); a node nothing reaches is dead (a dead leg slows, a dead arm weakens, no art node means no art, a dead heart leaves the puppet inert). Five
+scores, 0 to 100, decide its **grade** (their average, at most one grade above the weakest score's: Crude, Normal, Fine, Perfect), with
+no dice anywhere:
+
+- **Flow** (directness; blows and art x0.8 to x1.1), **Stability** (each vein's load carried all the way from the core against what
+  the lines hold: a plain line the frame's matter's 2/2/3/3/4 by grade, a thick line or the ring twice that, the eight cells round the
+  core anything; heat), **Harmony** (pairs fed alike, as many veins, mirrored; pace, aim and dodging x0.8 to x1.1), **Clarity** (leaks,
+  stubs, dead weight; reaction, misfires, how far it hears you), **Resilience** (its load safe from any single cut: two veins on separate
+  ways).
+
+**Qi and veins** (the deeper circuits, phase A, 2026-11-17). The core gives the board **qi**: 14/18/22/24/26 by frame grade, +1 per stage
+past Early its core stands at, +3 with the resonance ring closed (the board's Qi bar). Each side of a part a line reaches it by is a
+**vein**; every vein draws the part's load (limb, head, heart 1; mouth or stinger 2; nothing on a Mortal frame, which has no art) and makes
+the part stronger, one vein to four: arms' blows x1/1.2/1.35/1.5, legs' pace x1/1.1/1.2/1.3, wings' flight x1/1.15/1.3/1.45, a bee's
+legs' load x1/1.5/2/2.5, the head's sight 32/40/52/64 blocks and reaction x1/0.75/0.5/0.25, the art (and a bee's sting) x1/1.25/1.5/1.75,
+the heart's reach x1/1.25/1.5/1.75 and a seizer one rank more per vein past the first. A board whose veins want more qi than its core gives
+**won't seal**; a puppet made before keeps its drawing and its farthest veins go unfed. Every blow heats a puppet (an art 3) on every
+frame, shedding a point every 2 s; it overheats past 6/12/24 heat (Stability below 40/65/85; never from 85).
+
+**Elements** (phase B). From Master a **phase seal** (the palette's last slot, clicked again or 0 for another element; its element's
+forge token: iron nugget, sapling, prismarine shard, blaze powder, clay ball) on one of the core's four outlets tunes the lines joined to it
+(never across a part) to its element; every vein they bring carries it, a part fed by two elements has both; two elements' seals in one
+set of lines clash (none, shown red). Blows (arms; a bee's stinger) / art (mouth, stinger) / body (legs, wings, head, heart): **Metal**
+bites through a third of armour / carries on to a second foe at half harm / each vein 15% a cut glances off; **Wood** heals the puppet a
+tenth of the harm / roots 1 s / a cut Wood line grows back in 30 s; **Water** slows 2 s / slows 3 s / full speed in water, no fall damage;
+**Fire** burns 3 s / burns 5 s / 10% swifter but +1 heat a blow; **Earth** knocks back / staggers / each vein +10% health and knockback
+resistance (5 veins at most). A seal of the core's own element +2 qi, of the one overcoming it -2; two elements' lines close by (a Clarity leak) don't leak
+if the one feeds the other (Wood-Fire-Earth-Metal-Water) and give +1 qi a pair, leak twice over and heat if the one overcomes the other.
+From Master the Circuit Paths seal their outlets in the core's own element.
+
+**Arrays** (phase C). A small shape of strokes touching a part, recognised by the board (outlined in its colour, told of on the part's
+tooltip), gives a technique and draws its qi after every vein (short of qi, arrays go unfed first); it works while its part is fed and the
+core's qi reaches its strokes, never in the eight cells round the core: **Eye of Discernment** (a relay knot touching the head, lines on
+its other free sides; 2 qi): sees the invisible, reacts at once, +16 sight - without one a puppet ignores invisible foes; **Guard Coil**
+(2x2 thick lines touching an arm; 2): turns a foe's blow aside every 8 s; **Gale Stair** (3 diagonals in a slant touching a leg or wing; 2):
+dashes up to 8 blocks at a foe out of reach every 6 s; **Gathering Spiral** (a gathering knot touching the art's node, lines round it; 2):
+charges back twice as fast; **Iron Lock** (a ward touching the heart, bridges on its free sides; 3): can't be seized, a Circuit-Freeze
+Talisman holds it half as long. A **Twin Seal** (a coil or stair mirrored on both halves of a pair) halves the wait for 1 qi more. Whoever
+can paint the strokes can draw them; the paths draw them where the frame has room (Scout/Sentinel Eye from Adept, Brawler coil and
+Scout/Courier stair from Master, Caster spiral from Grandmaster, Balanced/Sentinel lock and the twins at Saint). The paths also feed the
+head straight through the mouth now, and Balanced raises the art's node last of each round.
+
+**Souls** (puppets, phase 2a). Every puppet has a **Soul-Binding Ring**; empty, it is hollow. A beast (an animal, a demon beast) or a
+cultivator slain by you or your puppets within 16 blocks of one of your puppets with an empty ring is drawn into the nearest such ring
+(a cultivator's: -10 alignment, a devilish deed). A beast's soul: +8 sight, a 10% dodge, 10% swifter. A cultivator's: the puppet takes its
+name, a charge more of its core's art, and casts one or two of the cultivator's own arts (its deepest striking spells) every 10 s in a
+fight at the puppet's realm. While its puppeteer is in the world with it and it can act, its circuits **copy** the soul; after an hour
+(three game days) the copy is whole, the real soul goes on and the puppet keeps all it gave. By a Puppet Workbench (its board open with the
+brush, within 8 blocks of one): **Release** the real soul early (a cultivator's: +5 alignment), **Move** it into another of your puppets
+with an empty ring by the same bench (copying anew), **Wipe** a whole copy. A soul is never an item.
+
+**Bodies of flesh** (puppets, phase 2b). Sneak-right-click a fresh or rotting cultivator's body (an NPC's: never a player's, a mortal's,
+bones or the long dead's) with the Inscription Brush: its loot spills, you get **Body of <name>** (a humanoid frame of the grade whose
+realms hold the dead's; -10 alignment). Its board is its **meridians**: a Master's Balanced layout already drawn (flesh-coloured), never
+wiped or painted over; rot breaks 2 to 12 of them, mended with a plain line. It **refines** a game day (20 min) on a Puppet Workbench
+before sealing (kept off the bench). Heart: a demon core of at least the dead's realm (a demon's body brings its own). The puppet stands
+at the **dead's own rank**, at a cultivator's **full might** (1.0, a frame's 0.7), in the dead's likeness (skin, a demon's head), its art
+the dead's element; wrecked it leaves its core and bones, dismantled its body. **Righteous cultivators** who see you with one (within 16)
+take you for an enemy.
+
+Ranks give strokes, readings and the **Circuit Path** (a ghost layout laid over the board, every stroke in its own colour; the Path button
+again for the next **build**: Balanced, Brawler, Scout, Sentinel, Caster on art frames, a bee's Courier; an Apprentice knows Balanced only):
+Apprentice plain lines and the trunk path; Adept relay knots, Flow; Master thick lines, bridges, diagonals, Stability and Harmony;
+Grandmaster cooling vents (an iron ingot), gathering knots (a spirit stone; a vein of the art that gathers a second charge), Clarity,
+Resilience, the live grade and a heat map; Saint ward knots, the resonance ring (+3 qi) and the weak spots. Each rank's path feeds only as
+many veins as its strokes can carry cool. A **Circuit Diagram** (the Copy button: a sheet of paper and four brush strokes) carries a layout to trade or keep;
+held, it lies over a board of its make. **Circuit Fragments** from the secret realms' Bronze Puppets join, four quarters, into an Ancient
+Circuit Diagram (a Saint's layout).
+
+**Puppets.** Seven tenths of a cultivator of their realm, as their circuits allow; they never cultivate and never mend by themselves.
+From Spirit grade a humanoid's art is a mouth beam and a bee's flies from its stinger, in the core's element, with charges that come back.
+Each fifth of its health lost cuts a line (Metal qi cuts one more and strikes x1.5); its owner repaints cuts with the brush (right-click
+the puppet) and mends a quarter of its health with its frame's matter. Wrecked, it leaves its core and some matter. With Qi Sense on,
+its circuits glow on its back. Some wandering cultivators field puppets.
+
+**The Command Seal** (two jade, a gold ingot, string): right-click the air for the list of all your puppets (order, health, place),
+right-click a puppet for its page: Follow, Guard (where you stand), Hold; a bee's Work between two chests marked with the seal (sneak and
+right-click them), or a
+message to any player in the world (it flies off, speaks it, comes back; Heaven and Immortal bees step there at once); Take apart (its
+frame, drawing kept, and core back). Slots by rank 2/4/7/11/16 (+1 per 20 Spirit points); reach by rank 32/48/64/96/128 blocks or the
+Consciousness Domain, times its Clarity's share and its heart's veins' reach. Held on another's puppet the seal **seizes** it if your
+rank stands above its maker's (two above for Fine circuits, three for Perfect, one more per heart vein past the first) and your seal's
+grade stands above the one it is bound to. The **Circuit-Freeze Talisman** (drawn with the brush) freezes puppets for five seconds.
+
+**Ranks of command** (puppets, phase 2c). A Command Seal has a **grade**, Mortal to Immortal: sneak-right-click a Puppet Workbench to
+raise it one grade for 4 spirit stones of the new grade, as high as your Puppetry allows (Apprentice Mortal ... Saint Immortal). A puppet
+is bound to the best seal you carry when you seal it (and to a better one you order it with); seizing wants a seal above that grade (NPC
+puppets: Spirit). A **Sub-Seal** (the page's button, a sheet of paper) lends one puppet: its holder right-clicks it to have it follow
+them, guard where they stand, hold; your own order takes it back, **Revoke** voids every Sub-Seal written for it. A Grandmaster or Saint
+makes an Earth+ humanoid a **General** (its page, 8 stones of its frame's grade): **Muster** takes up to 8 of your puppets within 16 blocks
+into its ranks (out of the world, still listed and in your slots), **Deploy** sets them down round it; they spill out if it falls. A
+Saint's puppet whose soul copy is whole grows **a mind of its own** after three more game days under control: a name of its own and a
+bent from what it did most meanwhile: Fierce (blows: +15% blows), Watchful (on guard: +8 sight, takes up foes twice as fast), Steadfast
+(harm borne: +20% health), Swift (ground covered: +15% pace and flight), Canny (arts cast: heat shed x2, art charges x1.5 as fast).
+
+**Players in puppets** (puppets, phase 2d). A player slain by you or your puppets within 16 blocks of one of your puppets with an empty
+ring has their soul drawn into it (-10 alignment; gamerule `puppetSoulBinding`, on); willingly, **Enter it** on your own hollow
+puppet's Command Seal page (beside it, pressed twice) or **Offer to <the player beside you>** there and their **Accept** (their screen
+pops up with Accept/Decline): the body dies, the soul goes in. **By Soul Projection**: a nascent soul out of its body right-clicks a
+puppet (possession's reach and qi; the puppet's realm no bar): its own hollow puppet entered for good (as Enter it), another player's
+hollow puppet holds it captive (struggle to get free; NPC puppeteers' puppets refuse it); a soul inside below the projector's highest path
+(realm and stage) is driven out (beast/cultivator souls and copies gone; a player's goes on as from a wreck, PvP only), one as strong or
+stronger holds; the soul snaps home and the body dies there. The soul's own screen ("Your Soul": opens as it wakes in the puppet, then
+with the inventory key while held) holds its buttons (held: Let go, Struggle, Its board). The G menu's first tab, in the Cultivation tab's
+place, is **Circuits**: a free soul's own body's board (Leave it and Your puppets under its Soul line), or a held soul's captor's board to
+look at only, its **command line** (core to heart) glowing violet, the next cell to cut filling as the struggle cuts it (seconds per cell
+on hover), Struggle and Let go under its Soul line, refreshed each second. **Held**: a spectator
+watching through its eyes; **Let go** is a death as any (no second body; a nascent soul lingers there to take another body); under
+control (the puppeteer in its world; the held one online or not) the puppet copies the soul, whole after an hour, then the real soul is
+pushed out straight to the Netherworld and the puppet keeps the name and look (the player's skin; released, the copy fades at half
+speed). **Struggle** (Puppetry >= the puppeteer's, or own realm above the puppet's): the command line taken from within, core to heart,
+a cell per 30 s (halved per rank/realm above, x4 warded); no line left to the heart = free. The puppeteer's page: **Release**/**Control**, **Sever** (free for
+good); the puppeteer away = released, slain = free. **Playing it**: the player rides inside, steering it as a soul steers a possessed
+body (bees fly), left-click its blow, the cast key (C) its art; otherwise living as ever (the user's ask: right-click uses things, E opens
+the pack, digging, picking up and dropping; never sleeps nor rides anything else); untouchable and unseen, no hunger, ageing or
+cultivation (own record sealed, techniques dormant);
+free: **Its board** (paint with own qi), **Leave it**, **Your puppets** (the list, no seal needed). Wrecked or taken apart, the soul goes on. Seizing a player's own
+puppet body takes 30 s.
+
+**The linked army** (puppets, phase 3). A **Link Knot** (Grandmaster stroke, key L; against the heart, a fed heart vein through it; GM+
+Circuit Paths draw one) links a puppet: your linked puppets within 16 blocks of each other get +3% blows and art each (+30% at most), and
+pass your orders on (a chain of your linked puppets, each within 16 of the next, from one in your reach). **Formations**: 4+ of your linked
+puppets on one foe spread round it at even angles; all within 4 blocks and no gap over 135 degrees: the foe is Bound and crushed each
+second for 25% of their blows together. **Puppet Factory** (block; its maker only): a Circuit Diagram, the frame's forging matter + 4 of
+its grade's stones and a demon core per copy; while its maker is online, within their slots and Puppetry (the diagram's highest stroke),
+it builds copies with exactly that layout (a Normal frame cast with its flaws off the lines, else flawless), 30 s a grade from Mortal's,
+hollow, holding on top of it; no practice taught. Within 8 blocks it mends its maker's puppets (a cut line every 5 s, 25% health per piece
+of frame matter); its button: **Repair only**. **Overseer Core** (block): 9 diagram slots; every cut and overheat of its keeper's puppets is
+recorded by design (make + grade + drawing as drawn), and written on its diagrams as a **wear map** (its screen; the bench's diagram
+ghost: red cells cut, orange rings hot). **Knowing the enemy's circuits**: wrecking another's puppet teaches its design and drops its
+diagram; against that design +25% damage (you and your puppets), cuts land on its critical lines, seizing wants a rank less. **Self-repair**:
+right-click your puppet with a Spring of the Ancients: it mends a cut line every 20 s (kept through dismantling). **Shielded core**:
+demon core + 4 Jade + 4 Obsidian (shapeless): in the lower realms a puppet above HB Grand Perfection stands at half health and harm, and
+Realm Suppress halves puppets; shielded, neither. **Self-destruct** (its page's top button, twice): a 1.5 s fuse, then 6x its blow
+(25% at the edge) within 3 + 1.5 x frame grade blocks, sparing you and yours, no blocks broken; nothing left, its core gone; a player's
+soul in it dies normally.
+
+Op: `/cultivation craft` lists every craft's rank and practice; `/cultivation craft <alchemy|forging|formations|talismans|puppetry>
+<apprentice|adept|master|grandmaster|saint>` sets that craft to the start of that rank; `/cultivation craft <craft> add <practice>` adds
+practice.
+
 ## Talismans (2026-11-10)
 
 The fourth craft (the user's "Build as designed"): `Talismans`, `TalismanPattern`, `TalismanItem`, `TalismanEntity`.
@@ -1768,7 +1934,7 @@ breakthrough out of that stage, on either path, waits until the axis is complete
 | Stage | Axis | Its wishes | What fills it |
 |---|---|---|---|
 | Early | **Axis of Longevity** | the sick and fading: heal them with a quarter of your qi, then take what years they can spare | **500 years** taken from the healed (each year onto your own lifespan too) |
-| Mid | **Axis of Fortune** | bare stores: bring what they lack (an item and a count), and take a share of their fortune (3-5 Mid-grade Spirit Stones, marked as shared with you) | **200 Low-grade Spirit Stones' worth** of those shares, absorbed |
+| Mid | **Axis of Fortune** | bare stores: bring what they lack (an item and a count), and take a share of their fortune (3-5 Mid-Grade Spirit Stones, marked as shared with you) | **200 Low-Grade Spirit Stones' worth** of those shares, absorbed |
 | Late | **Axis of Merit** | something preys on them (below): take it on, and it comes out of the land 24-36 blocks off, glowing; slay all of it | **200 hearts**: each creature of a threat slain by your hand counts its hearts (max health, halved) |
 | Grand Perfection | **Axis of Enlightenment** | a lesser cultivator stuck at its wall: sit in meditation within 6 blocks of it for a minute, and it breaks through a stage; or take its body (Soul Projection's possession) and meditate in it until it breaks through a stage yourself | **6 stages** guided |
 
@@ -2020,8 +2186,10 @@ only how a path cultivates. This README and the code (`Spell`, `Spells`, `spellC
   (the blood is the volume) and only to one with a demon core; the dead can't take up the heaven path's; never Thunder
   Tempering. Kept in sect chests (`SectPiece`, `MethodManualItem#kept`): a library one in five, a master's hall one in three
   (35%); demon clans keep Kin Blood, Core Devouring and Territorial Dominion, devilish sects Corpse Yin and Turtle Breath, the
-  rest the Rites and Turtle Breath; the lower realms' sects up to Core Formation, the Upper Realm's Core Formation to Sacred
-  Vessel. The creative tab has one of each at its last realm.
+  rest the Rites and Turtle Breath; the lower realms' sects up to Heavenly Being (Core Formation until 2026-11-16), the Upper
+  Realm's Core Formation to Sacred Vessel, the Great Void's Holy Lands and Demon Palaces Heavenly Being to Entering Nirvana (since
+  the same evening), the Immortal Realm's sects Entering Nirvana to True Immortal (since 2026-11-17; `MethodManualItem.World`), each
+  within the method's own realms. The creative tab has one of each at its last realm.
 - **Gathering formations** (`GatheringFormations`, `GatheringFormationBlock`, `GatheringFormationBlockEntity`): six blocks,
   `<low|mid|high>_<qi|yin>_gathering_formation`, x1.25 / x1.5 / x2 within 8 / 12 / 16 blocks while lit (a lit orb risen over its
   array, motes drawn in). Fed spirit stones by hand (one; sneaking, the stack): a Low stone burns 10 minutes in a Low one, a Mid
@@ -2195,8 +2363,10 @@ Tests: `MethodsPhaseThreeGameTests`.
 - **Devilish NPCs drain bodies** (`CorpseYin.DrainGoal`, `Corpses#lyingNear`): a devilish cultivator with no target looks every 2 s for a
   fresh or rotting body within 16 whose yin is undrawn (not its own sect's), walks to it and draws for 60 of its goal's ticks (some 6 s: a
   mob's goals tick every other tick), soul particles streaming, the body marked drawn.
-- Manuals: `MethodManualItem#kept` takes only methods whose first realm the world's manuals reach (lower to CF, Upper to SV); the EN and
-  TI ways come from `MethodManualItem#ancient`: the Fallen Holy Land's vaults (35% each) and the Fallen Immortal's Tomb's halls (8% each).
+- Manuals: `MethodManualItem#kept` takes only methods whose first realm the world's manuals reach (lower to HB since 2026-11-16, CF before; Upper to SV; the Great Void to EN
+  since the same evening, and there only those reaching HB; the Immortal Realm to TI since 2026-11-17, there only those reaching EN); the EN ways come from the Great Void's
+  and the Immortal Realm's sects (since then) and `MethodManualItem#ancient`, the TI ways from the Immortal Realm's sects and `#ancient`: the Fallen Holy Land's vaults
+  (35% each) and the Fallen Immortal's Tomb's halls (8% each).
   Righteous sects add Heart Demon Tempering, Dao Field Attunement, Vessel Nurturing and Judgement Hall Service; neutral Heart Demon
   Tempering, Dao Field Attunement, Rift Walking, Yellow Springs Immersion and Judgement Hall Service; devilish Yellow Springs Immersion and
   Rift Haunting; demon clans Ancestral Communion.
@@ -3742,7 +3912,9 @@ not above a giant island, every one of the old ground court's buildings on them)
   - twenty to each officer who fought a primordial beast that was slain.
 - **Ranks:** Officer, **Captain** at 30, **General** at 100, shown in the Sect tab.
 - **The Quartermaster** trades: a token for 3 Immortal Jade, any element's True Immortal Art Manual or Qi Circulation's True Immortal
-  Method Manual for 20 (the Netherworld Immortal Canon and Breathing's for 30, to Generals), more for Captains and Generals.
+  Method Manual for 20 (the Netherworld Immortal Canon and Breathing's for 30, to Generals; the day's way's True Immortal Method Manual
+  for 20 to Captains since 2026-11-17, Incense and Faith, Spirit Beast Bond, Ancestral Incense and Court of the Dead in turn), more for
+  Captains and Generals.
   Lines not yet open show the rank they want.
 - **A Venerable teaches its element's True Immortal method to Captains and up**, and tells the way to the primordial beasts.
 
@@ -3815,7 +3987,11 @@ The merchants sell each realm's demon blood (above).
 **The Laws** (`Law`, `Laws`, `LawState`). **Metal, Wood, Water, Fire, Earth**, and the greater **Space, Time, Life and Death**, nine
 levels each.
 - **The way up:** breaking into each realm of the ladder wants so many levels of the Laws together: **3, 7, 12, 18, 25, 35**, on the
-  heaven path, the ghost path and the Demon Path alike (the Demon Path wants its race's blood besides).
+  heaven path, the ghost path and the Demon Path alike (the Demon Path wants its race's blood besides). Where it's shown: the
+  Cultivation tab at Grand Perfection (said ahead in grey, amber at the bottleneck: `Laws#gateLine`); the Methods tab's Laws page, the
+  realm ahead's want for an immortal and, since 2026-11-17, the whole ladder for anyone, before True Immortal too (`Laws#ladderLine`, the
+  user: "make sure its shown somewhere that you need certain levels of law comprehension to progress to the next realm"); and the Codex's
+  The Laws page, with the numbers since the same day.
 - **Comprehending:** by True Immortals and those past them. **Meditating in the Immortal Realm** comprehends the Law in focus,
   whichever qi the meditation draws in, at its pace: level L wants L quarter-hours (the first fifteen minutes, the ninth two and a
   quarter hours). A foe of Entering Nirvana or above slain by an element's spell gives a **glimpse** of its Law one time in four (a
@@ -6579,8 +6755,9 @@ immediately upon using the arts manual)".
   `GhostJadeSlipItem`).
 - **Every method from its Method Manual.** Qi Circulation and Netherworld Breathing are Method Manuals now, one a realm, like every other
   method; the scriptures and the ghost foundations carry none of their volumes. Where they are: every sect library but the body sects'
-  and the beasts' keeps a Qi Circulation volume of its world's realms (Qi Refining to Core Formation below, Core Formation to Sacred Vessel
-  in the Jade Firmament: `MethodManualItem#circulation`); cultivators sell and drop one beside their scripture (rolled apart), ghost elders
+  and the beasts' keeps a Qi Circulation volume of its world's realms (Qi Refining to Heavenly Being below, the lower volumes the likelier,
+  Core Formation to Sacred Vessel in the Jade Firmament, Heavenly Being to Entering Nirvana in the Great Void's Holy Lands, Entering
+  Nirvana to True Immortal in the Immortal Realm's sects: `MethodManualItem#circulation`); cultivators sell and drop one beside their scripture (rolled apart), ghost elders
   and kings Breathing's beside their foundation; the Celestial Court, the cave abodes and the Yellow Springs Hollow keep them; any cultivator
   teaches the basics (Qi Circulation's first volume and a Qi Refining scripture), a teacher the Qi Circulation it breathes by to its
   scripture's realm, a ghost Breathing to its foundation's; death teaches every soul Breathing's first volume. Bloodline Purification, Body
@@ -6606,6 +6783,40 @@ immediately upon using the arts manual)".
   methods, keep to the **Yellow Springs Hollow's vaults** (the user's pick, the same evening): each vault, sealed anew at every opening,
   keeps one 15 times in 100 (Dao Integration's 6, Void Shattering's 4, Sacred Vessel's 3, Entering Nirvana's 2), with Netherworld
   Breathing's manual written to its realm (`SpringsHollowWorks#deepFoundation`; test `ManualsGameTests#theDeepGhostFoundationsKeepToTheHollowsVaults`).
+- **The lower libraries to Heavenly Being** (the user, later the same evening: "in lower realm the qi circulation manual should up to
+  heavenly being no?", then "Yes, both"). The lower realms run to Heavenly Being, but their sects' chests wrote Method Manuals only to Core
+  Formation (as their libraries' scriptures stop there), so no lower library held a Nascent Soul or Heavenly Being volume. Now
+  (`MethodManualItem.World.LOWER`): a lower library's Qi Circulation volume is Qi Refining's to Heavenly Being's, the lower of two draws (of a
+  hundred: Qi Refining's 36, Foundation Building's 28, Core Formation's 20, Nascent Soul's 12, Heavenly Being's 4); the methods a lower sect,
+  a body sect or a demon clan keeps (`#kept`, `#keptBody`) are written to any of their realms to Heavenly Being, and the ways that begin at
+  Nascent Soul or Heavenly Being (Heart Demon Tempering, the clone's seclusion, the Yellow Springs, a life borrowed, the ancestors' bones,
+  the Judgement Hall's errand) are kept below now too. The Upper Realm's stay Core Formation to Sacred Vessel; the scriptures in the
+  libraries are as they were. Tests: `ManualsGameTests`, `MethodsPhaseTwoGameTests#sectsKeepTheManualsOfTheirKind`,
+  `MethodsPhaseFourGameTests#eachWorldKeepsItsOwnRealmsWays`.
+- **The Great Void's to Entering Nirvana** (the user, the same evening: "also make it so up to entering nirvana method manuals spawn in
+  the great void", then "remember not all methods go all the way to true immortal or whatever, some are only for certain realms"). Its
+  sects, the Holy Lands and the Demon Palaces, kept Method Manuals before, but written as the Upper Realm's are, Core Formation to Sacred
+  Vessel, so no manual held a volume past Sacred Vessel of the ways that run on (Five Elements Cycling and Clone Seclusion to Entering
+  Nirvana; Incense and Faith, Spirit Beast Bond, Ancestral Incense and Court of the Dead to True Immortal): their Entering Nirvana volumes
+  came from a rare stele alone. Now (`MethodManualItem.World.GREAT_VOID`): a Holy Land library's Qi Circulation volume is Heavenly Being's
+  to Entering Nirvana's, the lower of two draws (of a hundred: Heavenly Being's 56, Dao Integration's 19, Void Shattering's 14, Sacred
+  Vessel's 8, Entering Nirvana's 3); the methods a Holy Land or a Demon Palace keeps are written to any of their realms from Heavenly Being
+  to Entering Nirvana, **each within its own** (Turtle Breath's never past Sacred Vessel, Corpse Yin Refining's at Heavenly Being, its
+  last); the ways that begin at Entering Nirvana (Nirvana Rebirth, Soul Furnace Refining, Bloodline Nirvana) are kept there too; the ways
+  that end before Heavenly Being (Heart Demon Tempering, Haunting, Weighted Training, Beast Blood Bathing, Territorial Dominion) are kept
+  there no more. Nothing past Entering Nirvana there (True Immortal's: the next). Tests: the same three.
+- **The Immortal Realm's to True Immortal** (the user, 2026-11-17, to my proposal for the True Immortal volumes nobody kept: "Also the
+  Court sales"). The Immortal Realm's island sects wrote the Upper Realm's manuals before, Core Formation to Sacred Vessel. Now
+  (`MethodManualItem.World.IMMORTAL`): their libraries' Qi Circulation volume is Entering Nirvana's 3 times in 4, True Immortal's 1 in 4;
+  they keep only the ways with an Entering Nirvana or a True Immortal volume, each written within its own realms (righteous: Five Elements
+  Cycling, Clone Seclusion, Incense and Faith, Spirit Beast Bond, Nirvana Rebirth, Immortal Essence Refining; neutral: Five Elements
+  Cycling, Clone Seclusion, Spirit Beast Bond, Ancestral Incense; devilish: Court of the Dead, Ancestral Incense, Soul Furnace Refining,
+  Ten Thousand Ghosts Union). And the Celestial Court's Quartermaster sells Captains one way's True Immortal Method Manual a day, for 20
+  tokens like Qi Circulation's: Incense and Faith, Spirit Beast Bond, Ancestral Incense and Court of the Dead in turn
+  (`CelestialCourt#TRUE_IMMORTAL_WAYS`). True Immortal's volumes stay the Immortal Realm's alone (`Realm#taughtInTheWorld`), and every way's
+  deepest volume is now kept somewhere (`MethodsPhaseFourGameTests#eachWorldKeepsItsOwnRealmsWays` checks both, with the Court's turns).
+  No method has a volume past True Immortal: from Earth Immortal to Heavenly Lord the Laws carry the four orthodox ways (Qi Circulation,
+  Netherworld Breathing, Bloodline Purification, Body Tempering: `CultivationMethod#spans`), and every other way stops at True Immortal.
 - **Bodies born against methods** (`Physique#bars`, `CultivationMethods#barredBy`; a manual, a stele or a teacher refuses and says why):
 
   | Body | Can't take |
@@ -6643,6 +6854,37 @@ immediately upon using the arts manual)".
 - Tests: `ManualsGameTests` (a stele's method fixed by its place and random between places, learned in seven seconds on the heavens' qi, an
   Art Manual teaching a whole scripture with its arts by the realm, Qi Circulation and Breathing from their manuals, the bodies' bars, old
   worlds' volumes kept, the Soul River's memory, the vanilla chests, no slip in any table), and the method tests rewritten for it.
+
+## The bug sweep of 2026-11-18
+
+The user's ask: "do a huge bug sweep of the whole mod and a check of all grammar and punctuation of sentences and check all screens and
+stuff". Every line of English (the lang file and the Codex) was read through, every screen opened in game and looked at, and the newest
+code read again. It put right:
+
+- **Words.** The spirit stones are Low-, Mid-, High-, Supreme- and Immortal-Grade Spirit Stones, as the pills, storage formations and the
+  Codex have them (a storage formation's screen says "Mid-Grade Storage Formation" too, and the Jade Lake's mirage vault mimics the
+  "High-Grade" one). Techniques are learned from their jade slips, not "manuals". The journal's demon blood entries are in the first person
+  like the rest. About thirty slips of grammar and punctuation besides (a missing space, "a Fine one one", "which feels" of a person, "a
+  working in progress", nested brackets, a sentence with no full stop, the spear's reach by grade).
+- **Screens.** The Formation Core's how-to hint was cut off after "Only Qi Sense": its lines sit higher, the hint is drawn whole or not at
+  all (then shown on hovering the Qi Veins line), and an empty store "is dry" rather than "runs dry in 0 s". The Command Seal's disabled
+  Offer button fits ("Offer (no one near)"), and its scores line hides the scores one's Puppetry can't read yet, as the board does. The
+  journal heads one's own entries "Day 11: A method of cultivation" (it said "Day 11, from Of the ghost path"). A live puppet's board says
+  "It stands at Core Formation Late" (not "its puppet will stand").
+- **Code.** Three of the puppets' per-player records (an open board, a seizing, a body's watchers) are cleared when a server stops: their
+  cleanup on leaving ran as a queued task, which a closing single-player world never runs.
+- **Territories.** A challenger stands on ground near the territory's own height (`Territories#standAt`), not on the top of its column: a
+  territory in a cave was challenged from the surface above it, one on a plain from a rooftop or a cliff, where it might never come down.
+  And a challenge is looked for in the territory's own world: a holder who stepped through a portal while challenged was looked for where
+  they had gone, no challenger was found there, and the territory counted as held; now it is lost, as fleeing it on foot is. (Found as
+  `aTerritoryIsMarkedHeldAndLost` failing now and then: its challenger, stood on a neighbouring test's roof, was out of the box it was
+  looked for in.)
+
+Read through and found sound: every lang key has its English and the arguments it is given; every item, block, entity, effect, sound and
+biome has its name, model and texture (`AssetsGameTests`, new); the packets players send (all on the server thread, their numbers
+checked); the storage formation's take-out (it hands back what is stored, never what the client describes); the puppets' saved data, the
+factory's and the Overseer Core's shift-clicks, the workbench's take-back; a soul's death going into a puppet (no totem saves it); no
+client code reached from the server's.
 
 ## License
 

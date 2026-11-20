@@ -1,4 +1,4 @@
-// 1.20.1	2026-11-16T19:51:00.2995663	Defying The Heavens/Block Loot Tables
+// 1.20.1	2026-11-18T15:38:47.1924732	Defying The Heavens/Block Loot Tables
 0e94fb10ad651ca942cd0f9dfda513003025edb6 data\defying-the-heavens\loot_tables\blocks\formation_core.json
 86ae70a214555fdc048f1e6c401d1dfcbcf87de0 data\defying-the-heavens\loot_tables\blocks\high_qi_gathering_formation.json
 86041040437e63b212119a67a16f5daa00c23752 data\defying-the-heavens\loot_tables\blocks\heaven_altar.json
@@ -8,6 +8,8 @@ c3a3dbb31c8296f0d72bb56c3711c5bc0c1784ca data\defying-the-heavens\loot_tables\bl
 dea87fce909ca5a379c5dcf5d29f38b43b7ccffb data\defying-the-heavens\loot_tables\blocks\meditation_mat.json
 d6f33755bb45d89565bcc67c02d79802fdb3001d data\defying-the-heavens\loot_tables\blocks\jade_ore.json
 acfd35aef3d373e63b6f72e54a975eb9956dd14f data\defying-the-heavens\loot_tables\blocks\red_meditation_mat.json
+61622a78b7b4aefd75bfaf644acef02ead5844da data\defying-the-heavens\loot_tables\blocks\overseer_core.json
+0ff91f39ba80ef1e0e50f948ab55b9b33c3bfdce data\defying-the-heavens\loot_tables\blocks\puppet_workbench.json
 5d73a4bb37ce95ef9369803f34120c31d91253be data\defying-the-heavens\loot_tables\blocks\red_spider_lily.json
 4b25a1162f7cebc1ecf3e75964c61b36f4342ea3 data\defying-the-heavens\loot_tables\blocks\blue_spirit_wood.json
 3300dc4aac9db3ab1905fbff8aef4d6b5af9ce32 data\defying-the-heavens\loot_tables\blocks\spirit_peach_sapling.json
@@ -31,3 +33,4 @@ d6a9b3a779306a1cd27586391e87d940433f4e46 data\defying-the-heavens\loot_tables\bl
 70e649e7e0e1d00a4e893563e562d6f68e9e4740 data\defying-the-heavens\loot_tables\blocks\sect_plaque.json
 1353e4e378d036345524b222edb0b03e500815c0 data\defying-the-heavens\loot_tables\blocks\low_qi_gathering_formation.json
 3c912e694a94541911cf7186cd20b8f277f98468 data\defying-the-heavens\loot_tables\blocks\alchemy_cauldron.json
+4fb7b4495711faf6109cbc75267c7375938704bf data\defying-the-heavens\loot_tables\blocks\puppet_factory.json

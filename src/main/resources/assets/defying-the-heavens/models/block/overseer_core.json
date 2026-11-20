@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "defying-the-heavens:block/overseer_core_top",
+    "bottom": "defying-the-heavens:block/overseer_core_bottom",
+    "side": "defying-the-heavens:block/overseer_core_side"
+  }
+}

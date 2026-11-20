@@ -227,6 +227,10 @@ public class ModModelProvider extends FabricModelProvider {
 		items.generateFlatItem(ModItems.RING_OF_POWER, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);
+		items.generateFlatItem(ModItems.COMMAND_SEAL, ModelTemplates.FLAT_ITEM); // Puppetry's (tools/beast-art PuppetArt)
+		items.generateFlatItem(ModItems.SUB_SEAL, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.CIRCUIT_DIAGRAM, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.CIRCUIT_FRAGMENT, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.YANG_FIRE_TALISMAN, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.GHOST_QUELLING_TALISMAN, ModelTemplates.FLAT_ITEM);
 		// The brush's talismans (Talismans): the paper, and each pattern's own (16x16 strips drawn as the older two are, each its own glyph).

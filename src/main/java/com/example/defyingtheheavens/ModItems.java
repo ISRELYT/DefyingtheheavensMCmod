@@ -65,6 +65,7 @@ public final class ModItems {
 					case GOURD -> new QiGourdItem(grade, properties.stacksTo(1));
 					case JADE -> new ProtectiveJadeItem(grade, properties);
 					case FLAME_BLADE, TIDE_SPEAR, VINE_WHIP, MOUNTAIN_HAMMER, GOLDEN_SWORD -> new ElementalWeaponItem(kind, grade, properties);
+					case HUMANOID_FRAME, BEE_FRAME -> new PuppetFrameItem(kind, grade, properties.stacksTo(1)); // its drawing its own
 				};
 				grades.put(grade, register(kind.itemId(grade), item));
 			}
@@ -144,6 +145,14 @@ public final class ModItems {
 
 	/** Paints seals of qi ink, the lines that carry a Qi Vein's qi to a Formation Core (see InscriptionBrushItem). */
 	public static final Item INSCRIPTION_BRUSH = register("inscription_brush", new InscriptionBrushItem(new Item.Properties().durability(256)));
+	/** A puppeteer's seal: their puppets listed and ordered, chests marked for a bee's work, another's puppet seized (see CommandSealItem). */
+	public static final Item COMMAND_SEAL = register("command_seal", new CommandSealItem(new Item.Properties().stacksTo(1)));
+	/** A puppet lent on paper: whoever holds it orders that one puppet, until its puppeteer orders it or revokes it (see SubSealItem). */
+	public static final Item SUB_SEAL = register("sub_seal", new SubSealItem(new Item.Properties().stacksTo(1)));
+	/** A board's drawing on paper, laid over a board of its make as a ghost; an ancient one joined from four fragments (see CircuitDiagramItem). */
+	public static final Item CIRCUIT_DIAGRAM = register("circuit_diagram", new CircuitDiagramItem(new Item.Properties().stacksTo(1)));
+	/** A quarter of an ancient circuit diagram, carried by the Bronze Puppets (see CircuitFragmentItem). */
+	public static final Item CIRCUIT_FRAGMENT = register("circuit_fragment", new CircuitFragmentItem(new Item.Properties().stacksTo(16)));
 	/** Painted with the brush: burnt, its yang fire drives a third of the yin out of a living body (see YangFireTalismanItem). */
 	public static final Item YANG_FIRE_TALISMAN = register("yang_fire_talisman", new YangFireTalismanItem(new Item.Properties().stacksTo(16)));
 	/** Painted with the brush: thrown, it strikes one of the dead and binds it where it stands (see GhostQuellingTalismanItem). */
@@ -176,6 +185,9 @@ public final class ModItems {
 	public static final Item QI_SEALING_TALISMAN = register("qi_sealing_talisman",
 			new TalismanItem(TalismanPattern.QI_SEALING, new Item.Properties().stacksTo(16)));
 	public static final Item REVEALING_TALISMAN = register("revealing_talisman", new TalismanItem(TalismanPattern.REVEALING, new Item.Properties().stacksTo(16)));
+	/** Puppetry's (2026-11-17): thrown, it freezes the puppets where it lands (Talismans). */
+	public static final Item CIRCUIT_FREEZE_TALISMAN = register("circuit_freeze_talisman",
+			new TalismanItem(TalismanPattern.CIRCUIT_FREEZE, new Item.Properties().stacksTo(16)));
 	/** A ghost method's slip from before 2026-11-16: made nowhere now; one carried or read becomes its Art Manual (see GhostJadeSlipItem). */
 	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
 	/** A heaven method's slip from before 2026-11-16: made nowhere now; one carried or read becomes its Art Manual (see JadeSlipItem). */

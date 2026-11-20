@@ -1114,7 +1114,20 @@ public class SpellArt {
 			System.err.println("java SpellArt.java --stored <dir, e.g. tools/spell-art/stored> [ids...]   (the stored true beasts)");
 			System.err.println("java SpellArt.java --primordial <the mod's assets> [ids...]   (the primordial beasts made here)");
 			System.err.println("java SpellArt.java --realm <the mod's assets> [ids...]   (the secret realms' guardians)");
+			System.err.println("java SpellArt.java --puppet <the mod's assets>   (the puppets, Puppets: each shape at each grade)");
 			System.exit(1);
+		}
+		if (args[0].equals("--puppet")) {
+			Path assets = Path.of(args[1]);
+			for (int g = 0; g < Puppets.GRADES.length; g++) {
+				Model humanoid = new Model("humanoid_" + Puppets.GRADES[g]);
+				Puppets.humanoid(humanoid, g);
+				write(assets, humanoid, "puppet");
+				Model bee = new Model("bee_" + Puppets.GRADES[g]);
+				Puppets.bee(bee, g);
+				write(assets, bee, "puppet");
+			}
+			return;
 		}
 		boolean stored = args[0].equals("--stored"), primordial = args[0].equals("--primordial"), realm = args[0].equals("--realm");
 		int first = stored || primordial || realm ? 1 : 0;

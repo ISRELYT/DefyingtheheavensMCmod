@@ -45,5 +45,7 @@ public abstract class LevelRendererMixin {
 	private void dth$possessedBodyUnseenFromWithin(Entity entity, double camX, double camY, double camZ, float partialTick, PoseStack poseStack,
 												   MultiBufferSource buffers, CallbackInfo ci) {
 		if (ClientSoul.isOut() && entity.getId() == ClientSoul.host() && Minecraft.getInstance().options.getCameraType().isFirstPerson()) ci.cancel();
+		// So does a player's own soul playing the puppet it is held in (PuppetPlayers).
+		else if (com.example.defyingtheheavens.client.ClientPuppetPilot.seenFromWithin(entity)) ci.cancel();
 	}
 }

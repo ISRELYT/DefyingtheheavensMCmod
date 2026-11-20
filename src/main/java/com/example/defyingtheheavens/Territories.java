@@ -2,8 +2,12 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -116,8 +120,7 @@ public final class Territories {
 		BeastKind kind = fit.get(level.random.nextInt(fit.size()));
 		BlockPos centre = c.demon().territory();
 		double a = level.random.nextDouble() * Math.PI * 2;
-		BlockPos at = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-				BlockPos.containing(centre.getX() + Math.cos(a) * (RADIUS - 4), centre.getY(), centre.getZ() + Math.sin(a) * (RADIUS - 4)));
+		BlockPos at = standAt(level, BlockPos.containing(centre.getX() + Math.cos(a) * (RADIUS - 4), centre.getY(), centre.getZ() + Math.sin(a) * (RADIUS - 4)));
 		DemonBeast beast = ModEntities.beast(kind).create(level);
 		if (beast == null) return;
 		beast.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, level.random.nextFloat() * 360, 0);
@@ -131,19 +134,54 @@ public final class Territories {
 		level.playSound(null, at, SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 1.0f, 0.8f);
 	}
 
-	/** Each second of every holder (NetherworldManager#second): out of its territory while a challenger lives, the territory is lost. */
+	/**
+	 * Where a challenger stands at {@code column}: on ground near the territory's own height (a territory in a cave is challenged in the cave,
+	 * not from the surface over it; one on a plain not from a rooftop or a cliff above it: bug sweep 10, 2026-11-18), else the column's top.
+	 */
+	static BlockPos standAt(ServerLevel level, BlockPos column) {
+		BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+		for (int dy = 6; dy >= -12; dy--) {
+			at.set(column.getX(), column.getY() + dy, column.getZ());
+			if (level.isOutsideBuildHeight(at)) continue;
+			BlockPos below = at.below(), above = at.above();
+			if (level.getBlockState(at).getCollisionShape(level, at).isEmpty() && level.getBlockState(above).getCollisionShape(level, above).isEmpty()
+					&& level.getFluidState(at).isEmpty() && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)) {
+				return at.immutable();
+			}
+		}
+		return level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column);
+	}
+
+	/**
+	 * Each second of every holder (NetherworldManager#second): out of its territory while a challenger lives, the territory is lost. The
+	 * challengers are looked for in the territory's world: through a portal its holder had fled, not held it (it was looked for where its
+	 * holder had gone, found nobody, and called the territory held: bug sweep 10). One not found counts as gone only while its holder stands
+	 * in the territory (its land loaded about it); away, it may only lie unloaded.
+	 */
 	static void second(ServerPlayer p) {
 		Set<UUID> challengers = CHALLENGERS.get(p.getUUID());
 		if (challengers == null || challengers.isEmpty()) return;
-		ServerLevel level = p.server.getLevel(InnerRealm.bodyDimension(p)); // the challengers are where its body is
-		if (level == null) return;
-		challengers.removeIf(id -> !(level.getEntity(id) instanceof DemonBeast beast) || !beast.isAlive());
+		DemonState d = CultivationManager.get(p).demon();
+		ResourceLocation world = d.hasTerritory() ? ResourceLocation.tryParse(d.territoryDimension()) : null;
+		ServerLevel level = world == null ? null : p.server.getLevel(ResourceKey.create(Registries.DIMENSION, world));
+		if (level == null) {
+			CHALLENGERS.remove(p.getUUID());
+			return;
+		}
+		boolean in = inside(p);
+		challengers.removeIf(id -> level.getEntity(id) instanceof DemonBeast beast ? !beast.isAlive() : in);
 		if (challengers.isEmpty()) {
 			CHALLENGERS.remove(p.getUUID());
 			p.displayClientMessage(Component.translatable(ModLang.MSG_TERRITORY_HELD).withStyle(ChatFormatting.DARK_RED), true);
 			return;
 		}
-		if (!inside(p)) lose(p);
+		if (!in) lose(p);
+	}
+
+	/** The challengers {@code holder} has alive now (the tests'). */
+	static Set<UUID> challengersOf(UUID holder) {
+		Set<UUID> challengers = CHALLENGERS.get(holder);
+		return challengers == null ? Set.of() : Set.copyOf(challengers);
 	}
 
 	/** {@code p} died: in its territory with a challenger alive (or any death within it), it is lost. */

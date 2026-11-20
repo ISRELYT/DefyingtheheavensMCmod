@@ -71,14 +71,50 @@ public class RealmGuardianRenderer extends GeoEntityRenderer<RealmGuardian> {
 		@Override
 		public ResourceLocation getAnimationResource(RealmGuardian guardian) { return animations; }
 
+		/** The head bone the look last turned, and by how much (radians about x and y), to be taken off before the next frame's. */
+		private CoreGeoBone looked;
+		private float lookX, lookY;
+		private boolean customised;
+
+		/**
+		 * Last frame's look taken off the head before GeckoLib sets anything (as BeastModels does): a bone no playing animation keys (an
+		 * awake guardian's head in its idle and walk) keeps what was set last frame, so a look added to it piled up frame on frame and the
+		 * head spun (found on the puppets, 2026-11-17, which turn their heads the same way). When GeckoLib draws the same frame again and
+		 * sets nothing, the look goes back on as it was.
+		 */
+		@Override
+		public void handleAnimations(RealmGuardian guardian, long instanceId, AnimationState<RealmGuardian> state) {
+			CoreGeoBone last = looked;
+			float lastX = lookX, lastY = lookY;
+			if (last != null) {
+				last.setRotX(last.getRotX() - lastX);
+				last.setRotY(last.getRotY() - lastY);
+			}
+			looked = null;
+			lookX = lookY = 0;
+			customised = false;
+			super.handleAnimations(guardian, instanceId, state);
+			if (customised || last == null) return;
+			last.setRotX(last.getRotX() + lastX);
+			last.setRotY(last.getRotY() + lastY);
+			looked = last;
+			lookX = lastX;
+			lookY = lastY;
+		}
+
 		@Override
 		public void setCustomAnimations(RealmGuardian guardian, long instanceId, AnimationState<RealmGuardian> state) {
+			customised = true;
 			if (guardian.isDormant()) return;
 			CoreGeoBone head = getAnimationProcessor().getBone("head");
 			EntityModelData look = state.getData(DataTickets.ENTITY_MODEL_DATA);
 			if (head == null || look == null) return;
-			head.setRotX(head.getRotX() + Mth.clamp(look.headPitch(), -30, 30) * Mth.DEG_TO_RAD);
-			head.setRotY(head.getRotY() + Mth.clamp(look.netHeadYaw(), -50, 50) * Mth.DEG_TO_RAD);
+			float x = Mth.clamp(look.headPitch(), -30, 30) * Mth.DEG_TO_RAD, y = Mth.clamp(Mth.wrapDegrees(look.netHeadYaw()), -50, 50) * Mth.DEG_TO_RAD;
+			head.setRotX(head.getRotX() + x);
+			head.setRotY(head.getRotY() + y);
+			looked = head;
+			lookX = x;
+			lookY = y;
 		}
 	}
 }

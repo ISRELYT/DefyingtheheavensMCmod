@@ -15,13 +15,17 @@ import net.minecraft.sounds.SoundSource;
  * ruined, half the practice still learned), a pill can come out a grade better than the herbs alone would give ({@link #betterGrade}: never
  * past the best grade herbs of that age can give at all), and a Grandmaster or a Saint now and then draws two pills from one brew
  * ({@link #secondPill}). Forging and Formations are practised at the Artifact Forge and on the formations themselves; Talismans (the fourth,
- * 2026-11-10) by drawing them with the Inscription Brush (Talismans), failing and coming out Fine or Perfect as the forge's work does.
+ * 2026-11-10) by drawing them with the Inscription Brush (Talismans), failing and coming out Fine or Perfect as the forge's work does;
+ * Puppetry (the fifth, 2026-11-17) by sealing puppets at the Puppet Workbench and mending their circuits (Puppetry), its rank giving the
+ * puppeteer more strokes, more readings of a board, a better Circuit Path, more puppets and a longer reach, never a roll of the dice.
  */
 public final class CraftMastery {
 	public enum Craft {
 		ALCHEMY("alchemy"), FORGING("forging"), FORMATIONS("formations"),
 		/** The fourth (2026-11-10): drawing talismans with the Inscription Brush (Talismans). */
-		TALISMANS("talismans");
+		TALISMANS("talismans"),
+		/** The fifth (2026-11-17, the user's "begin phase 1"): making puppets (Puppetry, CircuitBoard). */
+		PUPPETRY("puppetry");
 
 		private final String id;
 

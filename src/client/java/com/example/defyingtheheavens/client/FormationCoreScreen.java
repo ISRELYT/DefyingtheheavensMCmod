@@ -50,8 +50,11 @@ public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 
 	private static final int ROWS = 8;
 	private static final int ROW_HEIGHT = 13;
-	/** Where the function's radius row and the battery stand (below the tabs). */
-	private static final int RADIUS_Y = 58, BATTERY_Y = 88, LINES_Y = 114;
+	/**
+	 * Where the function's radius row and the battery stand (below the tabs), and the lines under them (drawn up 10 closer on 2026-11-18:
+	 * a new core's how-to hint was cut off after "Only Qi Sense" above the buttons).
+	 */
+	private static final int RADIUS_Y = 58, BATTERY_Y = 84, LINES_Y = 104;
 
 	/** A trusted cultivator, with the name they had when trusted. */
 	public record Trusted(UUID id, String name) {}
@@ -430,7 +433,9 @@ public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 		double total = (wanted ? barrierCost : 0) + (veilWanted ? veilCost : 0);
 		double needed = Math.max(shownCost, total);
 		int y = top + LINES_Y;
+		int veinsTop = y;
 		y = lines(g, Component.translatable(ModLang.CORE_VEINS, state.veins(), fmt(state.supply())), y, 0x7FE0A0);
+		boolean overVeins = mouseY >= veinsTop && mouseY < y && mouseX >= left + 14 && mouseX < left + WIDTH - 14;
 		y = lines(g, Component.translatable(veilTab ? ModLang.CORE_VEIL_UPKEEP : ModLang.CORE_UPKEEP, fmt(shownCost)), y,
 				state.supply() >= shownCost ? MUTED : 0xFF8A65);
 		if (wanted && veilWanted) {
@@ -441,8 +446,9 @@ public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 		}
 		if (state.supply() < needed) {
 			double seconds = state.battery() / (needed - state.supply());
-			// Wrapped to the panel ("the store runs dry in 152 s" ran past its side: 2026-10-30).
-			y = lines(g, Component.translatable(ModLang.CORE_SHORTFALL, (int) seconds), y, 0xFF8A65);
+			// Wrapped to the panel ("the store runs dry in 152 s" ran past its side: 2026-10-30); an empty store is dry, not "dry in 0 s".
+			y = lines(g, seconds < 1 ? Component.translatable(ModLang.CORE_SHORTFALL_DRY) : Component.translatable(ModLang.CORE_SHORTFALL, (int) seconds),
+					y, 0xFF8A65);
 		}
 		Component rankName = state.rank() < 0 ? null : PlayerCultivation.rankName(Realm.byIndex(state.rank() / Stage.values().length),
 				Stage.byIndex(state.rank() % Stage.values().length));
@@ -463,15 +469,24 @@ public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 			g.drawCenteredString(font, line, cx, y, up ? 0x69F0AE : 0xFFC107);
 			y += 10;
 		}
+		// How to join veins, while none are: whole or not at all, never under the buttons (cut off mid-sentence it read as broken:
+		// 2026-11-18); where it can't stand whole, hovering the veins line shows it.
+		boolean hintShown = false;
 		if (state.veins() == 0) {
+			List<FormattedCharSequence> hint = font.split(Component.translatable(ModLang.CORE_HINT), WIDTH - 24);
 			int hy = y + 2;
-			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.CORE_HINT), WIDTH - 24)) {
-				if (hy > top + HEIGHT - 40) break; // never under the buttons
-				g.drawCenteredString(font, line, cx, hy, FADED);
-				hy += 10;
+			if (hy + (hint.size() - 1) * 10 <= top + HEIGHT - 37) {
+				for (FormattedCharSequence line : hint) {
+					g.drawCenteredString(font, line, cx, hy, FADED);
+					hy += 10;
+				}
+				hintShown = true;
 			}
 		}
 		super.render(g, mouseX, mouseY, partialTick);
+		if (state.veins() == 0 && !hintShown && overVeins) {
+			g.renderTooltip(font, font.split(Component.translatable(ModLang.CORE_HINT), 200), mouseX, mouseY);
+		}
 	}
 
 	/**

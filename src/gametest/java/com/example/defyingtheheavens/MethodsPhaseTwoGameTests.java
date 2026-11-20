@@ -147,12 +147,14 @@ public class MethodsPhaseTwoGameTests implements FabricGameTest {
 		helper.assertTrue(heaven.contains(CultivationMethod.HEAVEN_RITES) && heaven.contains(CultivationMethod.TURTLE_BREATH)
 				&& devilish.contains(CultivationMethod.CORPSE_YIN) && !devilish.contains(CultivationMethod.HEAVEN_RITES)
 				&& den.contains(CultivationMethod.KIN_BLOOD) && den.stream().allMatch(m -> m.path() == TwoPaths.Path.DEMON), "Each kind keeps its own");
-		int kept = 0;
+		int kept = 0, lowerDeep = 0;
+		MethodManualItem.World[] worlds = MethodManualItem.World.values();
 		for (int i = 0; i < 600; i++) {
-			boolean upper = i % 2 == 0, hall = i % 3 == 0;
-			ItemStack[] stacks = {MethodManualItem.kept(Alignment.Faction.RIGHTEOUS, null, upper, hall, random),
-					MethodManualItem.kept(Alignment.Faction.DEVILISH, null, upper, hall, random),
-					MethodManualItem.kept(Alignment.Faction.NEUTRAL, Bloodline.TIGER, upper, hall, random)};
+			MethodManualItem.World world = worlds[i % worlds.length];
+			boolean hall = (i / worlds.length) % 3 == 0;
+			ItemStack[] stacks = {MethodManualItem.kept(Alignment.Faction.RIGHTEOUS, null, world, hall, random),
+					MethodManualItem.kept(Alignment.Faction.DEVILISH, null, world, hall, random),
+					MethodManualItem.kept(Alignment.Faction.NEUTRAL, Bloodline.TIGER, world, hall, random)};
 			List<Set<CultivationMethod>> kinds = List.of(heaven, devilish, den);
 			for (int k = 0; k < stacks.length; k++) {
 				CultivationMethod method = MethodManualItem.method(stacks[k]);
@@ -161,11 +163,43 @@ public class MethodsPhaseTwoGameTests implements FabricGameTest {
 				Realm realm = MethodManualItem.realm(stacks[k]);
 				helper.assertTrue(kinds.get(k).contains(method), "A sect keeps the methods of its kind: " + method.getId());
 				helper.assertTrue(realm != Realm.FOUR_AXIS && method.spans(realm), "Written to one of its own realms: " + method.getId() + " " + realm.getId());
-				helper.assertTrue(upper ? realm.ordinal() >= Math.max(method.first().ordinal(), Realm.CORE_FORMATION.ordinal()) && realm.ordinal() <= Realm.SACRED_VESSEL.ordinal()
-						: realm.ordinal() <= Realm.CORE_FORMATION.ordinal(), "The lower realms' to Core Formation, the Upper Realm's from it: " + realm.getId());
+				// Each world's own realms (MethodManualItem.World): the lower realms' to their last, Heavenly Being (2026-11-16: Core Formation
+				// before), the Upper Realm's Core Formation to Sacred Vessel, the Great Void's Heavenly Being to Entering Nirvana (the same evening);
+				// a method whose volumes end before them, its last.
+				int low = Math.min(method.last().ordinal(), Math.max(method.first().ordinal(), world.low.ordinal()));
+				helper.assertTrue(realm.ordinal() >= low && realm.ordinal() <= world.deepest.ordinal(),
+						"Written to its world's realms (" + world + "): " + method.getId() + " " + realm.getId());
+				if (world == MethodManualItem.World.LOWER && realm.ordinal() >= Realm.NASCENT_SOUL.ordinal()) lowerDeep++;
+				// "Some are only for certain realms" (the user, the same evening): no world keeps one that ends before its realms (the Great Void's
+				// from Heavenly Being, the Immortal Realm's from Entering Nirvana).
+				helper.assertTrue(method.last().ordinal() >= world.low.ordinal(), "No way that ends before its world's realms (" + world + "): " + method.getId());
 			}
 		}
 		helper.assertTrue(kept > 200 && kept < 1200, "Now and then a chest keeps one (" + kept + " of 1,800)");
+		helper.assertTrue(lowerDeep > 0, "A lower realm's sect keeps Nascent Soul's and Heavenly Being's volumes too");
+		// The Great Void's (the user, 2026-11-16: "make it so up to entering nirvana method manuals spawn in the great void"): the ways that run
+		// past Sacred Vessel written to Entering Nirvana there, and the ways that begin at it kept there.
+		Set<CultivationMethod> nirvana = new java.util.HashSet<>();
+		for (int i = 0; i < 2000; i++) {
+			for (Alignment.Faction faction : Alignment.Faction.values()) {
+				ItemStack stack = MethodManualItem.kept(faction, null, MethodManualItem.World.GREAT_VOID, true, random);
+				if (MethodManualItem.method(stack) != null && MethodManualItem.realm(stack) == Realm.ENTERING_NIRVANA) nirvana.add(MethodManualItem.method(stack));
+			}
+		}
+		helper.assertTrue(nirvana.containsAll(List.of(CultivationMethod.FIVE_ELEMENTS, CultivationMethod.CLONE_SECLUSION, CultivationMethod.INCENSE_FAITH,
+				CultivationMethod.SPIRIT_BEAST_BOND, CultivationMethod.ANCESTRAL_INCENSE, CultivationMethod.COURT_OF_THE_DEAD, CultivationMethod.NIRVANA_REBIRTH,
+				CultivationMethod.SOUL_FURNACE)), "The Great Void's sects keep Entering Nirvana's volumes: " + nirvana);
+		// The Immortal Realm's (2026-11-17): True Immortal's volumes of the ways that run on to it, and the ways that begin there.
+		Set<CultivationMethod> immortal = new java.util.HashSet<>();
+		for (int i = 0; i < 2000; i++) {
+			for (Alignment.Faction faction : Alignment.Faction.values()) {
+				ItemStack stack = MethodManualItem.kept(faction, null, MethodManualItem.World.IMMORTAL, true, random);
+				if (MethodManualItem.method(stack) != null && MethodManualItem.realm(stack) == Realm.TRUE_IMMORTAL) immortal.add(MethodManualItem.method(stack));
+			}
+		}
+		helper.assertTrue(immortal.equals(Set.of(CultivationMethod.INCENSE_FAITH, CultivationMethod.SPIRIT_BEAST_BOND, CultivationMethod.ANCESTRAL_INCENSE,
+				CultivationMethod.COURT_OF_THE_DEAD, CultivationMethod.IMMORTAL_ESSENCE_REFINING, CultivationMethod.TEN_THOUSAND_GHOSTS)),
+				"The Immortal Realm's sects keep True Immortal's volumes: " + immortal);
 		helper.succeed();
 	}
 
@@ -374,6 +408,7 @@ public class MethodsPhaseTwoGameTests implements FabricGameTest {
 	public void aTerritoryIsMarkedHeldAndLost(GameTestHelper helper) {
 		List<ServerPlayer> made = new ArrayList<>();
 		List<DemonBeast> challengers = new ArrayList<>();
+		java.util.Map<BlockPos, net.minecraft.world.level.block.state.BlockState> tower = new java.util.LinkedHashMap<>();
 		ServerPlayer p = null;
 		try {
 			p = survivor(helper, made, "territory-holder");
@@ -396,9 +431,19 @@ public class MethodsPhaseTwoGameTests implements FabricGameTest {
 			helper.assertTrue(key(CultivationMethods.whyNoGain(p, c, DEMON)).equals(ModLang.MSG_TERRITORY_OUTSIDE), "Outside it, nothing");
 			p.moveTo(home.x, home.y, home.z);
 			Territories.challenge(p);
-			challengers.addAll(helper.getLevel().getEntitiesOfClass(DemonBeast.class, new AABB(BlockPos.containing(home)).inflate(Territories.RADIUS + 8)));
+			// Found by its id, wherever it stands (looked for in a box round its holder, one stood on a neighbouring test's roof was missed:
+			// bug sweep 10, 2026-11-18); on ground near the territory's own height, not on whatever towers over its edge.
+			for (java.util.UUID id : Territories.challengersOf(p.getUUID())) {
+				if (helper.getLevel().getEntity(id) instanceof DemonBeast beast) challengers.add(beast);
+			}
 			ServerPlayer holder = p;
-			helper.assertTrue(challengers.stream().anyMatch(b -> b.getTarget() == holder), "A challenger comes for it");
+			helper.assertTrue(!challengers.isEmpty() && challengers.stream().allMatch(b -> b.getTarget() == holder), "A challenger comes for it");
+			// Where one stands: at the territory's height under a tower, not on the tower's top (the column's heightmap).
+			BlockPos column = BlockPos.containing(home.x + 3, home.y, home.z + 3);
+			for (int dy = -1; dy <= 30; dy++) tower.put(column.above(dy), helper.getLevel().getBlockState(column.above(dy)));
+			for (BlockPos pos : tower.keySet()) helper.getLevel().setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
+			for (BlockPos pos : List.of(column, column.above())) helper.getLevel().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+			helper.assertTrue(Territories.standAt(helper.getLevel(), column).equals(column), "A challenger stands at its territory's height");
 			Territories.second(p);
 			helper.assertTrue(c.demon().hasTerritory(), "Standing its ground: held");
 			p.moveTo(home.x + 40, home.y, home.z);
@@ -412,6 +457,7 @@ public class MethodsPhaseTwoGameTests implements FabricGameTest {
 			helper.succeed();
 		} finally {
 			challengers.forEach(Entity::discard);
+			tower.forEach((pos, was) -> helper.getLevel().setBlockAndUpdate(pos, was));
 			if (p != null) Territories.forget(p.getUUID());
 			leave(made);
 		}

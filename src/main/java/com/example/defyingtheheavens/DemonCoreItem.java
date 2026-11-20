@@ -27,7 +27,7 @@ import java.util.List;
  * artifact forging too, later (the user's word).
  */
 public class DemonCoreItem extends Item {
-	private static final String RANK = "CoreRank", ELEMENT = "CoreElement", FROM = "CoreFrom";
+	private static final String RANK = "CoreRank", ELEMENT = "CoreElement", FROM = "CoreFrom", SHIELDED = "CoreShielded";
 	/** Its looks, by realm: Qi Refining, Foundation Building, Core Formation, Nascent Soul, Heavenly Being and above. */
 	public static final int LOOKS = 5;
 	/** Core Devouring: a core is this share of the Demon Path's stage, twice as much a realm above, half a realm below, the most {@link #MOST}. */
@@ -115,6 +115,27 @@ public class DemonCoreItem extends Item {
 		}
 	}
 
+	/**
+	 * Whether it is shielded (puppet phase 3: CoreShieldRecipe, jade and obsidian round it): set in a puppet's frame, its puppet keeps its whole
+	 * strength where qi is suppressed (PuppetEntity#suppressed, RealmSuppressSystem).
+	 */
+	public static boolean shielded(ItemStack stack) {
+		CompoundTag tag = stack.getTag();
+		return tag != null && tag.getBoolean(SHIELDED);
+	}
+
+	/** One of {@code core}, shielded. */
+	public static ItemStack shield(ItemStack core) {
+		ItemStack out = core.copyWithCount(1);
+		out.getOrCreateTag().putBoolean(SHIELDED, true);
+		return out;
+	}
+
+	@Override
+	public boolean isFoil(ItemStack stack) {
+		return shielded(stack);
+	}
+
 	/** Which of its {@link #LOOKS} it wears (the client's "defying-the-heavens:realm" model property): its realm's, Heavenly Being's from there up. */
 	public static int look(ItemStack stack) {
 		return Math.min(LOOKS - 1, realm(stack).ordinal());
@@ -157,6 +178,7 @@ public class DemonCoreItem extends Item {
 		if (element != null) tooltip.add(Component.translatable(ModLang.CORE_ELEMENT, element.getDisplayName()).withStyle(ChatFormatting.GRAY));
 		Component from = from(stack);
 		if (from != null) tooltip.add(Component.translatable(ModLang.CORE_FROM, from).withStyle(ChatFormatting.DARK_GRAY));
+		if (shielded(stack)) tooltip.add(Component.translatable(ModLang.CORE_SHIELDED).withStyle(ChatFormatting.AQUA));
 		tooltip.add(Component.translatable(ModLang.CORE_USE).withStyle(ChatFormatting.DARK_AQUA));
 	}
 

@@ -61,12 +61,29 @@ public abstract class SoulEntityMixin {
 		return state.is(Blocks.SOUL_SAND) || state.is(Blocks.SOUL_SOIL);
 	}
 
-	/** A soul riding the body it possesses sits at that body's eyes, so its view is the body's (whatever the body's size). */
+	/**
+	 * A soul riding the body it possesses sits at that body's eyes, so its view is the body's (whatever the body's size); so does a player's
+	 * own soul playing the puppet it is held in (PuppetPlayers).
+	 */
 	@Inject(method = "positionRider(Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
 	private void dth$soulBehindTheEyes(Entity passenger, CallbackInfo ci) {
 		Entity self = (Entity) (Object) this;
-		if (!(passenger instanceof Player player) || !self.hasPassenger(passenger) || !SoulProjection.isSoul(player)) return;
+		if (!(passenger instanceof Player player) || !self.hasPassenger(passenger)) return;
+		if (!SoulProjection.isSoul(player) && !(self instanceof com.example.defyingtheheavens.PuppetEntity
+				&& com.example.defyingtheheavens.PuppetPlayers.isPilot(player))) return;
 		passenger.setPos(self.getX(), self.getY() + self.getEyeHeight() - player.getEyeHeight(), self.getZ());
 		ci.cancel();
+	}
+
+	/**
+	 * A soul playing a puppet rides nothing but its puppet (PuppetPlayers): using a boat, a horse or a minecart, as the living may now
+	 * (CultivationEvents), would take it out of its body. Both sides.
+	 */
+	@Inject(method = "startRiding(Lnet/minecraft/world/entity/Entity;Z)Z", at = @At("HEAD"), cancellable = true)
+	private void dth$pilotRidesOnlyItsPuppet(Entity vehicle, boolean force, CallbackInfoReturnable<Boolean> cir) {
+		if ((Object) this instanceof Player player && !(vehicle instanceof com.example.defyingtheheavens.PuppetEntity)
+				&& com.example.defyingtheheavens.PuppetPlayers.isPilot(player)) {
+			cir.setReturnValue(false);
+		}
 	}
 }

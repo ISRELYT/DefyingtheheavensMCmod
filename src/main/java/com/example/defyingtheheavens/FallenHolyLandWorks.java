@@ -361,7 +361,7 @@ public final class FallenHolyLandWorks extends RealmWorks {
 
 	/**
 	 * A hoard of the holy land: supreme spirit stones, now and then an immortal one, a Heaven-grade artifact, a Departure Jade, a manual of
-	 * one of Entering Nirvana's ways, which no sect keeps (MethodManualItem#ancient).
+	 * one of Entering Nirvana's ways, which only the Great Void's sects keep besides (MethodManualItem#ancient).
 	 */
 	static List<ItemStack> vaultTreasures(RandomSource random) {
 		List<ItemStack> out = new ArrayList<>();

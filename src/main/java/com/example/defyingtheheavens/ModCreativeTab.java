@@ -55,7 +55,11 @@ public final class ModCreativeTab {
 			// volumes one a realm: MethodManualItem)
 			for (CultivationMethod method : CultivationMethod.values()) if (method.fromManual()) add(MethodManualItem.of(method, method.last()));
 			add(ModBlocks.SHRINE, ModItems.INCENSE); // a shrine and its incense (Shrines)
-			// The Artifact Forge and its artifacts, every kind at every grade it is forged at (a banner of each of the five elements)
+			// The Artifact Forge and its artifacts, every kind at every grade it is forged at (a banner of each of the five elements); the
+			// puppets' frames among them, and the Puppet Workbench and the Command Seal before them (Puppetry)
+			add(ModBlocks.PUPPET_WORKBENCH, ModItems.COMMAND_SEAL, ModBlocks.PUPPET_FACTORY, ModBlocks.OVERSEER_CORE);
+			for (PuppetBlueprint blueprint : PuppetBlueprint.values()) add(CircuitDiagramItem.ancient(blueprint, ArtifactGrade.SPIRIT));
+			for (int quarter = 0; quarter < 4; quarter++) add(CircuitFragmentItem.of(PuppetBlueprint.HUMANOID, ArtifactGrade.EARTH, quarter));
 			add(ModBlocks.ARTIFACT_FORGE);
 			for (ArtifactKind kind : ArtifactKind.values()) {
 				for (ArtifactGrade grade : ArtifactGrade.values()) {

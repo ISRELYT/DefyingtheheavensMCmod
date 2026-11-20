@@ -383,17 +383,51 @@ public class MethodsPhaseFourGameTests implements FabricGameTest {
 	public void eachWorldKeepsItsOwnRealmsWays(GameTestHelper helper) {
 		RandomSource random = RandomSource.create(20261101L);
 		Alignment.Faction[] factions = Alignment.Faction.values();
+		MethodManualItem.World[] worlds = MethodManualItem.World.values();
+		int nirvanaWays = 0;
 		for (int k = 0; k < 900; k++) {
-			boolean upper = k % 2 == 0;
+			MethodManualItem.World world = worlds[(k / factions.length) % worlds.length];
 			Alignment.Faction faction = factions[k % factions.length];
-			ItemStack[] stacks = {MethodManualItem.kept(faction, null, upper, true, random), MethodManualItem.kept(faction, Bloodline.TIGER, upper, true, random)};
+			ItemStack[] stacks = {MethodManualItem.kept(faction, null, world, true, random), MethodManualItem.kept(faction, Bloodline.TIGER, world, true, random)};
 			for (ItemStack stack : stacks) {
 				CultivationMethod method = MethodManualItem.method(stack);
 				if (method == null) continue;
-				helper.assertTrue(method.first().ordinal() <= (upper ? Realm.SACRED_VESSEL : Realm.CORE_FORMATION).ordinal(),
-						"No sect keeps a way beyond its world's realms: " + method.getId());
+				// The lower realms' ways to Heavenly Being's, the Upper Realm's to Sacred Vessel's, the Great Void's to Entering Nirvana's (2026-11-16),
+				// the Immortal Realm's to True Immortal's (2026-11-17).
+				Realm deepest = switch (world) {
+					case LOWER -> Realm.HEAVENLY_BEING;
+					case UPPER -> Realm.SACRED_VESSEL;
+					case GREAT_VOID -> Realm.ENTERING_NIRVANA;
+					case IMMORTAL -> Realm.TRUE_IMMORTAL;
+				};
+				helper.assertTrue(method.first().ordinal() <= deepest.ordinal(), "No sect keeps a way beyond its world's realms: " + method.getId());
+				helper.assertTrue(method.first() != Realm.TRUE_IMMORTAL || world == MethodManualItem.World.IMMORTAL,
+						"True Immortal's ways only the Immortal Realm's sects keep: " + method.getId());
+				if (method.first() == Realm.ENTERING_NIRVANA) nirvanaWays++;
 			}
 		}
+		helper.assertTrue(nirvanaWays > 0, "The Great Void's sects keep the ways that begin at Entering Nirvana");
+		// And each way's deepest volume (past Sacred Vessel none was kept before 2026-11-16/17): some world's sects write it.
+		for (CultivationMethod method : CultivationMethod.values()) {
+			if (!method.fromManual() || method == CultivationMethod.QI_CIRCULATION || method == CultivationMethod.NETHERWORLD_BREATHING) continue;
+			boolean ofAKind = false, deepest = false;
+			for (Alignment.Faction faction : factions) ofAKind |= MethodManualItem.kinds(faction, null).contains(method) || MethodManualItem.kinds(faction, Bloodline.FOX).contains(method);
+			for (MethodManualItem.World world : worlds) deepest |= method.last().ordinal() >= world.low.ordinal() && method.last().ordinal() <= world.deepest.ordinal();
+			helper.assertTrue(ofAKind && deepest, "Its deepest volume kept somewhere: " + method.getId());
+		}
+		// The Celestial Court's Quartermaster sells each of the four ways' True Immortal volume in turn, to Captains (2026-11-17).
+		java.util.Set<CultivationMethod> sold = new java.util.HashSet<>();
+		for (long day = 0; day < CelestialCourt.TRUE_IMMORTAL_WAYS.length; day++) {
+			for (CelestialCourt.Ware ware : CelestialCourt.wares(day)) {
+				CultivationMethod way = MethodManualItem.method(ware.item());
+				if (way == null || way == CultivationMethod.QI_CIRCULATION || way == CultivationMethod.NETHERWORLD_BREATHING) continue;
+				helper.assertTrue(MethodManualItem.realm(ware.item()) == Realm.TRUE_IMMORTAL && ware.rank() == CelestialCourt.Rank.CAPTAIN,
+						"The day's way's True Immortal volume, to Captains: " + way.getId());
+				sold.add(way);
+			}
+		}
+		helper.assertTrue(sold.equals(java.util.Set.of(CultivationMethod.INCENSE_FAITH, CultivationMethod.SPIRIT_BEAST_BOND, CultivationMethod.ANCESTRAL_INCENSE,
+				CultivationMethod.COURT_OF_THE_DEAD)), "The Quartermaster sells each of the four in turn: " + sold);
 		for (int k = 0; k < 40; k++) {
 			ItemStack en = MethodManualItem.ancient(Realm.ENTERING_NIRVANA, random), ti = MethodManualItem.ancient(Realm.TRUE_IMMORTAL, random);
 			helper.assertTrue(MethodManualItem.method(en).first() == Realm.ENTERING_NIRVANA && MethodManualItem.realm(en) == Realm.ENTERING_NIRVANA
@@ -402,7 +436,7 @@ public class MethodsPhaseFourGameTests implements FabricGameTest {
 		helper.assertTrue(MethodManualItem.ancient(Realm.FOUR_AXIS, random).isEmpty(), "No way begins at Four Axis");
 		// Every way of phase 4 is somewhere to be found: a sect's kind, or the ancients' vaults; the orthodox two (manuals of their own since
 		// 2026-11-16) in every library (MethodManualItem#circulation) and with the ghosts who keep their foundations.
-		helper.assertTrue(MethodManualItem.method(MethodManualItem.circulation(false, random)) == CultivationMethod.QI_CIRCULATION,
+		helper.assertTrue(MethodManualItem.method(MethodManualItem.circulation(MethodManualItem.World.LOWER, random)) == CultivationMethod.QI_CIRCULATION,
 				"Every library keeps Qi Circulation's volumes");
 		for (CultivationMethod method : CultivationMethod.values()) {
 			if (!method.fromManual() || method == CultivationMethod.QI_CIRCULATION || method == CultivationMethod.NETHERWORLD_BREATHING) continue;

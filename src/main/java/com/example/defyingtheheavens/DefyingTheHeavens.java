@@ -18,6 +18,8 @@ public class DefyingTheHeavens implements ModInitializer {
 		HeavenAltarMenu.register();
 		VesselMenu.register();
 		StorageFormationMenu.register();
+		PuppetFactoryMenu.register(); // puppet phase 3: the Puppet Factory's screen
+		OverseerMenu.register(); // and the Overseer Core's
 		ModEntities.register();
 		ModParticles.register();
 		ModItems.register();
@@ -30,6 +32,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModStructures.register();
 		NoGhostPalaceFilter.register();
 		ClothingRecipes.register();
+		CoreShieldRecipe.register(); // puppet phase 3: a demon core shielded with jade and obsidian
 		Milestones.register(); // the advancements' trigger
 		ModPackets.registerServerReceivers();
 		CultivationEvents.register();
@@ -47,6 +50,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		LegendCommand.register();
 		SectMissions.register(); // the sect mission board: its postings, quarry, the gate watch, the boards set up
 		VanillaLoot.register(); // the mod's goods and writings in the vanilla world's chests (2026-11-16)
+		Puppetry.register(); // the puppets' messenger bees on the wing, boards and seizings let go of as their players leave
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

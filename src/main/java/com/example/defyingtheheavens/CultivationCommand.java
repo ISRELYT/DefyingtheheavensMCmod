@@ -18,7 +18,8 @@ import java.util.Locale;
  * Op-only testing helpers: /cultivation set [heaven|ghost|demon] <realm 1-11> <stage 1-4>, /cultivation addcultivation
  * [heaven|ghost|demon] <amount> (the heaven path's without a path named; the user's ask, 2026-10-24: every path, not only the
  * heaven path's), /cultivation setqi <amount> (the qi pool, capped at its maximum), /cultivation lifespan [set <years>] (Lifespan),
- * /cultivation obsession [set <one|none>] (Obsession), /cultivation bloodline [set <race> [colouring] | choose] (Bloodlines). Setting
+ * /cultivation obsession [set <one|none>] (Obsession), /cultivation bloodline [set <race> [colouring] | choose] (Bloodlines),
+ * /cultivation craft [<craft> <rank> | <craft> add <practice>] (CraftMastery: the crafts' ranks). Setting
  * a cultivator back to or below Qi Refining Mid (or mortal) takes back the heavens' leave and Favour, so the Ritual to the Heavens is
  * asked again. Set leaves every heaven method known understood exactly as far as the stage set (HeavenMethods#alignTo), nothing left
  * to settle; the ghost path's set leaves its methods so (GhostMethods#setPath, as /method path), and opens a mortal's meridians, whose
@@ -110,7 +111,50 @@ public final class CultivationCommand {
 													return 1;
 												}))))
 						.then(obsession())
-						.then(bloodline())));
+						.then(bloodline())
+						.then(craftCommand())));
+	}
+
+	/**
+	 * /cultivation craft: each craft's rank and practice; /cultivation craft <alchemy|forging|formations|talismans|puppetry>
+	 * <apprentice|adept|master|grandmaster|saint>: that craft set to the start of that rank; /cultivation craft <craft> add <practice>: that
+	 * much practice more (CraftMastery: the user's ask, 2026-11-17, "give me commands to up my skills in different crafts").
+	 */
+	private static LiteralArgumentBuilder<CommandSourceStack> craftCommand() {
+		LiteralArgumentBuilder<CommandSourceStack> craft = Commands.literal("craft").executes(ctx -> {
+			ServerPlayer p = ctx.getSource().getPlayerOrException();
+			PlayerCultivation own = CultivationManager.own(p);
+			for (CraftMastery.Craft c : CraftMastery.Craft.values()) {
+				int practice = own.getMastery(c);
+				ctx.getSource().sendSuccess(() -> Component.empty().append(c.getDisplayName()).append(": ")
+						.append(CraftMastery.Rank.of(practice).getDisplayName()).append(" (" + practice + " practice)"), false);
+			}
+			return 1;
+		});
+		for (CraftMastery.Craft c : CraftMastery.Craft.values()) {
+			LiteralArgumentBuilder<CommandSourceStack> one = Commands.literal(c.getId());
+			for (CraftMastery.Rank rank : CraftMastery.Rank.values()) {
+				one.then(Commands.literal(rank.name().toLowerCase(Locale.ROOT)).executes(ctx -> setMastery(ctx.getSource(), c, rank.from)));
+			}
+			one.then(Commands.literal("add").then(Commands.argument("practice", IntegerArgumentType.integer(1, 1_000_000))
+					.executes(ctx -> {
+						ServerPlayer p = ctx.getSource().getPlayerOrException();
+						return setMastery(ctx.getSource(), c, CultivationManager.own(p).getMastery(c) + IntegerArgumentType.getInteger(ctx, "practice"));
+					})));
+			craft.then(one);
+		}
+		return craft;
+	}
+
+	/** {@code craft}'s practice set to {@code practice} for the command's player (their own record), told and synced. */
+	private static int setMastery(CommandSourceStack source, CraftMastery.Craft craft, int practice) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		CultivationManager.own(p).setMastery(craft, practice);
+		CultivationManager.markDirty(p.server);
+		CultivationManager.sync(p);
+		source.sendSuccess(() -> Component.empty().append(craft.getDisplayName()).append(": ").append(CraftMastery.Rank.of(practice).getDisplayName())
+				.append(" (" + practice + " practice)"), false);
+		return 1;
 	}
 
 	private static final SimpleCommandExceptionType NO_DEMON_PATH = new SimpleCommandExceptionType(Component.literal(

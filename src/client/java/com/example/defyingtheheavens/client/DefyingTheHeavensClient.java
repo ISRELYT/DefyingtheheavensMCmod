@@ -35,6 +35,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.HeavenAltarMenu.TYPE, HeavenAltarScreen::new);
 		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.VesselMenu.TYPE, VesselScreen::new);
 		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.StorageFormationMenu.TYPE, StorageFormationScreen::new);
+		// Puppet phase 3: the Puppet Factory's screen and the Overseer Core's.
+		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.PuppetFactoryMenu.TYPE, PuppetFactoryScreen::new);
+		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.OverseerMenu.TYPE, OverseerScreen::new);
 		// An old Storage Ring (only ever seen for the moment before it unfolds into a formation) still looks its grade: models/item/storage_ring_*.
 		net.minecraft.client.renderer.item.ItemProperties.register(com.example.defyingtheheavens.ModItems.STORAGE_RING, DefyingTheHeavens.id("grade"),
 				(stack, level, entity, seed) -> com.example.defyingtheheavens.StorageRingItem.gradeIndex(stack) / 4.0f);
@@ -90,6 +93,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				com.example.defyingtheheavens.ModBlockEntities.CULTIVATION_FRUIT, context -> new CultivationFruitAuraRenderer());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
 				com.example.defyingtheheavens.ModBlockEntities.SPIRIT_PEDESTAL, SpiritPedestalRenderer::new);
+		// What lies on a Puppet Workbench, and its circuits to one with Qi Sense (Puppetry).
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
+				com.example.defyingtheheavens.ModBlockEntities.PUPPET_WORKBENCH, PuppetWorkbenchRenderer::new);
 		// Items used on both sides (pills) read the local player's cultivation from the synced mirror.
 		com.example.defyingtheheavens.CultivationManager.clientMirror = ClientCultivationData::get;
 		// The Alchemy Cauldron's water: the biome's water colour, turning jade while a brew cooks.
@@ -119,6 +125,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// Soul Projection: the soul's flight and state, its look (a core shader of its own), its body and seized bodies.
 		ClientSoul.register();
 		ClientBodies.register(); // a soul in another's body wears its look and name (Possession)
+		ClientPuppetPilot.register(); // a player's soul in a puppet: playing it steers it; its own screen (PuppetPlayers)
 		SoulRenderer.register();
 		SpellGhosts.register(); // the spirit shader the spells' White Impermanence, Black Impermanence and avatar are drawn in
 		EntityRendererRegistry.register(ModEntities.SOUL_BODY, SoulBodyRenderer::new);
@@ -163,6 +170,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(SpellConstructRenderer::tick);
 		EntityRendererRegistry.register(ModEntities.SPELL_BLOCK, SpellBlockRenderer::new);
 		EntityRendererRegistry.register(ModEntities.EARTH_GOLEM, EarthGolemRenderer::new);
+		EntityRendererRegistry.register(ModEntities.PUPPET_HUMANOID, context -> new PuppetRenderer(context, false));
+		EntityRendererRegistry.register(ModEntities.PUPPET_BEE, context -> new PuppetRenderer(context, true));
 		EntityRendererRegistry.register(ModEntities.DIRT_TIDE, DirtTideRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SPATIAL_TEAR, SpatialTearRenderer::new);
 		LegendsClient.register(); // the legendary weapons: the spear's bolt, the sword spirits, the swords in their stones

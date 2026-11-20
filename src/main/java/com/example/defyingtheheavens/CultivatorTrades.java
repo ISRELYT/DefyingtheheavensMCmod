@@ -211,7 +211,10 @@ public final class CultivatorTrades {
 						new Goods(new ItemStack(Items.BLAZE_ROD), 6, 2, 0),
 						new Goods(new ItemStack(Items.GHAST_TEAR), 15, 1, 0),
 						new Goods(new ItemStack(Items.ECHO_SHARD), 20, 1, 0),
-						artifact(random, ArtifactGrade.MORTAL, npc, 0)));
+						artifact(random, ArtifactGrade.MORTAL, npc, 0),
+						// A puppet's frame, and a torn quarter of an ancient circuit diagram (Puppetry).
+						frame(random, ArtifactGrade.MORTAL, 0),
+						new Goods(CircuitFragmentItem.random(random), 25, 1, 0)));
 				for (int i = 0; i < 3; i++) goods.add(odd.remove(random.nextInt(odd.size())));
 				goods.add(herb(random, 100, 400, 0, ModItems.GINSENG, ModItems.LINGZHI, ModItems.HUANGJING, ModItems.SPIRIT_GINSENG));
 				goods.add(odd.remove(random.nextInt(odd.size())).withRegard(Regard.PER_PIP));
@@ -401,6 +404,12 @@ public final class CultivatorTrades {
 		HeavenMethod own = npc.heavenMethod();
 		ItemStack artifact = Artifacts.any(random, grade, own != null ? own.element() : QiElement.five()[random.nextInt(5)]);
 		return new Goods(artifact, Artifacts.priceOf(artifact), 1, regard);
+	}
+
+	/** A puppet's frame of {@code grade} (Puppetry: a humanoid's or a bee's), Normal work, at its price. */
+	private static Goods frame(RandomSource random, ArtifactGrade grade, int regard) {
+		ItemStack frame = Artifacts.create(random.nextBoolean() ? ArtifactKind.HUMANOID_FRAME : ArtifactKind.BEE_FRAME, grade, Artifacts.Quality.NORMAL, null);
+		return new Goods(frame, Artifacts.priceOf(frame), 1, regard);
 	}
 
 	@SafeVarargs

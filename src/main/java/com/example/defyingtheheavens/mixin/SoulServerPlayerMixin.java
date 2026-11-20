@@ -26,7 +26,8 @@ public abstract class SoulServerPlayerMixin {
 
 	@Inject(method = "drop(Z)Z", at = @At("HEAD"), cancellable = true)
 	private void dth$soulDropsNothing(boolean wholeStack, CallbackInfoReturnable<Boolean> cir) {
-		if (Incorporeal.is((ServerPlayer) (Object) this)) cir.setReturnValue(false);
+		// (A soul playing a puppet drops things as the living do: Incorporeal#touchesNothing.)
+		if (Incorporeal.touchesNothing((ServerPlayer) (Object) this)) cir.setReturnValue(false);
 	}
 
 	/**
@@ -39,5 +40,7 @@ public abstract class SoulServerPlayerMixin {
 		ServerPlayer self = (ServerPlayer) (Object) this;
 		net.minecraft.world.entity.Entity to = camera == null ? self : camera;
 		if (!com.example.defyingtheheavens.Possession.mayView(self, to) || !com.example.defyingtheheavens.Sleeves.mayView(self, to)) ci.cancel();
+		// A soul held in a puppet looks out through it alone (PuppetPlayers).
+		else if (!com.example.defyingtheheavens.PuppetPlayers.mayView(self, to)) ci.cancel();
 	}
 }

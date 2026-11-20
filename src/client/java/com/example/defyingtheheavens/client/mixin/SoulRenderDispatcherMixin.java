@@ -33,5 +33,7 @@ public abstract class SoulRenderDispatcherMixin {
 		}
 		Minecraft mc = Minecraft.getInstance();
 		if (ClientSoul.isOut() && entity.getId() == ClientSoul.host() && mc.options.getCameraType().isFirstPerson()) cir.setReturnValue(false);
+		// Nor the puppet a player's own soul plays, from within it (PuppetPlayers).
+		else if (com.example.defyingtheheavens.client.ClientPuppetPilot.seenFromWithin(entity)) cir.setReturnValue(false);
 	}
 }

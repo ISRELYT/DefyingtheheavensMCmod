@@ -58,6 +58,7 @@ public final class CultivationEvents {
 		GhostSystem.arrived(player); // a ghost that left scattered: together again at the Gate
 		LifespanTribulation.onJoin(player); // a spent life ended by a death they never came back from: born anew now
 		NatalTreasures.login(player); // a natal treasure that broke in another's hands while they were away: gone, their soul wounded
+		PuppetPlayers.arrived(player); // a soul held in a puppet: its ways out told (its place set right on the next tick)
 	}
 
 	/**
@@ -347,7 +348,7 @@ public final class CultivationEvents {
 		// Breaking anything on a sect's grounds is trespass (theft, in the treasury), and its disciples answer it.
 		PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
 			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return true;
-			if (Incorporeal.is(sp)) return false; // the dead and wandering souls break nothing
+			if (Incorporeal.touchesNothing(sp)) return false; // the dead and wandering souls break nothing
 			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
 			// A secret realm's walls that hold (RealmWorks#holds): the Cave Abode's maze, its way walked, never dug round; the Ruins'
 			// ancestral hall while its formation stands; the Tomb's halls and sanctum.
@@ -462,6 +463,8 @@ public final class CultivationEvents {
 			RealmSuppressionHandler.update(newPlayer);
 			// Leaving the End (alive) copies health onto the new entity before our max-health bonus exists, capping it at 20.
 			newPlayer.setHealth(alive ? oldPlayer.getHealth() : newPlayer.getMaxHealth());
+			// A soul held in a puppet wakes in it; one gone on out of a puppet has its game back first (PuppetPlayers, puppet phase 2d).
+			PuppetPlayers.onRespawn(newPlayer, alive);
 			// A death's respawn wakes a ghost at the Ghost Gate; the Wheel's wakes the living (GhostSystem).
 			GhostSystem.onRespawn(newPlayer, alive);
 			NetherworldManager.refresh(newPlayer);
@@ -492,6 +495,9 @@ public final class CultivationEvents {
 			// A body cultivator's leap or charge under way: its fall does it no harm, as a player's does them none (BodyTechniques).
 			if (!(entity instanceof ServerPlayer) && source.is(DamageTypeTags.IS_FALL) && BodyTechniques.fallIsSafe(entity)) return false;
 			if (!(entity instanceof ServerPlayer sp)) return true;
+			// A player's soul playing the puppet it is held in is struck only through the puppet (PuppetPlayers): nothing touches it but what
+			// nothing stops.
+			if (PuppetPlayers.isPilot(sp) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
 			// Just after a Soul Dash, or on Yin Wind Steps, a fall does no harm (Spells#fallIsSafe); nor on a Ground-Splitting Leap (BodyTechniques).
 			if (source.is(DamageTypeTags.IS_FALL) && (Spells.fallIsSafe(sp) || BodyTechniques.fallIsSafe(sp))) return false;
 			// A projected soul is harmed only by cultivators who see it, by their own hand (see SoulProjection#allowSoulDamage).
@@ -564,6 +570,7 @@ public final class CultivationEvents {
 			Laws.onDeath(entity, source); // a mighty foe slain by an element's spell: a glimpse of its Law, perhaps
 			TenThousandGhosts.onDeath(entity, source); // a ghost slain, taken in by Ten Thousand Ghosts Union
 			BeastBlood.spilled(entity, source); // a demon beast's blood spilled where it fell, for Beast Blood Bathing
+			PuppetSouls.onDeath(entity, source); // a beast's or cultivator's soul drawn into its slayer's puppet's empty ring
 			if (entity instanceof ServerPlayer sp) {
 				FiveDecays.onDeath(sp); // a death nothing held off fails the Decays' judgement all the same
 				// A demon slain by another player leaves its demon core (DemonCoreItem), read from its record before anything changes it.
@@ -587,6 +594,7 @@ public final class CultivationEvents {
 				if (!spent && !source.is(ModDamageTypes.OLD_AGE)) GhostSystem.onDeath(sp, source, byHeaven);
 				SoulProjection.onDeath(sp); // nothing of a soul's journey outlives a death
 				Clones.onDeath(sp); // nor a clone: it dissolves where it stands
+				PuppetPlayers.masterDied(sp); // a puppeteer slain: the souls they held in their puppets free for good
 				SparSystem.abandon(sp); // killed mid-spar by something else: the spar is forfeit
 				BodyTechniques.end(sp); // the body's techniques under way end with it, Blood Frenzy goes out
 				RealmSuppressSystem.refreshNow(); // a fallen suppressor's pressure lifts at once
@@ -602,7 +610,7 @@ public final class CultivationEvents {
 	 */
 	private static void registerSoulInteractions() {
 		AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) ->
-				Incorporeal.is(player) ? InteractionResult.FAIL : InteractionResult.PASS);
+				Incorporeal.touchesNothing(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 			// A soul's one act on a block: rising in a body of the dead (CorpseWalk, 2026-11-13), as it enters a being.
 			if (SoulProjection.isSoul(player)) {
@@ -610,8 +618,16 @@ public final class CultivationEvents {
 				if (world.isClientSide) return InteractionResult.SUCCESS; // the server decides
 				return player instanceof ServerPlayer sp ? SoulProjection.tryPossessCorpse(sp, hit.getBlockPos()) : InteractionResult.FAIL;
 			}
-			// One whose body is held only watches it (a spectator could otherwise look into a chest it looks at).
-			if (player instanceof ServerPlayer held && (Possession.isHeld(held.getUUID()) || Sleeves.isCarried(held.getUUID()))) return InteractionResult.FAIL;
+			// One whose body is held only watches it (a spectator could otherwise look into a chest it looks at); so does a soul held in a
+			// puppet. One playing it uses things as the living do (the user, 2026-11-18: a free puppet "should be able to live like
+			// normal"), but a puppet never sleeps.
+			if (player instanceof ServerPlayer held && (Possession.isHeld(held.getUUID()) || Sleeves.isCarried(held.getUUID()) || PuppetPlayers.isHeld(held))) {
+				return InteractionResult.FAIL;
+			}
+			if (PuppetPlayers.isPilot(player) && world.getBlockState(hit.getBlockPos()).getBlock() instanceof net.minecraft.world.level.block.BedBlock) {
+				if (player instanceof ServerPlayer sp) sp.displayClientMessage(Component.translatable(ModLang.PUPPET_SOUL_NO_SLEEP), true);
+				return InteractionResult.FAIL;
+			}
 			if (!Incorporeal.isRuledGhost(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
 			BlockState state = world.getBlockState(hit.getBlockPos());
@@ -629,7 +645,7 @@ public final class CultivationEvents {
 		});
 		// Nothing of the living world in the hand of a soul or a ghost; but a ghost may drink a Marrow Cleansing Elixir, its meridians
 		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal), and read a manual or a slip.
-		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayUse(player, player.getItemInHand(hand))
+		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.touchesNothing(player) && !Incorporeal.mayUse(player, player.getItemInHand(hand))
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		// The dead eat nothing (CorpseWalk): a body walked in takes no food (a potion it drinks, as the undead do).
 		UseItemCallback.EVENT.register((player, world, hand) -> {
@@ -653,6 +669,8 @@ public final class CultivationEvents {
 			// Nothing to ride or use; only cultivators to talk with, the living and the dead (TalkSystem keeps the talk to what the
 			// dead may do).
 			if (Incorporeal.isRuledGhost(player)) return entity instanceof CultivatorNpc ? InteractionResult.PASS : InteractionResult.FAIL;
+			// A soul playing a puppet talks, trades and uses as the living do (its art goes by the cast key: PuppetPlayers#art), but rides
+			// nothing else: a boat or a horse would take it out of its body (SoulEntityMixin keeps it in).
 			if (!SoulProjection.isSoul(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND || player.isPassenger()) return InteractionResult.FAIL;
 			if (world.isClientSide) return InteractionResult.SUCCESS; // the server decides
@@ -665,6 +683,12 @@ public final class CultivationEvents {
 				if (entity instanceof Player target && GhostSystem.isGhost(target) || entity instanceof Ghostly) return InteractionResult.PASS;
 				if (world.isClientSide) return InteractionResult.SUCCESS; // sent on to the server
 				return player instanceof ServerPlayer sp && GhostSystem.attack(sp, entity) ? InteractionResult.PASS : InteractionResult.FAIL;
+			}
+			// A soul playing the puppet it is held in strikes with the puppet's blow (PuppetPlayers#strike), never its own hands.
+			if (PuppetPlayers.isPilot(player)) {
+				if (world.isClientSide) return InteractionResult.SUCCESS; // sent on to the server
+				if (player instanceof ServerPlayer sp) PuppetPlayers.strike(sp, entity);
+				return InteractionResult.FAIL;
 			}
 			if (!SoulProjection.isSoul(player)) return InteractionResult.PASS;
 			if (!player.isPassenger()) return InteractionResult.FAIL;

@@ -142,7 +142,8 @@ public class MethodsPhaseThreeGameTests implements FabricGameTest {
 			helper.assertTrue(near(heaven - heavenBefore, 4) && near(Shrines.worship(level, abs, Shrines.Kind.DEMON) - demonBefore, 2),
 					"Two villagers (1 each) and a Foundation Building cultivator (2): 4; a mountain god hears the mortals alone: 2");
 			Shrines.pray(level, abs, Shrines.Kind.HEAVEN, shrine, level.getGameTime());
-			helper.assertTrue(near(shrine.faith(), heaven), "Their prayer laid up as faith (" + shrine.faith() + ")");
+			// (At most MAX_FAITH laid up: a neighbouring test's mighty cultivator in reach fills it to the brim.)
+			helper.assertTrue(near(shrine.faith(), Math.min(Shrines.MAX_FAITH, heaven)), "Their prayer laid up as faith (" + shrine.faith() + " of " + heaven + ")");
 			shrine.setFaith(100);
 			double before = c.getCultivation();
 			double share = Shrines.flow(level, Shrines.Kind.HEAVEN, shrine);

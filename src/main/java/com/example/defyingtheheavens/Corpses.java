@@ -179,6 +179,8 @@ public final class Corpses {
 	 */
 	static InteractionResult use(ServerPlayer player, InteractionHand hand, CorpseBlockEntity body, BlockState state) {
 		ItemStack held = player.getItemInHand(hand);
+		// Sneaking with the Inscription Brush: a cultivator's body taken up to refine into a puppet's (PuppetBodies, Puppetry phase 2b).
+		if (held.is(ModItems.INSCRIPTION_BRUSH) && player.isShiftKeyDown()) return PuppetBodies.take(player, body, state, body.getBlockPos());
 		// One whose ghost path practises Corpse Yin Refining draws the body's yin with an empty hand (CorpseYin); sneaking, it asks whose
 		// it was, as anyone does.
 		if (held.isEmpty() && hand == InteractionHand.MAIN_HAND && !player.isShiftKeyDown() && CorpseYin.draws(player)) return CorpseYin.draw(player, body, state);

@@ -30,6 +30,12 @@ public abstract class SoulPlayerMixin {
 		return spectator || SoulProjection.isSoul((Player) (Object) this);
 	}
 
+	/** A player's own soul playing the puppet it is held in doesn't climb out of it by sneaking (PuppetPlayers: its screen lets it go). Both sides. */
+	@Inject(method = "wantsToStopRiding", at = @At("HEAD"), cancellable = true)
+	private void dth$pilotStaysIn(CallbackInfoReturnable<Boolean> cir) {
+		if (com.example.defyingtheheavens.PuppetPlayers.isPilot((Player) (Object) this)) cir.setReturnValue(false);
+	}
+
 	@Inject(method = "updatePlayerPose", at = @At("HEAD"), cancellable = true)
 	private void dth$soulStandsUpright(CallbackInfo ci) {
 		Player self = (Player) (Object) this;
@@ -65,7 +71,22 @@ public abstract class SoulPlayerMixin {
 		if (entity instanceof ExperienceOrb && GhostSystem.isGhost(self) && !SoulProjection.isSoul(self)) return;
 		// What a ghost takes up (Incorporeal#mayCarry): the dead's money and writings, and a Marrow Cleansing Elixir.
 		if (entity instanceof net.minecraft.world.entity.item.ItemEntity item && Incorporeal.mayCarry(self, item.getItem())) return;
-		if (Incorporeal.is(self)) ci.cancel();
+		// (A soul playing a puppet takes things up as the living do: Incorporeal#touchesNothing.)
+		if (Incorporeal.touchesNothing(self)) ci.cancel();
+	}
+
+	/**
+	 * A soul playing a puppet digs as the living do (PuppetPlayers; the user, 2026-11-18: "live like normal"): riding inside it, it is never
+	 * on the ground itself, and digging off the ground goes five times slower; the puppet's own footing counts. Both sides (the client
+	 * digs too).
+	 */
+	@ModifyReturnValue(method = "getDestroySpeed", at = @At("RETURN"))
+	private float dth$pilotDigsFromItsFeet(float speed) {
+		Player self = (Player) (Object) this;
+		if (!self.onGround() && self.getVehicle() != null && self.getVehicle().onGround() && com.example.defyingtheheavens.PuppetPlayers.isPilot(self)) {
+			return speed * 5f;
+		}
+		return speed;
 	}
 
 	/** The server never moves a soul itself (no gravity to apply): its client flies it. */

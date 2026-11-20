@@ -288,6 +288,8 @@ public final class RealmSuppressSystem {
 		// A player's body left sitting or standing (a projected soul's, a clone's or the main body's, an Inner Realm meditator's) isn't
 		// a mortal's to press: weighed as one, its health was halved, and its owner came back into it so (the sweep of 2026-10-23).
 		if (target instanceof SoulBodyEntity || target instanceof CloneBodyEntity || target instanceof InnerBodyEntity) return false;
+		// A puppet whose core is shielded keeps its whole strength (puppet phase 3: DemonCoreItem#shielded).
+		if (target instanceof PuppetEntity puppet && DemonCoreItem.shielded(puppet.core())) return false;
 		// Map makers' invulnerable NPCs stay as they are, and a cultivator's own companions are spared.
 		if (target.isInvulnerable()) return false;
 		// A body cultivator's diamond heart too (BodyTechniques#npcAct).

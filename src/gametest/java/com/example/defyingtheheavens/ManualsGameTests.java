@@ -210,16 +210,45 @@ public class ManualsGameTests implements FabricGameTest {
 					"Its volumes to Foundation Building: it gathers");
 			read(player, MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.QI_REFINING));
 			helper.assertTrue(GhostMethods.ghostRank(c.netherworld()) == 0 && GhostMethods.canGain(c), "Netherworld Breathing's first volume begins the ghost path, and it gathers");
-			// The sects' libraries keep Qi Circulation's volumes: the lower realms' to Core Formation, the Upper Realm's from it (never Four Axis).
+			// The sects' libraries keep Qi Circulation's volumes: the lower realms' to their last, Heavenly Being (2026-11-16: Core Formation
+			// before), the lower volumes the likelier; the Upper Realm's Core Formation to Sacred Vessel; the Great Void's Heavenly Being to
+			// Entering Nirvana (the same evening); never Four Axis.
 			net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(5);
-			for (int i = 0; i < 200; i++) {
-				boolean upper = i % 2 == 0;
-				ItemStack kept = MethodManualItem.circulation(upper, random);
+			int lowerDeep = 0, greatVoidDeep = 0, immortal = 0;
+			MethodManualItem.World[] worlds = MethodManualItem.World.values();
+			for (int i = 0; i < 100 * worlds.length; i++) {
+				MethodManualItem.World world = worlds[i % worlds.length];
+				ItemStack kept = MethodManualItem.circulation(world, random);
 				Realm realm = MethodManualItem.realm(kept);
+				// (The Immortal Realm's sects Entering Nirvana to True Immortal: the user's word, 2026-11-17.)
+				Realm low = switch (world) {
+					case LOWER -> Realm.QI_REFINING;
+					case UPPER -> Realm.CORE_FORMATION;
+					case GREAT_VOID -> Realm.HEAVENLY_BEING;
+					case IMMORTAL -> Realm.ENTERING_NIRVANA;
+				};
+				Realm high = switch (world) {
+					case LOWER -> Realm.HEAVENLY_BEING;
+					case UPPER -> Realm.SACRED_VESSEL;
+					case GREAT_VOID -> Realm.ENTERING_NIRVANA;
+					case IMMORTAL -> Realm.TRUE_IMMORTAL;
+				};
+				if (world == MethodManualItem.World.IMMORTAL && realm == Realm.TRUE_IMMORTAL) immortal++;
 				helper.assertTrue(MethodManualItem.method(kept) == CultivationMethod.QI_CIRCULATION && realm != Realm.FOUR_AXIS
-						&& (upper ? realm.ordinal() >= Realm.CORE_FORMATION.ordinal() && realm.ordinal() <= Realm.SACRED_VESSEL.ordinal()
-						: realm.ordinal() <= Realm.CORE_FORMATION.ordinal()), "A library's Qi Circulation volume of its world's realms (" + realm + ")");
+						&& realm.ordinal() >= low.ordinal() && realm.ordinal() <= high.ordinal(),
+						"A library's Qi Circulation volume of its world's realms (" + world + ": " + realm + ")");
+				if (world == MethodManualItem.World.LOWER && realm.ordinal() >= Realm.NASCENT_SOUL.ordinal()) lowerDeep++;
+				if (world == MethodManualItem.World.GREAT_VOID && realm.ordinal() >= Realm.VOID_SHATTERING.ordinal()) greatVoidDeep++;
 			}
+			// (Of a hundred lower libraries some sixteen keep Nascent Soul's or Heavenly Being's: the lower of two draws of five; of a hundred
+			// of the Great Void's some twenty-five Void Shattering's to Entering Nirvana's: the lower of two of six.)
+			helper.assertTrue(lowerDeep > 0 && lowerDeep < 40, "A lower library keeps Nascent Soul's and Heavenly Being's now and then (" + lowerDeep + " of 100)");
+			helper.assertTrue(greatVoidDeep > 0 && greatVoidDeep < 50, "A Great Void library keeps Void Shattering's to Entering Nirvana's now and then (" + greatVoidDeep + " of 100)");
+			// (Of a hundred of the Immortal Realm's some twenty-five True Immortal's: the lower of two of two.)
+			helper.assertTrue(immortal > 5 && immortal < 50, "An Immortal Realm library keeps True Immortal's a quarter of the time (" + immortal + " of 100)");
+			boolean nirvana = false;
+			for (int i = 0; i < 2000 && !nirvana; i++) nirvana = MethodManualItem.realm(MethodManualItem.circulation(MethodManualItem.World.GREAT_VOID, random)) == Realm.ENTERING_NIRVANA;
+			helper.assertTrue(nirvana, "...and now and then Entering Nirvana's");
 		} finally {
 			leave(player);
 		}

@@ -1621,6 +1621,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (owesLife(player)) return false; // they spared its life: not today
 			if (SparSystem.areSparring(this, player)) return false; // a spar is a contest, not a feud
 			if (!abovePathQuarrels() && getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
+			// One walking with a puppet made of a cultivator's body (PuppetBodies, Puppetry phase 2b): the righteous see the desecration.
+			if (!level().isClientSide && !abovePathQuarrels() && getFaction() == Alignment.Faction.RIGHTEOUS && player instanceof ServerPlayer sp
+					&& PuppetBodies.walksWithBody(sp)) return true;
 			// A man on a demon clan's grounds (the user's pick, 2026-10-23: wary, so attacked there, let be outside unless provoked).
 			if (!level().isClientSide && isDemon() && trespassingMan(player)) return true;
 			// Loathing turns it on a player too, if it thinks it can win.

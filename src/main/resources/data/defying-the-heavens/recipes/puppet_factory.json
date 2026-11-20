@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IMI",
+    "PWP",
+    "IBI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "M": {
+      "item": "defying-the-heavens:mid_spirit_stone"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "W": {
+      "item": "defying-the-heavens:puppet_workbench"
+    },
+    "B": {
+      "item": "minecraft:blast_furnace"
+    }
+  },
+  "result": {
+    "item": "defying-the-heavens:puppet_factory"
+  }
+}

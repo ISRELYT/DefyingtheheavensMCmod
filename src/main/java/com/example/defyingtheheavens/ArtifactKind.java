@@ -8,6 +8,10 @@ import org.jetbrains.annotations.Nullable;
  * each in every grade (ArtifactGrade); and since phase 2, the five weapons made of their element (ElementalWeaponItem: the user's ask,
  * "some made of their element"), from Spirit grade up, for it takes a demon core of their element to give the element a shape. Its item
  * id is the grade's and the kind's ("spirit_flying_sword", "heaven_flame_blade").
+ * <p>
+ * And puppets' frames (Puppetry; the user's "begin phase 1", 2026-11-17): a humanoid's and a bee's body (PuppetFrameItem), in every grade,
+ * the grade deciding the realms its puppet may stand at and the size of its circuit board. No demon core at the forge: the core goes into
+ * the frame at the Puppet Workbench, as its heart.
  */
 public enum ArtifactKind {
 	FLYING_SWORD("flying_sword", true, null),
@@ -21,7 +25,9 @@ public enum ArtifactKind {
 	TIDE_SPEAR("tide_spear", true, QiElement.WATER),
 	VINE_WHIP("vine_whip", true, QiElement.WOOD),
 	MOUNTAIN_HAMMER("mountain_hammer", true, QiElement.EARTH),
-	GOLDEN_SWORD("golden_light_sword", true, QiElement.METAL);
+	GOLDEN_SWORD("golden_light_sword", true, QiElement.METAL),
+	HUMANOID_FRAME("humanoid_frame", false, null),
+	BEE_FRAME("bee_frame", false, null);
 
 	private final String id;
 	private final boolean weapon;
@@ -38,6 +44,22 @@ public enum ArtifactKind {
 	/** The element a weapon is made of (null: none, a phase 1 artifact). */
 	public @Nullable QiElement element() { return element; }
 	public boolean isElemental() { return element != null; }
+
+	/** The puppet a frame is forged for (Puppetry), or null: not a frame. */
+	public @Nullable PuppetBlueprint blueprint() {
+		return switch (this) {
+			case HUMANOID_FRAME -> PuppetBlueprint.HUMANOID;
+			case BEE_FRAME -> PuppetBlueprint.BEE;
+			default -> null;
+		};
+	}
+
+	public boolean isFrame() { return blueprint() != null; }
+
+	/** A puppet's frame of {@code blueprint}. */
+	public static ArtifactKind frameOf(PuppetBlueprint blueprint) {
+		return blueprint == PuppetBlueprint.BEE ? BEE_FRAME : HUMANOID_FRAME;
+	}
 
 	/** Whether it is forged at {@code grade}: every grade, an elemental weapon from Spirit up. */
 	public boolean has(ArtifactGrade grade) {

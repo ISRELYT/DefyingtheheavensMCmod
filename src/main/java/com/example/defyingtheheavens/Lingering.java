@@ -120,7 +120,8 @@ public final class Lingering {
 	 */
 	public static boolean destroysTheSoul(DamageSource source, boolean byHeaven) {
 		return byHeaven || source.is(ModDamageTypes.JUDGE_GAZE) || source.is(ModDamageTypes.OLD_AGE) || source.is(ModDamageTypes.SOUL_SCATTER)
-				|| source.is(ModDamageTypes.SOUL_SEVERED) || source.is(ModDamageTypes.SOUL_SEIZED) || source.is(ModDamageTypes.CHAOS_STORM);
+				|| source.is(ModDamageTypes.SOUL_SEVERED) || source.is(ModDamageTypes.SOUL_SEIZED) || source.is(ModDamageTypes.CHAOS_STORM)
+				|| source.is(ModDamageTypes.SOUL_WENT_ON); // a soul gone on out of a puppet (PuppetPlayers): it lingered there already
 	}
 
 	/**

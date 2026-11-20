@@ -53,6 +53,32 @@ public final class ModPackets {
 	 */
 	public static final ResourceLocation MISSION_BOARD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "mission_board");
 	public static final ResourceLocation MISSION_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "mission_act");
+	/**
+	 * S2C: a puppet's circuit board open in its puppeteer's hands (PuppetBoards#send: a bench's frame or a puppet's own board, after the
+	 * stroke it answers; or the word to close it); C2S PUPPET_PAINT: a stroke (its number, x, y, the stroke's order: NONE wipes); C2S
+	 * PUPPET_ACT: seal, wipe the board, or the screen closed (PuppetBoards: SEAL, WIPE_ALL, CLOSE).
+	 */
+	public static final ResourceLocation PUPPET_BOARD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_board");
+	public static final ResourceLocation PUPPET_PAINT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_paint");
+	public static final ResourceLocation PUPPET_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_act");
+	/**
+	 * S2C: the Command Seal's list of its holder's puppets (PuppetCommands#send: each with its order, health and place; the one chosen);
+	 * C2S PUPPET_COMMAND: an order or act for one of them (PuppetCommands: its id, the act, a message and its addressee for a bee).
+	 */
+	public static final ResourceLocation PUPPET_LIST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_list");
+	public static final ResourceLocation PUPPET_COMMAND = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_command");
+	/**
+	 * S2C PUPPET_PILOT: whether the player plays the puppet holding their soul now (PuppetPlayers: its client steers what it rides); C2S
+	 * PUPPET_PILOT_ART: its art loosed where they look (its use key, which an empty hand never sends).
+	 */
+	public static final ResourceLocation PUPPET_PILOT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_pilot");
+	public static final ResourceLocation PUPPET_PILOT_ART = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_pilot_art");
+	/**
+	 * S2C PUPPET_SOUL_PAGE: how a player's soul in a puppet stands, and an offer standing for them (PuppetPlayers#sendPage: the client's
+	 * PuppetSoulScreen and its HUD hint); C2S PUPPET_SOUL_ACT: a button pressed there, or its inventory key asking for it (PuppetPlayers#act).
+	 */
+	public static final ResourceLocation PUPPET_SOUL_PAGE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_soul_page");
+	public static final ResourceLocation PUPPET_SOUL_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "puppet_soul_act");
 	/** S2C: whether the player is in their clone now, and how their main body fares where it sits (Clones), for the HUD. */
 	public static final ResourceLocation CLONE_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "clone_state");
 	/**
@@ -369,6 +395,26 @@ public final class ModPackets {
 			int act = buf.readVarInt();
 			int id = buf.readVarInt();
 			server.execute(() -> SectMissions.act(player, act, id));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PUPPET_PAINT, (server, player, handler, buf, responseSender) -> {
+			int seq = buf.readVarInt(), x = buf.readVarInt(), y = buf.readVarInt(), stroke = buf.readVarInt();
+			server.execute(() -> PuppetBoards.paint(player, seq, x, y, stroke));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PUPPET_ACT, (server, player, handler, buf, responseSender) -> {
+			int act = buf.readVarInt();
+			server.execute(() -> PuppetBoards.act(player, act));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PUPPET_COMMAND, (server, player, handler, buf, responseSender) -> {
+			UUID puppet = buf.readUUID();
+			int act = buf.readVarInt();
+			String text = buf.readUtf(PuppetCommands.MESSAGE_LENGTH * 4), to = buf.readUtf(64);
+			server.execute(() -> PuppetCommands.act(player, puppet, act, text, to));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PUPPET_PILOT_ART, (server, player, handler, buf, responseSender) ->
+				server.execute(() -> PuppetPlayers.art(player)));
+		ServerPlayNetworking.registerGlobalReceiver(PUPPET_SOUL_ACT, (server, player, handler, buf, responseSender) -> {
+			int act = buf.readVarInt();
+			server.execute(() -> PuppetPlayers.act(player, act));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SPEND_STAT_POINTS, (server, player, handler, buf, responseSender) -> {
 			int stat = buf.readVarInt();

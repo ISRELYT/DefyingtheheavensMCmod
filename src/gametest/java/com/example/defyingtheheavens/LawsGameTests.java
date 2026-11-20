@@ -113,6 +113,20 @@ public class LawsGameTests implements FabricGameTest {
 		int[] needs = {3, 7, 12, 18, 25, 35};
 		for (int i = 0; i < LADDER.length; i++) helper.assertTrue(Laws.needed(LADDER[i]) == needs[i], LADDER[i].getId() + " wants " + needs[i] + " levels");
 		helper.assertTrue(Laws.needed(Realm.TRUE_IMMORTAL) == 0, "True Immortal wants none");
+		// Shown to anyone on the Methods tab's Laws page (Laws#ladderLine; the user, 2026-11-17): each realm of the ladder, then its levels.
+		Component ladder = Laws.ladderLine();
+		if (key(ladder).equals(ModLang.LAWS_LADDER) && ladder.getContents() instanceof TranslatableContents t && t.getArgs().length == 1
+				&& t.getArgs()[0] instanceof Component list) {
+			java.util.List<Component> parts = list.getSiblings().stream().filter(part -> !part.getString().equals(", ")).toList();
+			helper.assertTrue(parts.size() == 2 * LADDER.length, "The ladder line: each realm and its levels (" + parts.size() + " parts)");
+			for (int i = 0; i < LADDER.length; i++) {
+				String realmKey = LADDER[i].getDisplayName().getContents() instanceof TranslatableContents r ? r.getKey() : "";
+				helper.assertTrue(parts.get(2 * i).getContents() instanceof TranslatableContents name && name.getKey().equals(realmKey)
+						&& parts.get(2 * i + 1).getString().equals(" " + needs[i]), "The ladder line: " + LADDER[i].getId() + " " + needs[i]);
+			}
+		} else {
+			helper.fail("The Laws page's ladder line: one list");
+		}
 		// The heaven path: its True Immortal method opens no way past it; the Laws do.
 		PlayerCultivation c = new PlayerCultivation();
 		c.awaken(0);

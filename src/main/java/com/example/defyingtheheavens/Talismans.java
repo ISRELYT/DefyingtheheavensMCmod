@@ -80,6 +80,9 @@ public final class Talismans {
 	public static final double HOMEWARD_STIR = 0.4;
 	/** Qi-Sealing: seconds sealed, a second less for each two stages the sealed stands above the talisman (none a realm or more above it). */
 	public static final int SEAL_SECONDS = 5;
+	/** Circuit-Freeze: how long the puppets it catches stand frozen (its work's worth more), and how far round where it lands it catches them. */
+	public static final int CIRCUIT_FREEZE_TICKS = 100;
+	public static final double CIRCUIT_FREEZE_RADIUS = 2.0;
 	/** Revealing: how long its sight lasts, and how far off the hidden show to it. */
 	public static final int REVEAL_TICKS = 600;
 	public static final double REVEAL_REACH = 32;
@@ -318,6 +321,16 @@ public final class Talismans {
 			}
 			case QI_SEALING -> {
 				if (struck != null) seal(struck, rank, power, thrower);
+			}
+			case CIRCUIT_FREEZE -> {
+				// Every puppet it strikes or lands by, frozen whatever its realm: the talisman locks the circuits, not the core.
+				Vec3 centre = struck != null ? struck.position() : at;
+				for (PuppetEntity puppet : level.getEntitiesOfClass(PuppetEntity.class, new net.minecraft.world.phys.AABB(centre, centre).inflate(CIRCUIT_FREEZE_RADIUS))) {
+					if (thrower != null && puppet.isOwnedBy(thrower)) continue;
+					puppet.freeze((int) (CIRCUIT_FREEZE_TICKS * power));
+					level.sendParticles(ParticleTypes.ELECTRIC_SPARK, puppet.getX(), puppet.getY(0.6), puppet.getZ(), 16, 0.3, 0.4, 0.3, 0.05);
+				}
+				level.playSound(null, centre.x, centre.y, centre.z, SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0f, 1.4f);
 			}
 			default -> {
 			}

@@ -40,7 +40,9 @@ public enum TalismanPattern {
 	/** Thrown: the one it strikes can't cast a spell or fly for a few seconds, the fewer the stronger it is (Talismans#seal). */
 	QI_SEALING("qi_sealing", Use.THROWN, QiElement.EARTH, 1, 0.12, 200, () -> ModItems.QI_SEALING_TALISMAN, 1),
 	/** Burnt: for half a minute one sees through Concealment barriers, and those hidden by Concealment Talismans show to one (Talismans#reveal). */
-	REVEALING("revealing", Use.BURNT, QiElement.FIRE, 1, 0.10, 600, () -> ModItems.REVEALING_TALISMAN, 1);
+	REVEALING("revealing", Use.BURNT, QiElement.FIRE, 1, 0.10, 600, () -> ModItems.REVEALING_TALISMAN, 1),
+	/** Thrown (Puppetry, 2026-11-17): the puppets where it lands stand frozen, their circuits locked, for a few seconds (Talismans#CIRCUIT_FREEZE_TICKS). */
+	CIRCUIT_FREEZE("circuit_freeze", Use.THROWN, QiElement.METAL, 1, 0.10, 200, () -> ModItems.CIRCUIT_FREEZE_TALISMAN, 1);
 
 	/** How it is used: thrown (TalismanEntity), burnt on oneself (TalismanItem#use), or the older talismans' own ways. */
 	public enum Use { THROWN, BURNT, OWN }

@@ -1,4 +1,4 @@
-// 1.20.1	2026-11-16T19:51:00.301086	Defying The Heavens/Model Definitions
+// 1.20.1	2026-11-18T15:38:47.1939965	Defying The Heavens/Model Definitions
 2b3bc3890c11b0cf8e111ed310feca8d383f29fa assets\defying-the-heavens\models\item\spirit_flame_blade.json
 2a37dff13a81a9b17eb809fba4b736f445728126 assets\defying-the-heavens\models\item\jade_ore.json
 2138dc0ce113e8174d6ff2af48c66ed13c7f1416 assets\defying-the-heavens\models\item\mortal_saber.json
@@ -6,27 +6,29 @@
 d001e2514b5199c26f3dc72fa51531e9a970ea41 assets\defying-the-heavens\models\item\talisman_paper.json
 f4125133876ff3cdf20bb5bc48fc24e6cc6789ee assets\defying-the-heavens\models\block\deepslate_jade_ore.json
 ccd3b944c05c987f4c0a3e8c1eb7f30683a10ead assets\defying-the-heavens\models\item\high_qi_gathering_formation.json
-2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_nine_nether_soul_sutra_lower.json
 0c5659c1ed56d1b8b44279c3e27a4c3c54bc7c3d assets\defying-the-heavens\models\item\inscription_brush.json
+2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_nine_nether_soul_sutra_lower.json
 5b31621286c719021fdc491b916f5141c4ec7e83 assets\defying-the-heavens\models\item\heaven_mountain_hammer.json
 eb8d0e20869b1f34c3ca520b9b200a257b4893c3 assets\defying-the-heavens\models\item\yin_gathering_pill_glow.json
 7a42364108f3ff65a77d65ef3dca35e0ba6a8151 assets\defying-the-heavens\models\item\immortal_saber.json
 5557a94c3753e2ee49333992e54ccbb9449c2078 assets\defying-the-heavens\models\item\immortal_golden_light_sword.json
 9e147c3040d38d56f692edf82e4dca611d10df50 assets\defying-the-heavens\models\item\pill_sage_notes.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_wandering_soul_steps_upper.json
+6252a1a3a0e5f036c333d0d566867e788e446057 assets\defying-the-heavens\models\item\heaven_humanoid_frame.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_ghost_core_canon_lower.json
-06a4c148a84aa442b6847e2c60ddc32fd020712d assets\defying-the-heavens\blockstates\chaos_origin_ore.json
 fc3ae8540ad10ef01a87db729302b06ffe0b661b assets\defying-the-heavens\blockstates\white_blossom_leaves.json
+06a4c148a84aa442b6847e2c60ddc32fd020712d assets\defying-the-heavens\blockstates\chaos_origin_ore.json
 fb34311402d475c485625c6a75a4d6b0b920d312 assets\defying-the-heavens\models\item\yin_gathering_pill.json
 9a7ea7eead89558f7b0811875cf0e8f4393478f8 assets\defying-the-heavens\blockstates\high_yin_gathering_formation.json
 480f3c53f41e1e027db19122204589e46fa173b7 assets\defying-the-heavens\models\block\spirit_stone_ore.json
 fd8953c44891ca695c043d79873eb70faecbd362 assets\defying-the-heavens\models\item\peach_wood_sword.json
 4da1f1296088387a89c88f76778ed330922d29cd assets\defying-the-heavens\models\block\method_stele_ten_thousand_ghosts_union_middle.json
-ddcde0b25e9c5d0c11a80bcd6288823333f23d19 assets\defying-the-heavens\models\block\high_qi_gathering_formation.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_hell_forged_vessel_sutra_lower.json
+ddcde0b25e9c5d0c11a80bcd6288823333f23d19 assets\defying-the-heavens\models\block\high_qi_gathering_formation.json
 6e19ed319a3f65b6678d96013549e5ddab50a243 assets\defying-the-heavens\models\block\dao_stele_earth_upper.json
 85fda91894e430ff18f2b1286ca8826c82ea46bd assets\defying-the-heavens\blockstates\blue_spirit_log.json
 a3aff6425169d1f1f9f9a572dd4f255f46dea2de assets\defying-the-heavens\models\item\blue_spirit_wood.json
+a786918bdedc7c377a56c617197dbb0648c102e8 assets\defying-the-heavens\models\item\mortal_bee_frame.json
 cc46f71b3f7f7c729b751bbcbea67fa0567dd383 assets\defying-the-heavens\models\item\sleeping_sword.json
 c1e9b1667a42b94aca104d93b2657338a80cc26b assets\defying-the-heavens\models\item\immortal_flame_blade.json
 37832845f163193765515e863bee7957a6bd5d0a assets\defying-the-heavens\blockstates\jade_ore.json
@@ -35,8 +37,8 @@ c1e9b1667a42b94aca104d93b2657338a80cc26b assets\defying-the-heavens\models\item\
 7722ba8b15488afed376de65a5e9635e54a9b164 assets\defying-the-heavens\models\item\immortal_protective_jade.json
 4f200d0b144509fa31504bd4148b369d546cf6d8 assets\defying-the-heavens\models\block\red_spider_lily.json
 e8f9461fddcb73811300db48aafb1caa6bf1267c assets\defying-the-heavens\blockstates\low_qi_gathering_formation.json
-bbf4c0e46766208d6f9873a5c753ca5867ca953e assets\defying-the-heavens\blockstates\first_flame.json
 e8e299e2a170d94b8d1fe44a51db262e82a53af3 assets\defying-the-heavens\blockstates\jade_stone.json
+bbf4c0e46766208d6f9873a5c753ca5867ca953e assets\defying-the-heavens\blockstates\first_flame.json
 6e19ed319a3f65b6678d96013549e5ddab50a243 assets\defying-the-heavens\models\block\dao_stele_fire_upper.json
 14a019c759d0e30e19060decb4f79ae93da4e43d assets\defying-the-heavens\models\item\ghost_jade_slip.json
 60fdfdbaa2c070e66e28841f66a09187cfd0db9f assets\defying-the-heavens\models\item\heaven_glaive.json
@@ -54,11 +56,12 @@ d39b857108c58b415f58fadfcfc9dfd04cfe6d56 assets\defying-the-heavens\models\block
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_void_rending_nether_canon_upper.json
 cee376356c4ad8792013b39899aff79ddbbba1f8 assets\defying-the-heavens\blockstates\deepslate_jade_ore.json
 8420c7ad4c1f62dee56a47aae4add3199cc4ba9c assets\defying-the-heavens\models\item\revealing_talisman.json
+9ccabe04609217ee174720eb53e50774f4c280ee assets\defying-the-heavens\models\item\circuit_fragment.json
 fb9bebee49346803cb797fc0f275e568cac8762b assets\defying-the-heavens\models\item\yang_preservation_pill.json
 f0e0dc36fc9e4211f8e61536f420ea0a36ccaddf assets\defying-the-heavens\models\item\rich_spirit_stone_ore.json
 6c524fb47e50d3e713502cba8750c49a2d438cc7 assets\defying-the-heavens\blockstates\shrine.json
-b0e7055965d52b4725b49b7812cb94456562fa4c assets\defying-the-heavens\blockstates\dao_stele.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_netherworld_immortal_canon_lower.json
+b0e7055965d52b4725b49b7812cb94456562fa4c assets\defying-the-heavens\blockstates\dao_stele.json
 7abe0733dd35bbbccb7ce02fe45ed1035985c2ce assets\defying-the-heavens\blockstates\deepslate_qi_vein.json
 5b3af2fb380f66a9e657c6c8f890ed9eb4ea4f7f assets\defying-the-heavens\models\block\method_stele_nine_nether_soul_sutra_middle.json
 0c4920adea025c16db52faa6612a5d87ffa23e7f assets\defying-the-heavens\models\block\method_stele_hell_forged_vessel_sutra_middle.json
@@ -110,6 +113,7 @@ e7efde74a5f4def1cad2daa03f5e24e9a9b35982 assets\defying-the-heavens\blockstates\
 acd3c49225231bef1785c8c885581bc2edf9f824 assets\defying-the-heavens\models\item\blank_manual.json
 b8570fdf1f90afe721952a77540b59ce35f5ec7c assets\defying-the-heavens\models\item\high_yin_gathering_formation.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_netherworld_breathing_upper.json
+0752255bf18baece904a361cae3430fadc3ab97e assets\defying-the-heavens\models\item\heaven_bee_frame.json
 fb37b44d635479612843810096bad7d3cf741787 assets\defying-the-heavens\models\item\spring_of_the_ancients.json
 e0e612f065143d42ecd38e2559dedc9754632cb9 assets\defying-the-heavens\models\item\world_seed.json
 abef812047d1dee3878182614546b1ad6ee0b43c assets\defying-the-heavens\models\item\immortal_glaive.json
@@ -131,8 +135,11 @@ f49edbc230cf7d4b452f9f810cd50b51c9347a6d assets\defying-the-heavens\models\item\
 17392cc66a8e15563e832541d38a3347b936ede7 assets\defying-the-heavens\models\item\heaven_spear.json
 31c4aa7e6754804226595a0bede0c914c1e33f54 assets\defying-the-heavens\models\block\high_yin_gathering_formation.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_yellow_springs_marrow_upper.json
+3628dd542767d5eae9af817e9dd5741cbe04a661 assets\defying-the-heavens\models\item\earth_humanoid_frame.json
 1c3ca90fdc4fb34fd3744880c126dcb6b2966a88 assets\defying-the-heavens\models\item\blue_spirit_log.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_ten_thousand_ghosts_union_upper.json
+bee38969a4a6c79b022e469b217a38d2f5a8f8e4 assets\defying-the-heavens\models\item\mortal_humanoid_frame.json
+fe1b104324885cd2f774a515b287943a277966ab assets\defying-the-heavens\models\item\sub_seal.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_netherworld_breathing_lower.json
 cbe40512b81d3b9247fb7a3f91912ade855a99d1 assets\defying-the-heavens\models\block\low_yin_gathering_formation.json
 603cd07352161604d6c020d292f808b5b61519cb assets\defying-the-heavens\blockstates\red_spider_lily.json
@@ -153,10 +160,12 @@ c4b9558af4b3038ba051e33835a56bd14d3b3fd8 assets\defying-the-heavens\models\item\
 363b3cf6babf5c0e90a93cac9e042ed896fcbe3b assets\defying-the-heavens\models\item\mid_qi_gathering_formation.json
 2f4a95c814a7b84d93cfc4ea3d99382f0ce25abf assets\defying-the-heavens\models\item\jade_slip.json
 476542007555ca536f91a061704604d4b53879f3 assets\defying-the-heavens\models\block\mid_yin_gathering_formation_lit.json
+a0b8acd84a176889c4a5a6c403eb0a3a86f0d54a assets\defying-the-heavens\models\item\command_seal.json
 97bf3c4a1bd1ed1bc3e8cb3c8f0138bc3568cefc assets\defying-the-heavens\models\item\ghost_quelling_talisman.json
 81c735941df450e31d1d3d156726ee973e9de390 assets\defying-the-heavens\models\block\low_qi_gathering_formation_lit.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_ghost_fire_scripture_upper.json
 9f1de859fa279e27967d3dbfebc298dcc7e34710 assets\defying-the-heavens\models\item\buried_sword.json
+2cdcc131ff396a0b15aeeed595c1745ea62d1146 assets\defying-the-heavens\models\item\immortal_bee_frame.json
 1e102380f7253616d7c0c705a9094da77b0dd976 assets\defying-the-heavens\models\block\blue_spirit_wood.json
 d442068d33f8fcfae742b0922f35ab9f5ecd526b assets\defying-the-heavens\models\block\method_stele_six_paths_canon_middle.json
 d5d0b91ab8a708fbe061879f20a019690a69b1b8 assets\defying-the-heavens\models\item\heaven_protective_jade.json
@@ -174,6 +183,7 @@ cb0b2efd1131f6d0186dcbb1ec01c2321e3b0b49 assets\defying-the-heavens\models\item\
 ee6d67d5e03b56b2026bbfc67e7198b5a1d36788 assets\defying-the-heavens\models\item\spirit_glaive.json
 a9206aaa65f2521922bb584a6236e2d76d61b4ea assets\defying-the-heavens\models\block\blue_spirit_log.json
 aa883aa9375ce872ec26ba9d3cded2c83393b455 assets\defying-the-heavens\blockstates\small_world_gate.json
+5a98d1fd3c8a508b6fb73ccc0d04ac2685a6b31a assets\defying-the-heavens\models\item\earth_bee_frame.json
 904161acf7f6c775ca3d2ae87eefaa00698b9328 assets\defying-the-heavens\models\block\dao_stele_earth_middle.json
 dd8591718030d45ae9bd9494a1eef7bb6be25af7 assets\defying-the-heavens\models\block\mid_yin_gathering_formation.json
 f2ca7467223a5027ba12e2bccf8258e6a3d699c8 assets\defying-the-heavens\models\item\netherworld_lotus_seeds.json
@@ -188,6 +198,7 @@ e9f4f4179eb16eee6dc5668930933480841f300c assets\defying-the-heavens\models\item\
 43fbcc82abf0d94016c37cee9db058c34592e7ca assets\defying-the-heavens\models\block\low_qi_gathering_formation.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_yama_judgement_upper.json
 f529157d7c4121e3482f8a21cc4964c48e6db91d assets\defying-the-heavens\models\item\fire_talisman.json
+8db7105a886bf438411fb65d58ac9b092d208754 assets\defying-the-heavens\models\item\circuit_diagram.json
 29b29a055fff84dd52e834e927edc8ca56e1696c assets\defying-the-heavens\blockstates\rich_spirit_stone_ore.json
 44d93fc3984c32e6e2c7daf31efad53c2d7f21f4 assets\defying-the-heavens\models\block\method_stele_ghost_fire_scripture_middle.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_ghost_core_canon_upper.json
@@ -197,6 +208,8 @@ a697b8997087eab3181f59b2813ce982ced0d0ee assets\defying-the-heavens\models\item\
 d4d15be2eff29a8fb0020cba0fc501bcdf2df5ae assets\defying-the-heavens\models\block\dao_stele_metal_middle.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_ghost_fire_scripture_lower.json
 4e1661421de29baf90226ca0e23448da9f584584 assets\defying-the-heavens\models\item\earth_glaive.json
+613b24055c99d3d8c4ee1f868d4a0f8060f2b69c assets\defying-the-heavens\models\item\spirit_humanoid_frame.json
+751b97479f1db1607254bad536c1afb7f1831545 assets\defying-the-heavens\models\item\circuit_freeze_talisman.json
 a01acdd980b4457dccc2d6879ada12fd7cc69850 assets\defying-the-heavens\blockstates\spirit_stone_ore.json
 a5b6d377c39209c7f72ab1c30d0510dc81c5f5f0 assets\defying-the-heavens\models\item\qi_vein.json
 c928dfd3ce99be3289a7c1f7a7edd490f0ee2bd5 assets\defying-the-heavens\models\item\earth_flying_sword.json
@@ -211,8 +224,8 @@ af9c28f98e9b2fd8ca56d2f421b64b5c236af586 assets\defying-the-heavens\models\item\
 4b4cb9921e084a73b3f8eec989cfb1daea2a156a assets\defying-the-heavens\models\item\jade.json
 3d307e8365f50c3231851315cbb104a491472cef assets\defying-the-heavens\models\item\qi_sealing_talisman.json
 cc950f778a32dafa16ce165a35a89dd292c37ca8 assets\defying-the-heavens\models\item\earth_saber.json
-dc78f60b210fc562be1a57aeb1576ee4836b23b6 assets\defying-the-heavens\models\item\immortal_spear.json
 9b4ee51c9b4849467cea8f29d88389c81e708ae2 assets\defying-the-heavens\models\item\mortal_glaive.json
+dc78f60b210fc562be1a57aeb1576ee4836b23b6 assets\defying-the-heavens\models\item\immortal_spear.json
 81624f8a9539ff17ffbb317e4cfa0ac488dac53e assets\defying-the-heavens\blockstates\blue_spirit_planks.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_yellow_springs_marrow_lower.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_underworld_nirvana_scripture_lower.json
@@ -237,6 +250,7 @@ f87184b59047ad137143fffa627a92b090fa8509 assets\defying-the-heavens\models\block
 8624105914472298d52ccbf711863e3a9efe5bdf assets\defying-the-heavens\models\block\white_blossom_leaves.json
 f31fdd7e999a38aa0f7fb729349b900e9446c820 assets\defying-the-heavens\models\item\spirit_saber.json
 76867d32166bbb4bc9af223e7025aaee7d566b5f assets\defying-the-heavens\models\item\primeval_blood_essence.json
+e18eac6119c8fc03cb9194219f191c171c67371e assets\defying-the-heavens\models\item\spirit_bee_frame.json
 f2b7b2f36cc72c3098ab4ba3d9c372598a9c3272 assets\defying-the-heavens\models\block\method_stele_netherworld_immortal_canon_middle.json
 e1cfe2bd032baec4da2fe01e895493bb92d11c42 assets\defying-the-heavens\models\block\method_stele_netherworld_breathing_middle.json
 7baec0879ebd2a601083901b571ef258841a8ea2 assets\defying-the-heavens\models\block\dao_stele_earth_lower.json
@@ -246,6 +260,7 @@ e1d2c90d73364569d47942cb7c7272ae0c1dcaf1 assets\defying-the-heavens\blockstates\
 089c8d086249283011f824f5c7fd77a8e2ea37ef assets\defying-the-heavens\blockstates\spatial_rift.json
 483d269a5dfa8ff8240eef6055cf64f505d3d8fe assets\defying-the-heavens\models\block\dao_stele_wood_middle.json
 b8b0f100bc1e43aaf51b03916581e271c0819ac9 assets\defying-the-heavens\models\item\shrine.json
+c6b4ec3fc7c3e6d338a908f4a695dcfac41db028 assets\defying-the-heavens\models\item\immortal_humanoid_frame.json
 0879522e5328c840cbad18bd369cccad022ab564 assets\defying-the-heavens\models\item\concealment_talisman.json
 5512cc3db60768f8f26dca8572418384c2b6d7a3 assets\defying-the-heavens\models\item\heaven_element_banner.json
 87268c19f0bf6db1457df03a8fd600c0cbcb26c8 assets\defying-the-heavens\models\item\mortal_element_banner.json

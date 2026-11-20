@@ -266,6 +266,15 @@ public final class ModBlocks {
 	/** Where pills are brewed: water, a fire beneath, then the ingredients (see AlchemyCauldronBlock). */
 	public static final Block ALCHEMY_CAULDRON = registerWithItem("alchemy_cauldron",
 			new AlchemyCauldronBlock(BlockBehaviour.Properties.copy(Blocks.CAULDRON).mapColor(MapColor.TERRACOTTA_ORANGE)));
+	/** Where puppets are made: a frame laid on it, its core set, its circuits painted, the puppet sealed (see PuppetWorkbenchBlock, Puppetry). */
+	public static final Block PUPPET_WORKBENCH = registerWithItem("puppet_workbench", new PuppetWorkbenchBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_BROWN).strength(2.5f).sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+	/** Where puppets are built from a diagram, and mended (puppet phase 3: PuppetFactoryBlock). */
+	public static final Block PUPPET_FACTORY = registerWithItem("puppet_factory", new PuppetFactoryBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.METAL).requiresCorrectToolForDrops().strength(3.5f, 6.0f).sound(SoundType.METAL)));
+	/** Where a puppeteer's diagrams are kept and their puppets' wear in fights is written on them (puppet phase 3: OverseerCoreBlock). */
+	public static final Block OVERSEER_CORE = registerWithItem("overseer_core", new OverseerCoreBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.EMERALD).requiresCorrectToolForDrops().strength(3.0f, 6.0f).sound(SoundType.STONE).lightLevel(state -> 7)));
 	/** Where artifacts are forged: a fire beneath, the materials, the forger's qi (see ArtifactForgeBlock). */
 	public static final Block ARTIFACT_FORGE = registerWithItem("artifact_forge", new ArtifactForgeBlock(BlockBehaviour.Properties.of()
 			.mapColor(MapColor.TERRACOTTA_ORANGE).requiresCorrectToolForDrops().strength(3.5f).sound(SoundType.METAL).noOcclusion()

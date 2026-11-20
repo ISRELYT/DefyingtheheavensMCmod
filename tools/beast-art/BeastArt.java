@@ -375,6 +375,13 @@ public class BeastArt {
 			System.out.println("written");
 			return;
 		}
+		// Puppetry's frames, the Command Seal and the Puppet Workbench's faces (PuppetArt): {@code <assets> puppets [sheet.png]}.
+		if (args.length >= 2 && args[1].equals("puppets") && args.length <= 3) {
+			PuppetArt.writeAll(Path.of(args[0]));
+			if (args.length == 3) PuppetArt.writeSheet(Path.of(args[2]));
+			System.out.println("written");
+			return;
+		}
 		if (args.length == 2 && args[1].equals("missions")) {
 			MissionArt.writeAll(Path.of(args[0]));
 			System.out.println("written");

@@ -126,6 +126,7 @@ public final class Artifacts {
 		if (stack.getItem() instanceof ElementBannerItem banner) return banner.grade();
 		if (stack.getItem() instanceof QiGourdItem gourd) return gourd.grade();
 		if (stack.getItem() instanceof ProtectiveJadeItem jade) return jade.grade();
+		if (stack.getItem() instanceof PuppetFrameItem frame) return frame.grade();
 		return null;
 	}
 
@@ -136,11 +137,13 @@ public final class Artifacts {
 
 	/**
 	 * A Normal artifact of {@code grade}, picked by {@code random}: any kind of the first forging, a banner only of {@code element}'s, and
-	 * from Spirit grade up the weapon made of {@code element} too (none of either where it is null).
+	 * from Spirit grade up the weapon made of {@code element} too (none of either where it is null); never a puppet's frame (Puppetry's
+	 * own: PuppetFrameItem).
 	 */
 	public static ItemStack any(RandomSource random, ArtifactGrade grade, @Nullable QiElement element) {
 		List<ArtifactKind> kinds = new java.util.ArrayList<>();
 		for (ArtifactKind kind : ArtifactKind.values()) {
+			if (kind.isFrame()) continue;
 			if (kind.isElemental() ? kind.element() == element && kind.has(grade) : kind != ArtifactKind.BANNER || element != null) kinds.add(kind);
 		}
 		ArtifactKind kind = kinds.get(random.nextInt(kinds.size()));

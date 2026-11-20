@@ -259,6 +259,7 @@ public final class Spells {
 		int rank;
 		if (caster instanceof ServerPlayer player) rank = TwoPaths.higherRank(CultivationManager.get(player), true);
 		else if (caster instanceof CultivatorNpc npc) rank = npc.sustainedRank();
+		else if (caster instanceof PuppetEntity puppet) rank = puppet.rank(); // a cultivator's soul's arts, cast at the puppet's own realm
 		else return 1;
 		return (float) spell.harmFor(rank);
 	}

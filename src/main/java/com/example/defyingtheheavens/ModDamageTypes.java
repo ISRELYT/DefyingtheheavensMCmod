@@ -19,6 +19,19 @@ public final class ModDamageTypes {
 	/** A body taken by another cultivator's nascent soul (see SoulProjection#seize): tagged as {@link #SOUL_SEVERED}. */
 	public static final ResourceKey<DamageType> SOUL_SEIZED = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("soul_seized"));
 	/**
+	 * A player's soul pushed out of a puppet's ring by its whole copy (PuppetPlayers#goOn): its body was dead already, so it goes down to the
+	 * Netherworld at once, no lingering (Lingering#destroysTheSoul). Tagged as {@link #SOUL_SEVERED}.
+	 */
+	public static final ResourceKey<DamageType> SOUL_WENT_ON = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("soul_went_on"));
+	/**
+	 * A player's soul out of a puppet's ring otherwise (let go, its puppet destroyed, left): it dies as any death goes, a nascent soul
+	 * lingering where it was to take a body by the ghosts' rules (Lingering), the rest down to the Gate. Tagged as {@link #SOUL_SEVERED}
+	 * for what holds it off (nothing), not for the soul.
+	 */
+	public static final ResourceKey<DamageType> SOUL_LEFT_PUPPET = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("soul_left_puppet"));
+	/** A body given up willingly, its soul gone into a puppet (PuppetPlayers#enter, #accept). Tagged as {@link #SOUL_SEVERED}. */
+	public static final ResourceKey<DamageType> SOUL_INTO_PUPPET = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("soul_into_puppet"));
+	/**
 	 * A soul scattering on the Soul River (see SoulRiver#scatter): tagged as {@link #SPATIAL_PRESSURE}. It never takes the last of
 	 * a body's health, so its death message is only there for completeness.
 	 */
@@ -94,6 +107,9 @@ public final class ModDamageTypes {
 		context.register(GHOSTLY, new DamageType(DefyingTheHeavens.MOD_ID + ".ghostly", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEVERED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_severed", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEIZED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_seized", DamageScaling.NEVER, 0.0f));
+		context.register(SOUL_WENT_ON, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_went_on", DamageScaling.NEVER, 0.0f));
+		context.register(SOUL_LEFT_PUPPET, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_left_puppet", DamageScaling.NEVER, 0.0f));
+		context.register(SOUL_INTO_PUPPET, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_into_puppet", DamageScaling.NEVER, 0.0f));
 		context.register(CORE_DETONATION, new DamageType(DefyingTheHeavens.MOD_ID + ".core_detonation", DamageScaling.NEVER, 0.0f));
 		context.register(OLD_AGE, new DamageType(DefyingTheHeavens.MOD_ID + ".old_age", DamageScaling.NEVER, 0.0f));
 		context.register(YIN_LIGHTNING, new DamageType(DefyingTheHeavens.MOD_ID + ".yin_lightning", DamageScaling.NEVER, 0.1f));
@@ -198,6 +214,16 @@ public final class ModDamageTypes {
 
 	public static DamageSource soulSevered(Level level) {
 		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SEVERED));
+	}
+
+	/** A player's soul gone on out of a puppet (PuppetPlayers#goOn): pushed out (straight down), or leaving as any death goes. */
+	public static DamageSource soulWentOn(Level level, boolean pushedOut) {
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(pushedOut ? SOUL_WENT_ON : SOUL_LEFT_PUPPET));
+	}
+
+	/** A body given up, its soul gone into a puppet (PuppetPlayers#enter, #accept). */
+	public static DamageSource soulIntoPuppet(Level level) {
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_INTO_PUPPET));
 	}
 
 	/** Seized by {@code soul}'s nascent soul. */

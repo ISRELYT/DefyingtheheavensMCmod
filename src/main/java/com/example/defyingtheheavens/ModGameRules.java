@@ -56,6 +56,13 @@ public final class ModGameRules {
 			GameRuleRegistry.register("leaveCorpses", GameRules.Category.DROPS, GameRuleFactory.createBooleanRule(true));
 
 	/**
+	 * A player slain by a puppeteer (or their puppet) near one of the puppeteer's puppets with its ring empty has their soul drawn into it
+	 * (PuppetPlayers, puppet phase 2d). Off, no player's soul is taken against their will; willing ones still go in.
+	 */
+	public static final GameRules.Key<GameRules.BooleanValue> PUPPET_SOUL_BINDING =
+			GameRuleRegistry.register("puppetSoulBinding", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(true));
+
+	/**
 	 * The secret realms stir and open (SecretRealms): each in its turn, by the world's clock. Off, none stirs (one open now closes, those in it
 	 * cast out beside its Seal) and its Seal stays shut.
 	 */

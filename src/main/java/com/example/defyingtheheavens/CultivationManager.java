@@ -21,6 +21,8 @@ public final class CultivationManager {
 		if (body != null) return body;
 		// (In their clone it is their own, played at the clone's strength: Clones#strength.)
 		if (Possession.isHeld(player.getUUID())) return Possession.sealed();
+		// A soul held in a puppet, or playing it: its own cultivation dormant in it (PuppetPlayers; the puppet is all it has).
+		if (PuppetPlayers.isBound(player)) return Possession.sealed();
 		return own(player);
 	}
 
@@ -45,6 +47,7 @@ public final class CultivationManager {
 
 	public static void sync(ServerPlayer player) {
 		if (Possession.isHeld(player.getUUID())) return; // a held body's owner: their screen keeps what it last showed of them
+		if (PuppetPlayers.isBound(player)) return; // a soul in a puppet: likewise (PuppetPlayers)
 		ModPackets.sendSync(player, get(player), MeditationManager.isMeditating(player.getUUID()));
 	}
 

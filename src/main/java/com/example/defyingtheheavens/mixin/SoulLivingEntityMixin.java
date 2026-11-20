@@ -182,8 +182,9 @@ public abstract class SoulLivingEntityMixin {
 		LivingEntity self = (LivingEntity) (Object) this;
 		if (SoulProjection.possessorOf(self) != player) return;
 		dth$face(self, player);
-		// A flier's jump is a climb (dth$possessedFlies), not a hop.
-		if (((SoulLivingEntityMixin) (Object) player).jumping && self.onGround() && !SoulProjection.flies(self)) jumpFromGround();
+		// A flier's jump is a climb (dth$possessedFlies), not a hop; a puppet frozen or stalled doesn't jump for its soul (PuppetPlayers).
+		if (((SoulLivingEntityMixin) (Object) player).jumping && self.onGround() && !SoulProjection.flies(self)
+				&& !(self instanceof com.example.defyingtheheavens.PuppetEntity puppet && puppet.stalled())) jumpFromGround();
 		ci.cancel();
 	}
 

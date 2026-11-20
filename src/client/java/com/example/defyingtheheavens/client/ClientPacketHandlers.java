@@ -370,6 +370,16 @@ public final class ClientPacketHandlers {
 			MissionBoardScreen.Page page = MissionBoardScreen.read(buf);
 			client.execute(() -> MissionBoardScreen.show(page));
 		});
+		// A puppet's circuit board in its puppeteer's hands (PuppetBoards#send): onto its screen, opening or closing it.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.PUPPET_BOARD, (client, handler, buf, sender) -> {
+			PuppetBoardScreen.Page page = PuppetBoardScreen.read(buf);
+			client.execute(() -> PuppetBoardScreen.receive(page));
+		});
+		// The Command Seal's list of one's puppets (PuppetCommands#send).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.PUPPET_LIST, (client, handler, buf, sender) -> {
+			CommandSealScreen.Page page = CommandSealScreen.read(buf);
+			client.execute(() -> CommandSealScreen.show(page));
+		});
 		// In one's clone or not, and how the main body fares (Clones), for the HUD.
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.CLONE_STATE, (client, handler, buf, sender) -> {
 			boolean in = buf.readBoolean();

@@ -716,6 +716,11 @@ public final class BodyTechniques {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return false;
 		}
+		// (A soul playing a puppet: its own body's techniques lie dormant with its cultivation, PuppetPlayers.)
+		if (PuppetPlayers.isPilot(p)) {
+			p.displayClientMessage(Component.translatable(ModLang.PUPPET_SOUL_DORMANT), true);
+			return false;
+		}
 		if (Incorporeal.is(p)) {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return false;

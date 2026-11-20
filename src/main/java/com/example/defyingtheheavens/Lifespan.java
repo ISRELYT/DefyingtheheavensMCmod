@@ -338,6 +338,8 @@ public final class Lifespan {
 			if (!p.isSpectator()) weaken(p);
 			// (One held by another's soul, or carried in a sleeve, is a spectator only to watch: their years go on.)
 			if (p.isCreative() || p.isSpectator() && !Possession.isHeld(p.getUUID()) && !Sleeves.isCarried(p.getUUID())) continue;
+			// (A soul held in a puppet, or playing it, doesn't age: PuppetPlayers.)
+			if (PuppetPlayers.isPilot(p)) continue;
 			age(p, step);
 		}
 	}

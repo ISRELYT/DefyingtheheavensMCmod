@@ -253,9 +253,13 @@ public final class SoulProjection {
 		return s == null ? State.NONE : s.state;
 	}
 
-	/** The soul possessing {@code entity}, or null: a soul riding it (both sides). */
+	/**
+	 * The soul possessing {@code entity}, or null: a soul riding it (both sides); or a player's own soul playing the puppet it is held in
+	 * (PuppetPlayers, puppet phase 2d), steered as a soul steers a body it possesses.
+	 */
 	public static Player possessorOf(Entity entity) {
-		return entity != null && entity.getFirstPassenger() instanceof Player player && isSoul(player) ? player : null;
+		if (entity == null || !(entity.getFirstPassenger() instanceof Player player)) return null;
+		return isSoul(player) || entity instanceof PuppetEntity && PuppetPlayers.isPilot(player) ? player : null;
 	}
 
 	/** Taken over by a soul: a beast ridden by one, or an NPC cultivator set aside while one is in its body (both sides). */
@@ -921,8 +925,9 @@ public final class SoulProjection {
 	/**
 	 * The soul (right-clicking) enters {@code target}: within reach, at least {@link #POSSESS_REALM_GAP} realms below the highest of the
 	 * cultivator's paths, with {@link #POSSESS_QI_FRACTION} of its pool to pay. Not a boss, a Warden, anyone's pet but its own, a named
-	 * creature, a mount, the dead, or another soul. A player or a living NPC cultivator is truly possessed ({@link #inhabit}); anything else
-	 * is ridden.
+	 * creature, a mount, the dead, or another soul. A player or a living NPC cultivator is truly possessed ({@link #inhabit}); a puppet is gone
+	 * into for good, by the puppets' own rules (PuppetPlayers#projectInto: its realm no bar, a soul in it one if it is as strong); anything
+	 * else is ridden.
 	 */
 	public static InteractionResult tryPossess(ServerPlayer player, Entity target) {
 		Session s = SESSIONS.get(player.getUUID());
@@ -936,7 +941,9 @@ public final class SoulProjection {
 		// lower). The soul's own path (PlayerCultivation#soulPath) pays.
 		TwoPaths.Path path = c.soulPath();
 		int own = Math.max(0, TwoPaths.higherRank(c, true)) / Stage.values().length;
-		String refusal = refusal(player, living, own);
+		// A puppet is gone into for good by the puppets' own rules, never ridden (PuppetPlayers#projectInto; the user, 2026-11-18): its own
+		// realm stands in no soul's way; a soul in it does, if it is as strong.
+		String refusal = target instanceof PuppetEntity ? null : refusal(player, living, own);
 		if (refusal != null) {
 			player.displayClientMessage(Component.translatable(refusal), true);
 			return InteractionResult.FAIL;
@@ -947,7 +954,13 @@ public final class SoulProjection {
 					(int) (POSSESS_QI_FRACTION * 100)), true);
 			return InteractionResult.FAIL;
 		}
-		if (target instanceof ServerPlayer || target instanceof CultivatorNpc npc && !npc.isGhost()) {
+		if (target instanceof PuppetEntity puppet) {
+			String not = PuppetPlayers.projectInto(player, puppet);
+			if (not != null) {
+				player.displayClientMessage(Component.translatable(not, puppet.getDisplayName()), true);
+				return InteractionResult.FAIL;
+			}
+		} else if (target instanceof ServerPlayer || target instanceof CultivatorNpc npc && !npc.isGhost()) {
 			if (!inhabit(player, s, living)) return InteractionResult.FAIL;
 		} else {
 			possess(player, s, (Mob) target);
@@ -1204,6 +1217,8 @@ public final class SoulProjection {
 	 * as they are, its speed (a player's) told once; scaled like a mob's, it crawled at a tenth of a walk.
 	 */
 	public static Vec3 hostStep(LivingEntity host, float strafe, float forward) {
+		// A puppet frozen by a talisman or stalled by its heat moves for no one, its own soul in it either (PuppetPlayers).
+		if (host instanceof PuppetEntity puppet && puppet.stalled()) return Vec3.ZERO;
 		Vec3 keys = new Vec3(strafe, 0, forward);
 		if (keys.lengthSqr() > 1) keys = keys.normalize();
 		if (host instanceof SoulVesselEntity) return keys;
@@ -1250,6 +1265,7 @@ public final class SoulProjection {
 	 * works it (a bee 0.13, a parrot 0.09, an allay 0.11); for any other (a blaze), its walking pace. Less in water or lava.
 	 */
 	public static double flightPace(LivingEntity host, float glide) {
+		if (host instanceof PuppetEntity puppet && puppet.stalled()) return 0; // a frozen or stalled bee puppet hangs still
 		double pace;
 		if (host instanceof Phantom) pace = glide;
 		else if (host instanceof Vex) pace = VEX_PACE;
@@ -1574,6 +1590,8 @@ public final class SoulProjection {
 	 * there (TwoPaths#inGhostForm), and the viewer doesn't perceive souls (the dead always see the dead, and those in their form).
 	 */
 	public static boolean broadcastsTo(ServerPlayer soul, ServerPlayer viewer) {
+		// A player's soul playing the puppet it is held in is the puppet to the world: no one sees the player (PuppetPlayers).
+		if (viewer != soul && PuppetPlayers.isPilot(soul)) return false;
 		return !seenOnlyBySeers(soul) || viewer == soul || perceives(viewer)
 				|| (GhostSystem.isGhost(soul) || TwoPaths.inGhostForm(soul)) && GhostSystem.isGhost(viewer);
 	}

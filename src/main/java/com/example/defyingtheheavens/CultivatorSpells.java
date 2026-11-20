@@ -21,7 +21,7 @@ import java.util.List;
  */
 public final class CultivatorSpells {
 	/** What a spell is to a cultivator choosing one: aimed at its foe, laid on its foe's ground, about itself, a ward, a mending, a helper. */
-	enum Use { AT_FOE, ON_FOE, ABOUT, WARD, MEND, HELPER, NONE }
+	public enum Use { AT_FOE, ON_FOE, ABOUT, WARD, MEND, HELPER, NONE }
 
 	/** Ticks between its casts in a fight: at least this many, and up to {@link #CAST_SPREAD} more. */
 	static final int CAST_EVERY = 70, CAST_SPREAD = 50;
@@ -33,7 +33,7 @@ public final class CultivatorSpells {
 	static final double FLIGHT_RESERVE_SECONDS = 10;
 
 	/** How {@code spell} serves a cultivator, and (for one at or about its foe) how far it reaches. */
-	static Use use(Spell spell) {
+	public static Use use(Spell spell) {
 		return switch (spell) {
 			case GHOST_FIRE_BOLT, SOUL_REND, YAMA_VERDICT, FLAME_BOLT, WOOD_BULLET, EARTH_SPEAR, WATER_ARROW, FLYING_SWORD, STEEL_HURRICANE,
 					FIRE_SERPENT, LIFE_FORCE_DRAIN, MYSTERIOUS_BRISTLE_PRISON, WATER_PRISON, BOULDER_CLEAVE, ADVANCED_FLYING_SWORD_TECHNIQUE,

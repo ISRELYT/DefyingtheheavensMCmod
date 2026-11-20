@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GJG",
+    "JEJ",
+    "GMG"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "J": {
+      "item": "defying-the-heavens:jade"
+    },
+    "E": {
+      "item": "minecraft:ender_eye"
+    },
+    "M": {
+      "item": "defying-the-heavens:mid_spirit_stone"
+    }
+  },
+  "result": {
+    "item": "defying-the-heavens:overseer_core"
+  }
+}

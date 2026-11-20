@@ -331,7 +331,7 @@ public final class ImmortalTombWorks extends RealmWorks {
 
 	/**
 	 * Each hall's vault sealed anew for the ancients: its Law's Dao Fragments and immortal spirit stones; now and then an Immortal Jade, or a
-	 * manual of one of True Immortal's ways, which no sect keeps (MethodManualItem#ancient).
+	 * manual of one of True Immortal's ways, which only the Immortal Realm's sects keep besides (MethodManualItem#ancient).
 	 */
 	static void renewVaults(ServerLevel level, ImmortalTomb.Shape s, BlockPos c) {
 		RandomSource random = level.getRandom();

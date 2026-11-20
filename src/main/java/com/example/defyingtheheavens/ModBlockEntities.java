@@ -57,6 +57,21 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("alchemy_cauldron"),
 			BlockEntityType.Builder.of(AlchemyCauldronBlockEntity::new, ModBlocks.ALCHEMY_CAULDRON, ModBlocks.PILL_SAGE_CAULDRON).build(null));
 
+	/** What lies on a Puppet Workbench: the frame and its core (see PuppetWorkbenchBlockEntity). */
+	public static final BlockEntityType<PuppetWorkbenchBlockEntity> PUPPET_WORKBENCH = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("puppet_workbench"),
+			BlockEntityType.Builder.of(PuppetWorkbenchBlockEntity::new, ModBlocks.PUPPET_WORKBENCH).build(null));
+
+	/** A Puppet Factory's diagram, matter, cores and works (puppet phase 3: PuppetFactoryBlockEntity). */
+	public static final BlockEntityType<PuppetFactoryBlockEntity> PUPPET_FACTORY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("puppet_factory"),
+			BlockEntityType.Builder.of(PuppetFactoryBlockEntity::new, ModBlocks.PUPPET_FACTORY).build(null));
+
+	/** An Overseer Core's diagrams and its keeper (puppet phase 3: OverseerCoreBlockEntity). */
+	public static final BlockEntityType<OverseerCoreBlockEntity> OVERSEER_CORE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("overseer_core"),
+			BlockEntityType.Builder.of(OverseerCoreBlockEntity::new, ModBlocks.OVERSEER_CORE).build(null));
+
 	/** The Artifact Forge's materials and working (see ArtifactForgeBlockEntity). */
 	public static final BlockEntityType<ArtifactForgeBlockEntity> ARTIFACT_FORGE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("artifact_forge"),

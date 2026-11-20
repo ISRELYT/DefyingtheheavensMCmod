@@ -233,6 +233,8 @@ public final class NpcSpawner {
 			if (rollsBody(npc, random)) npc.setBodyCultivator(true);
 		}
 		level.addFreshEntity(npc);
+		// And now and then a puppeteer, with a puppet or two at its side (Puppetry, 2026-11-17).
+		if (!mortal && !(npc instanceof GhostCultivatorNpc) && random.nextInt(NpcPuppets.PUPPETEER_IN) == 0) NpcPuppets.field(level, npc, random);
 	}
 
 	/** One wandering cultivator in this many is a demon, where its race's land is (DenStructure#raceOfLand). */

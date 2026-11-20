@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "top": "defying-the-heavens:block/puppet_factory_top",
+    "bottom": "defying-the-heavens:block/puppet_factory_bottom",
+    "side": "defying-the-heavens:block/puppet_factory_side",
+    "front": "defying-the-heavens:block/puppet_factory_front"
+  }
+}

@@ -34,6 +34,14 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 		// A True Immortal's gaze, like a severed soul's death: nothing stands between it and death, a totem included.
 		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
 		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
+		// A player's soul gone on out of a puppet (PuppetPlayers): as a severed soul's death, nothing holds it off.
+		// And a body given up to a puppet, its soul gone into it; and a soul out of one otherwise.
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.SOUL_WENT_ON, ModDamageTypes.SOUL_INTO_PUPPET, ModDamageTypes.SOUL_LEFT_PUPPET);
+		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.SOUL_WENT_ON, ModDamageTypes.SOUL_INTO_PUPPET, ModDamageTypes.SOUL_LEFT_PUPPET);
+		tag(DamageTypeTags.BYPASSES_EFFECTS).add(ModDamageTypes.SOUL_WENT_ON, ModDamageTypes.SOUL_INTO_PUPPET, ModDamageTypes.SOUL_LEFT_PUPPET);
+		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.SOUL_WENT_ON, ModDamageTypes.SOUL_INTO_PUPPET, ModDamageTypes.SOUL_LEFT_PUPPET);
+		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.SOUL_WENT_ON, ModDamageTypes.SOUL_INTO_PUPPET, ModDamageTypes.SOUL_LEFT_PUPPET);
+		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.SOUL_WENT_ON, ModDamageTypes.SOUL_INTO_PUPPET, ModDamageTypes.SOUL_LEFT_PUPPET);
 		// One's own golden core detonated, or one's years run out: nothing at all holds that death off.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
 		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);

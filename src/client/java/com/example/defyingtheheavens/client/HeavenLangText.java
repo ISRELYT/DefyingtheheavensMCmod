@@ -163,13 +163,13 @@ final class HeavenLangText {
 		t.add(ModLang.spellKey("crimson_tempering"), "Crimson Tempering");
 		t.add(ModLang.spellKey("crimson_tempering") + ".description", "For 30 s fire and lava cannot burn you, and lava bears your weight: you can walk and run across it. A fire ward.");
 		t.add(ModLang.spellKey("wood_bullet"), "Wood Bullet");
-		t.add(ModLang.spellKey("wood_bullet") + ".description", "Grows a sharp wooden stake in the air before you, then shoots it at where you aim, up to 40 blocks: 5 wood harm and a small knock back. Against a fire ward (Crimson Tempering, Flame Armour) the stake burns to ash.");
+		t.add(ModLang.spellKey("wood_bullet") + ".description", "Grows a sharp wooden stake in the air before you, then shoots it at where you aim, up to 40 blocks: 5 wood harm and a small knockback. Against a fire ward (Crimson Tempering, Flame Armour) the stake burns to ash.");
 		t.add(ModLang.spellKey("emerald_healing_art"), "Emerald Healing Art");
 		t.add(ModLang.spellKey("emerald_healing_art") + ".description", "For 10 s you heal 1 health every second, fed or hungry, and glow a faint green.");
 		t.add(ModLang.spellKey("verdant_growth"), "Verdant Growth");
 		t.add(ModLang.spellKey("verdant_growth") + ".description", "A tree grows up out of the ground under your feet in two seconds, lifting you 14 blocks into the air on its trunk, and spreads a blossoming crown round you at the top. It stands for 60 s, then withers away; its wood and leaves give nothing when broken. Cast it standing on the ground.");
 		t.add(ModLang.spellKey("earth_spear"), "Earth Spear");
-		t.add(ModLang.spellKey("earth_spear") + ".description", "Raises clods of earth into the air before you, where they fuse into a podao of dried earth, then flings it at where you aim, up to 40 blocks: 6 earth harm and a heavy knock back.");
+		t.add(ModLang.spellKey("earth_spear") + ".description", "Raises clods of earth into the air before you, where they fuse into a podao of dried earth, then flings it at where you aim, up to 40 blocks: 6 earth harm and a heavy knockback.");
 		t.add(ModLang.spellKey("hardened_body"), "Hardened Body");
 		t.add(ModLang.spellKey("hardened_body") + ".description", "For 30 s a thin skin of stone covers you, taking 7% off all harm you take (14% off water's). An earth ward.");
 		t.add(ModLang.spellKey("dirt_tide"), "Dirt Tide");
@@ -203,7 +203,7 @@ final class HeavenLangText {
 		t.add(ModLang.spellKey("earth_wall_technique"), "Earth Wall Technique");
 		t.add(ModLang.spellKey("earth_wall_technique") + ".description", "A wall of the ground you stand on, 6 blocks long and 4 tall, rises out of the earth 3 blocks ahead of you, across your way. If you are not on the ground, it forms in mid air, from its middle block outward. It stands for 30 s, then sinks back into the ground.");
 		t.add(ModLang.spellKey("boulder_throw"), "Boulder Throw");
-		t.add(ModLang.spellKey("boulder_throw") + ".description", "Tears a boulder out of the ground ahead of you, leaving a round hole two blocks deep, gathers it in the air and throws it at where you aim, up to 48 blocks: 16 earth harm and a heavy knock back. It tears it from whatever lies ahead, ground or what is built there (not inside a barrier).");
+		t.add(ModLang.spellKey("boulder_throw") + ".description", "Tears a boulder out of the ground ahead of you, leaving a round hole two blocks deep, gathers it in the air and throws it at where you aim, up to 48 blocks: 16 earth harm and a heavy knockback. It tears it from whatever lies ahead, ground or what is built there (not inside a barrier).");
 		t.add(ModLang.spellKey("cave_formation"), "Cave Formation");
 		t.add(ModLang.spellKey("cave_formation") + ".description", "Carves a cave fit for one into the slope or ground you look at, within 6 blocks, crumbling it away before your eyes over 3 s: into a slope, an entrance one block wide and two tall with a room three blocks wide, deep and tall behind it; into the ground, three steps down to such a room.");
 		t.add(ModLang.spellKey("rain_call"), "Rain Call");

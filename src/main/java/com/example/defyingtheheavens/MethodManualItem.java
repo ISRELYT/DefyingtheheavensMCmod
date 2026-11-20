@@ -3,6 +3,7 @@ package com.example.defyingtheheavens;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -22,9 +23,11 @@ import java.util.List;
  * A Method Manual (the methods overhaul's phase 2): one of the methods learned apart from a path's own teaching (CultivationMethod#fromManual),
  * written to a realm. Read (right-click; the dead may read one too: Incorporeal#mayUse), its volumes from its first realm up to that one
  * are learned (CultivationMethods#learn); a demon method's whole, its blood being its volume. Not used up, so it may be passed on. Sect
- * libraries and masters' halls keep them, each the methods of its own kind ({@link #kept}, {@link #kinds}); the lower realms' to Core
- * Formation, the Upper Realm's from Core Formation on; the ways of Entering Nirvana and True Immortal only the ancients' vaults
- * ({@link #ancient}).
+ * libraries and masters' halls keep them, each the methods of its own kind ({@link #kept}, {@link #kinds}); the lower realms' to Heavenly
+ * Being, the Upper Realm's from Core Formation to Sacred Vessel, the Great Void's from Heavenly Being to Entering Nirvana, the Immortal
+ * Realm's from Entering Nirvana to True Immortal ({@link World}); the ways of Entering Nirvana the Great Void's and the Immortal Realm's
+ * sects and the ancients' vaults, those of True Immortal the Immortal Realm's sects and the ancients' ({@link #ancient}). The Celestial
+ * Court sells True Immortal's volume of a way that runs on to it, one a day (CelestialCourt#wares).
  */
 public class MethodManualItem extends Item {
 	private static final String METHOD = "Method", REALM = "Realm";
@@ -99,16 +102,51 @@ public class MethodManualItem extends Item {
 	}
 
 	/**
-	 * Now and then ({@link #LIBRARY_CHANCE}, {@link #HALL_CHANCE} for a master's hall) a manual for a chest of a sect's of {@code faction}
-	 * (a demon clan's den, {@code race} a beast's), of the {@code upper} realm's or the lower realms'; or nothing. Only methods with volumes
-	 * of the realms that world's manuals are written to (the lower realms' to Core Formation, the Upper Realm's from it to Sacred Vessel):
-	 * the ways of Entering Nirvana and True Immortal no sect keeps ({@link #ancient}).
+	 * The worlds whose sects keep Method Manuals (SectPiece#chest), each writing them to its own realms: the lower realms' Qi Refining to
+	 * Heavenly Being, their last (Core Formation until the user's word of 2026-11-16, so no lower library held a Nascent Soul or Heavenly
+	 * Being volume); the Upper Realm's Core Formation to Sacred Vessel; the Great Void's, its Holy Lands' and Demon Palaces', Heavenly Being
+	 * to Entering Nirvana (the user, the same evening: "make it so up to entering nirvana method manuals spawn in the great void"), the realms
+	 * of its libraries' scriptures; the Immortal Realm's island sects (ImmortalSects) Entering Nirvana to True Immortal (the user's word of
+	 * 2026-11-17, "Also the Court sales" with it: they kept the Upper Realm's before, so the ways that run on to True Immortal had that volume
+	 * nowhere). True Immortal's volumes are the Immortal Realm's alone (Realm#taughtInTheWorld: the worlds below none).
 	 */
-	public static ItemStack kept(Alignment.Faction faction, Bloodline race, boolean upper, boolean hall, RandomSource random) {
+	public enum World {
+		LOWER(Realm.QI_REFINING, Realm.HEAVENLY_BEING),
+		UPPER(Realm.CORE_FORMATION, Realm.SACRED_VESSEL),
+		GREAT_VOID(Realm.HEAVENLY_BEING, Realm.ENTERING_NIRVANA),
+		IMMORTAL(Realm.ENTERING_NIRVANA, Realm.TRUE_IMMORTAL);
+
+		/** The shallowest and the deepest realm its chests write a manual to. */
+		public final Realm low, deepest;
+
+		World(Realm low, Realm deepest) {
+			this.low = low;
+			this.deepest = deepest;
+		}
+
+		/** The world of a sect of the {@code upper} realm's or the lower realms' standing in {@code dimension}. */
+		public static World of(boolean upper, ResourceKey<Level> dimension) {
+			return !upper ? LOWER : ModDimensions.isGreatVoid(dimension) ? GREAT_VOID : ModDimensions.isImmortalRealm(dimension) ? IMMORTAL : UPPER;
+		}
+	}
+
+	/**
+	 * Now and then ({@link #LIBRARY_CHANCE}, {@link #HALL_CHANCE} for a master's hall) a manual for a chest of a sect's of {@code faction}
+	 * (a demon clan's den, {@code race} a beast's) in {@code world}; or nothing. Only methods with volumes of the realms that world's manuals
+	 * are written to ({@link World}), each written within its own realms ({@link #volume}): the ways of Entering Nirvana the Great Void's and
+	 * the Immortal Realm's sects keep, those of True Immortal the Immortal Realm's alone ({@link #ancient}); and the ways that end before a
+	 * world's realms begin it keeps not (the user, 2026-11-16: "not all methods go all the way to true immortal or whatever, some are only for
+	 * certain realms"), which leaves out of the Great Void's, from Heavenly Being, those ending at Nascent Soul or before (Heart Demon
+	 * Tempering, Haunting, the weights, beasts' blood, Territorial Dominion), and out of the Immortal Realm's, from Entering Nirvana, all but
+	 * the ways that reach it; the lower realms' and the Upper Realm's keep all of their kind's that reach them, as before. Nothing if a kind
+	 * keeps none there.
+	 */
+	public static ItemStack kept(Alignment.Faction faction, Bloodline race, World world, boolean hall, RandomSource random) {
 		if (random.nextFloat() >= (hall ? HALL_CHANCE : LIBRARY_CHANCE)) return ItemStack.EMPTY;
-		int top = (upper ? Realm.SACRED_VESSEL : Realm.CORE_FORMATION).ordinal();
-		List<CultivationMethod> kept = kinds(faction, race).stream().filter(m -> m.first().ordinal() <= top).toList();
-		return volume(kept.get(random.nextInt(kept.size())), upper, random);
+		int low = world.low.ordinal(), top = world.deepest.ordinal();
+		List<CultivationMethod> kept = kinds(faction, race).stream().filter(m -> m.first().ordinal() <= top && m.last().ordinal() >= low).toList();
+		if (kept.isEmpty()) return ItemStack.EMPTY;
+		return volume(kept.get(random.nextInt(kept.size())), world, random);
 	}
 
 	/**
@@ -117,31 +155,36 @@ public class MethodManualItem extends Item {
 	 * library's one or two always, in place of the scriptures' Art Manuals (SectPiece#BODY_LIBRARY_LOOT), its master's hall's one now and then
 	 * ({@link #HALL_CHANCE}); written to a realm as {@link #kept}'s are.
 	 */
-	public static List<ItemStack> keptBody(Alignment.Faction faction, boolean upper, boolean hall, RandomSource random) {
+	public static List<ItemStack> keptBody(Alignment.Faction faction, World world, boolean hall, RandomSource random) {
 		List<ItemStack> manuals = new ArrayList<>();
 		if (hall && random.nextFloat() >= HALL_CHANCE) return manuals;
 		List<CultivationMethod> ways = kinds(faction, Bloodline.HUMAN).stream().filter(m -> m.path() == TwoPaths.Path.BODY).toList();
 		if (ways.isEmpty()) return manuals;
 		int count = hall ? 1 : 1 + random.nextInt(2);
-		for (int i = 0; i < count; i++) manuals.add(volume(ways.get(random.nextInt(ways.size())), upper, random));
+		for (int i = 0; i < count; i++) manuals.add(volume(ways.get(random.nextInt(ways.size())), world, random));
 		return manuals;
 	}
 
 	/**
-	 * A Qi Circulation manual for a sect library of the {@code upper} realm's or the lower realms' (SectPiece#chest: every one keeps one since
-	 * 2026-11-16, the arts carrying none of its volumes): written to one of the realms that world's are, the lower ones the likelier.
+	 * A Qi Circulation manual for a sect library in {@code world} (SectPiece#chest: every one keeps one since 2026-11-16, the arts carrying
+	 * none of its volumes): written to one of the realms that world's are ({@link World}: the lower realms' Qi Refining to Heavenly Being,
+	 * the Upper Realm's Core Formation to Sacred Vessel, the Great Void's Heavenly Being to Entering Nirvana, the Immortal Realm's Entering
+	 * Nirvana to True Immortal), the lower ones the likelier.
 	 */
-	public static ItemStack circulation(boolean upper, RandomSource random) {
-		int low = upper ? Realm.CORE_FORMATION.ordinal() : Realm.QI_REFINING.ordinal(), high = upper ? Realm.SACRED_VESSEL.ordinal() : Realm.CORE_FORMATION.ordinal();
+	public static ItemStack circulation(World world, RandomSource random) {
+		int low = world.low.ordinal(), high = world.deepest.ordinal();
 		int realm = low + Math.min(random.nextInt(high - low + 1), random.nextInt(high - low + 1)); // the lower of two
 		if (realm == Realm.FOUR_AXIS.ordinal()) realm--; // no method has a volume of Four Axis
 		return of(CultivationMethod.QI_CIRCULATION, Realm.byIndex(realm));
 	}
 
-	/** A manual of {@code method} for a sect's chest of the {@code upper} realm's or the lower realms': written to one of the realms that world's are. */
-	private static ItemStack volume(CultivationMethod method, boolean upper, RandomSource random) {
-		int low = upper ? Math.max(method.first().ordinal(), Realm.CORE_FORMATION.ordinal()) : method.first().ordinal();
-		int high = upper ? Math.min(method.last().ordinal(), Realm.SACRED_VESSEL.ordinal()) : Math.min(method.last().ordinal(), Realm.CORE_FORMATION.ordinal());
+	/**
+	 * A manual of {@code method} for a sect's chest in {@code world}: written to one of the realms that world's are, or, a method whose volumes
+	 * end before them, to its last.
+	 */
+	private static ItemStack volume(CultivationMethod method, World world, RandomSource random) {
+		int low = Math.max(method.first().ordinal(), world.low.ordinal());
+		int high = Math.min(method.last().ordinal(), world.deepest.ordinal());
 		if (high < low) high = low;
 		int realm = low + random.nextInt(high - low + 1);
 		if (realm == Realm.FOUR_AXIS.ordinal()) realm--; // no method has a volume of Four Axis
@@ -157,7 +200,7 @@ public class MethodManualItem extends Item {
 	 * Turtle Breath; a clan its blood's (kin blood, cores,
 	 * territory, beast worship, the ancestors' bones). The Body Path's ways (2026-11-01): the bath, the weights and the spars a righteous sect's;
 	 * all four a neutral one's; beasts' blood and the weights a devilish one's. (The ways of Entering Nirvana and True Immortal are listed with
-	 * their kind's, but no sect's chest holds one: {@link #kept}.)
+	 * their kind's: the Great Void's and the Immortal Realm's sects keep the first, the Immortal Realm's alone the second: {@link #kept}.)
 	 */
 	public static List<CultivationMethod> kinds(Alignment.Faction faction, Bloodline race) {
 		if (race != null && race.isBeast()) return List.of(CultivationMethod.KIN_BLOOD, CultivationMethod.CORE_DEVOURING,
@@ -186,7 +229,8 @@ public class MethodManualItem extends Item {
 	/**
 	 * A manual the ancients left in a secret realm's vault (the methods overhaul's phase 4): one of the ways whose volumes begin at
 	 * {@code realm}, written to it; the Fallen Holy Land's vaults keep Entering Nirvana's, the Fallen Immortal's Tomb's halls True
-	 * Immortal's, which no sect keeps. Nothing if none begins there.
+	 * Immortal's (both kept besides by the Immortal Realm's sects, the first by the Great Void's too: {@link #kept}). Nothing if none begins
+	 * there.
 	 */
 	public static ItemStack ancient(Realm realm, RandomSource random) {
 		List<CultivationMethod> ways = java.util.Arrays.stream(CultivationMethod.values()).filter(m -> m.fromManual() && m.first() == realm).toList();

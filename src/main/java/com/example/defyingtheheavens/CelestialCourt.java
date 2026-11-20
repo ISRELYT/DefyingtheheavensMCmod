@@ -435,10 +435,19 @@ public final class CelestialCourt {
 	record Ware(ItemStack item, int tokens, int maxUses, Rank rank) {}
 
 	/**
+	 * The ways the Quartermaster sells True Immortal's volume of, one a day in turn (the user's word, 2026-11-17): those that run on to True
+	 * Immortal beside the orthodox two, whose volume of it the worlds below keep nowhere (Realm#taughtInTheWorld); the Immortal Realm's sects
+	 * keep them too (MethodManualItem.World#IMMORTAL).
+	 */
+	static final CultivationMethod[] TRUE_IMMORTAL_WAYS = {CultivationMethod.INCENSE_FAITH, CultivationMethod.SPIRIT_BEAST_BOND,
+			CultivationMethod.ANCESTRAL_INCENSE, CultivationMethod.COURT_OF_THE_DEAD};
+
+	/**
 	 * What the Court's Quartermaster has for tokens today: three Immortal Jade for a token, each element's True Immortal art's manual and Qi
 	 * Circulation's True Immortal manual (2026-11-16: the arts carry none of its volumes), to every officer; to Captains, Immortal-grade
-	 * Cultivation Pills, a Sacred Vessel (the day's element) and an Immortal artifact (the day's kind); to Generals, the ghost path's last
-	 * foundation's Art Manual (the Netherworld Immortal Canon), Netherworld Breathing's True Immortal manual and a Ring of Transcendence.
+	 * Cultivation Pills, a Sacred Vessel (the day's element), an Immortal artifact (the day's kind) and the day's way's True Immortal manual
+	 * ({@link #TRUE_IMMORTAL_WAYS}); to Generals, the ghost path's last foundation's Art Manual (the Netherworld Immortal Canon), Netherworld
+	 * Breathing's True Immortal manual and a Ring of Transcendence.
 	 */
 	static List<Ware> wares(long day) {
 		List<Ware> wares = new ArrayList<>();
@@ -448,9 +457,13 @@ public final class CelestialCourt {
 		wares.add(new Ware(PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.IMMORTAL, 100), 3, 2, Rank.CAPTAIN));
 		QiElement todays = QiElement.five()[(int) Math.floorMod(day, 5L)];
 		wares.add(new Ware(new ItemStack(ModItems.sacredVessel(todays)), 15, 1, Rank.CAPTAIN));
-		// The day's Immortal artifact (the Artifact Forge's), its kind by the day, a banner of the day's element.
-		ArtifactKind kind = ArtifactKind.values()[(int) Math.floorMod(day, (long) ArtifactKind.values().length)];
+		// The day's Immortal artifact (the Artifact Forge's), its kind by the day, a banner of the day's element; never a puppet's frame.
+		ArtifactKind[] kinds = java.util.Arrays.stream(ArtifactKind.values()).filter(k -> !k.isFrame()).toArray(ArtifactKind[]::new);
+		ArtifactKind kind = kinds[(int) Math.floorMod(day, (long) kinds.length)];
 		wares.add(new Ware(Artifacts.create(kind, ArtifactGrade.IMMORTAL, Artifacts.Quality.NORMAL, kind == ArtifactKind.BANNER ? todays : null), 6, 1, Rank.CAPTAIN));
+		// The day's way's True Immortal volume, at Qi Circulation's price (the user's word, 2026-11-17: "Also the Court sales").
+		CultivationMethod way = TRUE_IMMORTAL_WAYS[(int) Math.floorMod(day, (long) TRUE_IMMORTAL_WAYS.length)];
+		wares.add(new Ware(MethodManualItem.of(way, Realm.TRUE_IMMORTAL), 20, 1, Rank.CAPTAIN));
 		wares.add(new Ware(TechniqueManualItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 30, 1, Rank.GENERAL));
 		wares.add(new Ware(MethodManualItem.of(CultivationMethod.NETHERWORLD_BREATHING, Realm.TRUE_IMMORTAL), 30, 1, Rank.GENERAL));
 		wares.add(new Ware(new ItemStack(ModItems.RING_OF_TRANSCENDENCE), 25, 1, Rank.GENERAL));

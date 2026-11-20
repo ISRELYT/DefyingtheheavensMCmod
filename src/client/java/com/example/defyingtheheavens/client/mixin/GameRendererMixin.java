@@ -34,13 +34,14 @@ public abstract class GameRendererMixin {
 	 * A soul possessing a body looks out from inside it (its eyes sit at the body's, within the body's own box), and vanilla's pick
 	 * takes a box holding the eyes for a hit whenever that box comes later in the level's entity list than the true target: then
 	 * every swing landed on the host itself and was thrown away (so a creature possessed and moved about, then taken again by any
-	 * soul, struck nothing). The body it is in is never what its crosshair is on.
+	 * soul, struck nothing). The body it is in is never what its crosshair is on; nor the puppet a player's own soul plays (PuppetPlayers:
+	 * its blows, its hands on chests and doors, its digging, all went to the puppet it looks out of).
 	 */
 	@ModifyArg(method = "pick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ProjectileUtil;getEntityHitResult(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;D)Lnet/minecraft/world/phys/EntityHitResult;"),
 			index = 4)
 	private Predicate<Entity> dth$notTheBodyItIsIn(Predicate<Entity> pickable) {
 		Minecraft mc = Minecraft.getInstance();
-		Entity host = mc.player == null || !ClientSoul.isOut() ? null : mc.player.getVehicle();
+		Entity host = mc.player == null || !ClientSoul.isOut() && !com.example.defyingtheheavens.client.ClientPuppetPilot.piloting() ? null : mc.player.getVehicle();
 		return host == null ? pickable : pickable.and(entity -> entity != host);
 	}
 

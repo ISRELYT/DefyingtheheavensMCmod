@@ -322,6 +322,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		cultY = A_PANEL_Y / 3;
 		cultW = A_PANEL_W / 3;
 		cultH = Math.round((height * 3f - 2 * A_PANEL_Y) / 3);
+		// A soul in a puppet never cultivates (puppet phase 2d): its first tab opens its circuits instead (TabButton), so the menu opens on the
+		// next one.
+		if (tab == Tab.CULTIVATION && ClientPuppetPilot.inPuppet()) tab = Tab.STATS;
 
 		// The tabs down the column, one under another as the mockup has them, the Dao Codex at their foot (CodexScreen comes back here).
 		Tab[] tabs = Tab.values();
@@ -1707,6 +1710,13 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				case FORGING -> lines.add(Component.translatable(ModLang.CRAFTS_FORGING));
 				case FORMATIONS -> lines.add(Component.translatable(ModLang.CRAFTS_FORMATIONS));
 				case TALISMANS -> lines.add(Component.translatable(ModLang.CRAFTS_TALISMANS));
+				case PUPPETRY -> {
+					lines.add(Component.translatable(ModLang.CRAFTS_PUPPETRY));
+					// The puppets' weight one may keep and how far one's will reaches, at this rank (Puppetry#SLOTS, #REACH; Spirit and
+					// the Consciousness Domain on top, as the Command Seal's list tells).
+					lines.add(Component.translatable(ModLang.CRAFTS_PUPPETRY_HOLDS, com.example.defyingtheheavens.Puppetry.SLOTS[rank.ordinal()],
+							(int) com.example.defyingtheheavens.Puppetry.REACH[rank.ordinal()]));
+				}
 			}
 			for (Component line : lines) {
 				for (FormattedCharSequence part : font.split(line, right - x - 4)) {
@@ -2129,9 +2139,12 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		int y = viewTop + 3 - journalScroll;
 		for (int i = 0; i < entries.size(); i++) {
 			Journal.Entry entry = entries.get(i);
-			// Who told it; "#" marks a source of the player's own (a method learned, the Terrace's view), a translation key.
-			Object teller = entry.teller().startsWith("#") ? Component.translatable(entry.teller().substring(1)) : entry.teller();
-			g.drawString(font, Component.translatable(ModLang.JOURNAL_ENTRY, entry.day(), teller), x, y, 0xFFD700);
+			// Who told it; "#" marks a source of the player's own (a method learned, the Terrace's view), a translation key: a heading of its
+			// own ("Day 11: A method of cultivation"), not "from" it ("Day 11, from Of the ghost path" read wrong: 2026-11-18).
+			boolean own = entry.teller().startsWith("#");
+			Component header = own ? Component.translatable(ModLang.JOURNAL_ENTRY_OWN, entry.day(), Component.translatable(entry.teller().substring(1)))
+					: Component.translatable(ModLang.JOURNAL_ENTRY, entry.day(), entry.teller());
+			g.drawString(font, header, x, y, 0xFFD700);
 			y += 12;
 			for (FormattedCharSequence line : texts.get(i)) {
 				g.drawString(font, line, x, y, 0xC8C8C8);
@@ -2833,6 +2846,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		addTop.accept(Component.translatable(ModLang.LAWS_TOTAL, s.total()), 0xFFD700);
 		if (!immortal) {
 			addTop.accept(Component.translatable(ModLang.LAWS_SEALED), 0x9E9E9E);
+			// Every realm of the ladder and the Laws it wants, for anyone to read ahead (the user, 2026-11-17).
+			addTop.accept(com.example.defyingtheheavens.Laws.ladderLine(), 0xB0A0C0);
 		} else {
 			int stages = Stage.values().length;
 			int next = TwoPaths.higherRank(c, false) / stages + 1;
@@ -2842,6 +2857,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				boolean open = s.total() >= needed;
 				addTop.accept(Component.translatable(open ? ModLang.LAWS_NEXT_OPEN : ModLang.LAWS_NEXT, ahead.getDisplayName(), needed), open ? 0x69F0AE : 0xF0D78C);
 			}
+			addTop.accept(com.example.defyingtheheavens.Laws.ladderLine(), 0xB0A0C0);
 			com.example.defyingtheheavens.Law focus = s.focus();
 			boolean here = mc.level != null && com.example.defyingtheheavens.ModDimensions.hasImmortalQi(mc.level.dimension());
 			addTop.accept(focus == null ? Component.translatable(ModLang.LAWS_NO_FOCUS)
@@ -3645,6 +3661,12 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 
 		@Override
 		public void onPress() {
+			// A soul in a puppet (puppet phase 2d): the first tab stands in the Cultivation tab's place (a puppet never cultivates; the
+			// user, 2026-11-18: "having the circuit board menu replace the cultivation tab"), its own body's board or its soul's screen.
+			if (target == Tab.CULTIVATION && ClientPuppetPilot.inPuppet()) {
+				ClientPuppetPilot.openFirstTab(CultivationScreen.this);
+				return;
+			}
 			tab = target;
 			dragged = null;
 			updateButtons();
@@ -3658,7 +3680,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		@Override
 		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 			boolean selected = tab == target;
-			navRow(g, target.ordinal(), getMessage(), selected, isHoveredOrFocused(), false);
+			// (A soul in a puppet: the first tab is its circuits, or its soul's screen: ClientPuppetPilot#firstTab.)
+			Component puppet = target == Tab.CULTIVATION ? ClientPuppetPilot.firstTab() : null;
+			navRow(g, target.ordinal(), puppet != null ? puppet : getMessage(), selected && puppet == null, isHoveredOrFocused(), false);
 		}
 
 		@Override

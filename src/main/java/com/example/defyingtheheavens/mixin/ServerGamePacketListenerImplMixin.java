@@ -107,6 +107,7 @@ public abstract class ServerGamePacketListenerImplMixin {
 			shift = At.Shift.AFTER))
 	private void dth$heldStayWithTheirBody(net.minecraft.network.protocol.game.ServerboundTeleportToEntityPacket packet,
 										   org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
-		if (com.example.defyingtheheavens.Possession.isHeld(player.getUUID()) || com.example.defyingtheheavens.Sleeves.isCarried(player.getUUID())) ci.cancel();
+		if (com.example.defyingtheheavens.Possession.isHeld(player.getUUID()) || com.example.defyingtheheavens.Sleeves.isCarried(player.getUUID())
+				|| com.example.defyingtheheavens.PuppetPlayers.isBound(player)) ci.cancel(); // nor a soul held in a puppet (PuppetPlayers)
 	}
 }

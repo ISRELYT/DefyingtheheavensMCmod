@@ -3,6 +3,7 @@ package com.example.defyingtheheavens;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -71,6 +72,23 @@ public final class Laws {
 	/** {@link #gateLine} with the realm ahead named {@code name} (the Body Path's own names: BodyPath#lawGateLine). */
 	public static Component gateLine(PlayerCultivation c, Realm realm, Component name) {
 		return Component.translatable(ModLang.LAW_GATE, name, needed(realm), c.laws().total());
+	}
+
+	/**
+	 * Every realm of the ladder with the levels of the Laws together breaking into it wants, in a line for anyone to read (the Methods tab's
+	 * Laws page; the user, 2026-11-17: "make sure its shown somewhere that you need certain levels of law comprehension to progress to the
+	 * next realm"): "Earth Immortal 3, Heaven Immortal 7, ...", from {@link #needed} itself.
+	 */
+	public static Component ladderLine() {
+		MutableComponent ladder = Component.empty();
+		boolean first = true;
+		for (Realm realm : Realm.values()) {
+			if (!realm.isPastTrueImmortal()) continue;
+			if (!first) ladder.append(", ");
+			ladder.append(realm.getDisplayName()).append(" " + needed(realm));
+			first = false;
+		}
+		return Component.translatable(ModLang.LAWS_LADDER, ladder);
 	}
 
 	// --- Who comprehends them ---

@@ -128,6 +128,8 @@ public final class GhostSystem {
 	 */
 	public static void onDeath(ServerPlayer p, net.minecraft.world.damagesource.DamageSource source, boolean byHeaven) {
 		if (!afterDeathOn(p) || state(p).ghost()) return;
+		// A soul held in a puppet (PuppetPlayers) wakes in the puppet, not below, until it goes on out of it.
+		if (PuppetPlayers.isBound(p)) return;
 		ServerLevel netherworld = p.server.getLevel(ModDimensions.NETHERWORLD);
 		if (netherworld == null) return;
 		NetherworldState s = state(p);

@@ -99,6 +99,7 @@
       "com.example.defyingtheheavens.StorageFormationGameTests",
       "com.example.defyingtheheavens.ConcealmentGameTests",
       "com.example.defyingtheheavens.ArtifactGameTests",
+      "com.example.defyingtheheavens.PuppetGameTests",
       "com.example.defyingtheheavens.ElementalWeaponGameTests",
       "com.example.defyingtheheavens.LegendGameTests",
       "com.example.defyingtheheavens.SectMissionGameTests",
@@ -137,7 +138,8 @@
       "com.example.defyingtheheavens.SectErrandsGameTests",
       "com.example.defyingtheheavens.SpellMightGameTests",
       "com.example.defyingtheheavens.LingeringGameTests",
-      "com.example.defyingtheheavens.ManualsGameTests"
+      "com.example.defyingtheheavens.ManualsGameTests",
+      "com.example.defyingtheheavens.AssetsGameTests"
     ]
   }
 }
