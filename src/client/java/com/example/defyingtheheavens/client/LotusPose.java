@@ -17,7 +17,9 @@ public final class LotusPose {
 		if (entity instanceof com.example.defyingtheheavens.SoulBodyEntity || entity instanceof com.example.defyingtheheavens.InnerBodyEntity) return true;
 		// A main body left sitting while its player is in their clone (Clones), or a clone left in seclusion (CloneSeclusion).
 		if (entity instanceof com.example.defyingtheheavens.CloneBodyEntity body) return body.isSitting() || body.isSecluding();
+		// A player held in their breakthrough cinematic sits in the lotus pose too, as everyone who sees them is told (CinematicClient).
 		return entity instanceof Player ? ClientMeditationTracker.isMeditating(entity.getUUID()) && !ModDimensions.isInnerRealm(entity.level().dimension())
+				|| com.example.defyingtheheavens.client.cinematic.CinematicClient.seated(entity.getUUID())
 				: entity instanceof CultivatorNpc npc && npc.isMeditating();
 	}
 

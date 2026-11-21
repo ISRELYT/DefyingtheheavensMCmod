@@ -790,10 +790,13 @@ public final class TribulationManager {
 		p.clearFire();
 
 		ServerLevel level = p.serverLevel();
-		level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.0f);
-		level.playSound(null, p.blockPosition(), SoundEvents.END_PORTAL_SPAWN, SoundSource.PLAYERS, 0.6f, 1.5f);
-		level.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.15);
-		level.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.4);
+		// The realm's breakthrough cinematic, where it has one (Cinematics), in place of the old burst; after the last strike, always.
+		if (!Cinematics.onBreakthrough(p, t.targetRealm, t.targetStage, TwoPaths.Path.HEAVEN)) {
+			level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.0f);
+			level.playSound(null, p.blockPosition(), SoundEvents.END_PORTAL_SPAWN, SoundSource.PLAYERS, 0.6f, 1.5f);
+			level.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.15);
+			level.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.4);
+		}
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_BREAKTHROUGH, t.targetName()));
 		Milestones.onTribulation(p, t.targetRealm);
 	}
@@ -816,10 +819,12 @@ public final class TribulationManager {
 		NetherworldManager.refresh(p);
 
 		ServerLevel level = p.serverLevel();
-		level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.8f);
-		level.playSound(null, p.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.6f);
-		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.1);
-		level.sendParticles(ParticleTypes.GLOW, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.2);
+		if (!Cinematics.onBreakthrough(p, t.targetRealm, t.targetStage, TwoPaths.Path.GHOST)) {
+			level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.8f);
+			level.playSound(null, p.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.6f);
+			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.1);
+			level.sendParticles(ParticleTypes.GLOW, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.2);
+		}
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.AQUA));
 		Milestones.onTribulation(p, t.targetRealm);
 	}
@@ -846,10 +851,12 @@ public final class TribulationManager {
 		p.clearFire();
 
 		ServerLevel level = p.serverLevel();
-		level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.9f);
-		level.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.8f, 0.8f);
-		level.sendParticles(ParticleTypes.FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.12);
-		level.sendParticles(ParticleTypes.CRIMSON_SPORE, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.6, 1.0, 0.6, 0.2);
+		if (!Cinematics.onBreakthrough(p, t.targetRealm, t.targetStage, TwoPaths.Path.DEMON)) {
+			level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.9f);
+			level.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.8f, 0.8f);
+			level.sendParticles(ParticleTypes.FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.12);
+			level.sendParticles(ParticleTypes.CRIMSON_SPORE, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.6, 1.0, 0.6, 0.2);
+		}
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_DEMON_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.RED));
 		Milestones.onTribulation(p, t.targetRealm);
 	}
@@ -874,10 +881,12 @@ public final class TribulationManager {
 		p.clearFire();
 
 		ServerLevel level = p.serverLevel();
-		level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.8f);
-		level.playSound(null, p.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 1.0f, 0.6f);
-		level.sendParticles(ParticleTypes.CRIT, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.3);
-		level.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
+		if (!Cinematics.onBreakthrough(p, t.targetRealm, t.targetStage, TwoPaths.Path.BODY)) {
+			level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.8f);
+			level.playSound(null, p.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 1.0f, 0.6f);
+			level.sendParticles(ParticleTypes.CRIT, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.3);
+			level.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
+		}
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_BODY_TRIB_PASSED, BodyPath.rankName(BodyPath.rank(c))).withStyle(net.minecraft.ChatFormatting.GOLD));
 		Milestones.onTribulation(p, t.targetRealm);
 	}

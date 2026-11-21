@@ -139,7 +139,9 @@
       "com.example.defyingtheheavens.SpellMightGameTests",
       "com.example.defyingtheheavens.LingeringGameTests",
       "com.example.defyingtheheavens.ManualsGameTests",
-      "com.example.defyingtheheavens.AssetsGameTests"
+      "com.example.defyingtheheavens.AssetsGameTests",
+      "com.example.defyingtheheavens.DevToolsGameTests",
+      "com.example.defyingtheheavens.CinematicsGameTests"
     ]
   }
 }

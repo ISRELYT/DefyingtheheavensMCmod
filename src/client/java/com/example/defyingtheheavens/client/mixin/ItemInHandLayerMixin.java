@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * A sword rider's sword is under their feet (SwordFlightClient draws it there), so not in their hand as well. A polished blade
+ * A sword rider's sword is under their feet (SwordFlightClient draws it there), so not in their hand as well. A player held in their
+ * breakthrough cinematic sits with empty hands (what they held would stand in front of the film's close shots). A polished blade
  * (Blade Polish) wisps with white smoke (BladeWisps).
  */
 @Mixin(ItemInHandLayer.class)
@@ -23,6 +24,7 @@ public abstract class ItemInHandLayerMixin {
 	private void dth$swordUnderfoot(LivingEntity entity, ItemStack stack, ItemDisplayContext context, HumanoidArm arm, PoseStack poseStack,
 									MultiBufferSource buffers, int light, CallbackInfo ci) {
 		if (arm == entity.getMainArm() && SwordFlightClient.isRiding(entity)) ci.cancel();
+		else if (com.example.defyingtheheavens.client.cinematic.CinematicClient.seated(entity.getUUID())) ci.cancel();
 	}
 
 	@Inject(method = "renderArmWithItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))

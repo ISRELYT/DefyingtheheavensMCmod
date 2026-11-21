@@ -1,0 +1,29 @@
+{
+    "blend": { "func": "add", "srcrgb": "one", "dstrgb": "zero" },
+    "vertex": "sobel",
+    "fragment": "dth_cine_composite",
+    "attributes": [ "Position" ],
+    "samplers": [
+        { "name": "DiffuseSampler" },
+        { "name": "FxSampler" },
+        { "name": "DepthSampler" },
+        { "name": "MainDepthSampler" },
+        { "name": "Bloom1Sampler" },
+        { "name": "Bloom2Sampler" },
+        { "name": "Bloom3Sampler" }
+    ],
+    "uniforms": [
+        { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "InSize", "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
+        { "name": "OutSize", "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
+        { "name": "Exposure", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "SkyDark", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "Saturation", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "Contrast", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "Tint", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0 ] },
+        { "name": "Vignette", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "FxBoost", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "BloomStrength", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "FxCover", "type": "float", "count": 1, "values": [ 1.0 ] }
+    ]
+}

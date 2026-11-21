@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.example.defyingtheheavens.client.dev.mixin",
+  "plugin": "com.example.defyingtheheavens.client.dev.DevMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "VfxFrameMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

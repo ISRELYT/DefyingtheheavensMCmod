@@ -13,6 +13,31 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
 	@Shadow public ServerPlayer player;
+	@Shadow private boolean clientIsFloating;
+	@Shadow private int aboveGroundTickCount;
+
+	/**
+	 * A player held in their breakthrough cinematic (Cinematics) is held in the air if they were in it: never "floating" to vanilla, which
+	 * would kick one without flight from a server that allows none after four seconds of it. Their floating is let go of each tick.
+	 */
+	@org.spongepowered.asm.mixin.injection.Inject(method = "tick", at = @At("HEAD"))
+	private void dth$heldAreNotFloating(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		if (!com.example.defyingtheheavens.Cinematics.isPlaying(player)) return;
+		clientIsFloating = false;
+		aboveGroundTickCount = 0;
+	}
+
+	/**
+	 * A player held in their breakthrough cinematic touches no one: no blow, no use of a creature or what it carries (Fabric's callbacks see
+	 * the "interact at" and the attack, not the plain "interact": Cinematics refuses those, this the rest). On the server's thread.
+	 */
+	@org.spongepowered.asm.mixin.injection.Inject(method = "handleInteract", cancellable = true, at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V",
+			shift = At.Shift.AFTER))
+	private void dth$heldTouchNoOne(net.minecraft.network.protocol.game.ServerboundInteractPacket packet,
+									org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		if (com.example.defyingtheheavens.Cinematics.isPlaying(player)) ci.cancel();
+	}
 
 	/**
 	 * The creative inventory syncs edits slot by slot, and vanilla only accepts menu slots 1-45 (up to the offhand).

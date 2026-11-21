@@ -51,6 +51,8 @@ public class DefyingTheHeavens implements ModInitializer {
 		SectMissions.register(); // the sect mission board: its postings, quarry, the gate watch, the boards set up
 		VanillaLoot.register(); // the mod's goods and writings in the vanilla world's chests (2026-11-16)
 		Puppetry.register(); // the puppets' messenger bees on the wing, boards and seizings let go of as their players leave
+		VfxCapture.register(); // /vfxcapture, the effects work's capture tool: only with the dev flag (DevTools), never in a player's game
+		Cinematics.register(); // the breakthrough cinematics' hold, packets and /breakthroughfx (step B1: real breakthroughs play them with the dev flag only)
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

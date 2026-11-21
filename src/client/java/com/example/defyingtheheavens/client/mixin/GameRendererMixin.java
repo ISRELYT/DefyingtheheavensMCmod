@@ -28,6 +28,8 @@ public abstract class GameRendererMixin {
 	private void dth$senses(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
 		com.example.defyingtheheavens.client.SkyLayer.composite();
 		SenseOverlay.beforeEntityOutline(partialTicks);
+		// A breakthrough cinematic's frame: the world graded for its player, its effects' layer and their bloom laid over (FxPost).
+		com.example.defyingtheheavens.client.fx.FxPost.apply(partialTicks);
 	}
 
 	/**
@@ -56,11 +58,21 @@ public abstract class GameRendererMixin {
 	private void dth$judgeGazeRolls(PoseStack pose, float partialTicks, CallbackInfo ci) {
 		ClientJudgeGaze.distort(pose, partialTicks);
 		com.example.defyingtheheavens.client.ClientSpellFx.shake(pose, partialTicks); // a blow or a quake near shakes the view
+		// A breakthrough cinematic's shot rolled (within 10 degrees: CinematicCamera).
+		com.example.defyingtheheavens.client.cinematic.CinematicCamera.View view = com.example.defyingtheheavens.client.cinematic.CinematicClient.view(partialTicks);
+		if (view != null && view.roll() != 0) pose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(view.roll()));
 	}
 
-	/** ...and breathes in and out. */
+	/** ...and breathes in and out. A breakthrough cinematic's shot sets its own field of view. */
 	@Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
 	private void dth$judgeGazeBreathes(Camera camera, float partialTicks, boolean useFovSetting, CallbackInfoReturnable<Double> cir) {
+		if (useFovSetting) {
+			com.example.defyingtheheavens.client.cinematic.CinematicCamera.View view = com.example.defyingtheheavens.client.cinematic.CinematicClient.view(partialTicks);
+			if (view != null) {
+				cir.setReturnValue((double) view.fov());
+				return;
+			}
+		}
 		double scale = ClientJudgeGaze.fovScale();
 		if (scale != 1) cir.setReturnValue(cir.getReturnValue() * scale);
 	}

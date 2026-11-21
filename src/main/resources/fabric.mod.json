@@ -26,6 +26,10 @@
     {
       "config": "defying-the-heavens.jei.mixins.json",
       "environment": "client"
+    },
+    {
+      "config": "defying-the-heavens.dev.mixins.json",
+      "environment": "client"
     }
   ],
 

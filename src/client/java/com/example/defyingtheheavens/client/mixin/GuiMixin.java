@@ -31,6 +31,18 @@ public abstract class GuiMixin {
 	@Shadow
 	private int screenWidth;
 
+	/**
+	 * A breakthrough cinematic's own screen in place of the whole HUD (CinematicHud: the letterbox, the title, the skip ring), Fabric's
+	 * HUD callback with it. Declared first, so nothing else of the HUD runs. Guarded (CinematicClient#hud): should it fail, the film ends
+	 * and the HUD is back from the next frame.
+	 */
+	@Inject(method = "render", at = @At("HEAD"), cancellable = true)
+	private void dth$cinematic(GuiGraphics graphics, float partialTick, CallbackInfo ci) {
+		if (com.example.defyingtheheavens.client.cinematic.CinematicClient.own() == null) return;
+		com.example.defyingtheheavens.client.cinematic.CinematicClient.hud(graphics, partialTick);
+		ci.cancel();
+	}
+
 	@Inject(method = "render", at = @At("HEAD"))
 	private void dth$meteorFire(GuiGraphics graphics, float partialTick, CallbackInfo ci) {
 		MeteorFlightClient.renderHud(graphics, partialTick);

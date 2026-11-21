@@ -6886,6 +6886,174 @@ checked); the storage formation's take-out (it hands back what is stored, never 
 factory's and the Overseer Core's shift-clicks, the workbench's take-back; a soul's death going into a puppet (no totem saves it); no
 client code reached from the server's.
 
+## The effects capture tool (developers only, 2026-11-21)
+
+The visual-effects work (the breakthrough cinematics and the meditation aura) is judged from captures, not from memory. `/vfxcapture`
+records what the game really shows and `tools/vfx-check/VfxCheck.java` turns it into sheets and checks. **It exists only in a game
+started with `-Ddth.dev=true`** (`DevTools`): without that flag there is no command, no recorder and no hook, so a player's game never
+has any of it. It sets its player's cultivation the way `/cultivation set` does, so use it in a test world.
+
+```
+/vfxcapture breakthrough:<realm>[:<stage>[:<path>]] [seed] [full|short]   the breakthrough into that realm: its tribulation, run to the end
+/vfxcapture meditation:<path>:<realm>[:<stage>] [harmony|surge|ready]      6 s of meditation from three views
+/vfxcapture matrix:realms:<path>[:<stage>]                                 one meditating frame per realm (17 cells)
+/vfxcapture matrix:paths:<realm>[:<stage>]                                 one per path (4 cells)
+/vfxcapture wall:<path>:<realm>[:<stage>]                                  meditating behind a wall of stone, seen through it
+/vfxcapture perf:breakthrough:...  /  perf:meditation:...                  the same spot without the effect and with it, nothing saved
+/vfxcapture stop                                                           ends a run; everything it changed is put back
+```
+
+Realms are written `qr fb cf ns hb fa di vs sv en ti ei hi gi tgi ps hl`, stages `early mid late gp`, paths `heaven ghost demon body`.
+Options: `views=` (breakthrough: `player`, `third`, `observer`; meditation: `side`, `first`, `observer`), `observer=<name>` (the
+watching player; else the nearest), `label=`, `time=noon|night|dusk|keep`, `weather=clear|rain|keep`, `secs=`, `after=`,
+`pitch=<degrees>` (where the player looks, up negative), `obshud` (the observer recorded with their own HUD, in creative mode) and
+`others=keep`. Without that last, every other path the player walks is first set back to its first stage, so nothing left over
+decides how they look (the body is drawn from the higher path, and the HUD names its realm).
+
+- **The views.** A breakthrough is recorded from the player's own eyes (with the HUD), from behind them (third person) and by an
+  observer 24 blocks off at eye height (no HUD); a meditation from the side at 5 blocks, from the player's own eyes (with the HUD) and
+  by an observer at 16. The observer is a second player, put in spectator mode where the camera stands (the nearest angle that sees the
+  player clearly), and put back after.
+- **The frames** are read at the very end of each frame, after the post effects, a shader pack and the HUD (`VfxFrameMixin`, at the
+  frame's last step before it is shown), one a tick, named by the server's game time, and written on worker threads. Every frame's
+  time is logged. While a view records, no screen, chat line or toast covers it, and a line left in the action bar from before it is
+  cleared as it begins.
+- **The world untouched.** Every block state within 48 blocks is hashed before the effect and after it; the record lists any that
+  changed. Random ticks are stilled while a run lasts (grass creeping onto earth and vines growing would change blocks by themselves).
+- **The same player every time.** For the run the player has the ordinary Five-Element Spiritual Roots, and Qi Sense (its grey), the
+  Consciousness Domain (its lattice of lines) and the Inner Realm (a long sitting carries the soul off) are switched off; all of it is
+  put back after. Their health is topped up once their path is set, and nothing is recorded for two seconds after the scene is set, so
+  every client has caught up (a domain switched off is still drawn on others' screens until their next domain packet, up to 1.5 s).
+- **The time and the weather** asked for are put back after the run, as the day-light rule and random ticks are.
+- **A run cut short** (`/vfxcapture stop`, the player or the observer leaving the game or the world the run began in, or the server
+  closing) ends the same way as one that went through: a tribulation still running is called off first (no reward, no fall:
+  `TribulationManager#abandon`), so no strike lands once the player's guard is gone, then everything above is put back and the record
+  written (the view being recorded marked cut short), the world checked in the world the run began in. As the server closes, this runs
+  ahead of the mod's own clean-up (an earlier phase of `SERVER_STOPPING`, before `TribulationManager#clear`). A player who leaves the game
+  mid-tribulation has the trial's mark taken off their own record too (the mod would fail it when they next join: a fall), and gets their
+  guard (invulnerability) back as soon as they're on again, while the server runs; an observer who left comes back as they left, in
+  spectator mode. The record says so.
+- **A server killed mid-run** (no `SERVER_STOPPING`): the run's game rules (random ticks, the day-light rule) are written down while it
+  lasts (`unfinished-run.json` in the captures folder) and put back as that world's server next starts. The player's own state is not.
+- **Where it goes.** `-Ddth.vfx.dir` (else `vfx-captures` beside the game): one folder per run, holding the server's record
+  (`server.json`) and a folder per view (`frames/`, `frames.csv`, `frametimes.csv`, `client.json`).
+- **The checker.** `java tools/vfx-check/VfxCheck.java build <run folder> --out <folder> --ref <reference csv> --ffmpeg <ffmpeg.exe>`
+  writes a sheet per act at 4 frames a second (each frame labelled with its tick), every beat's frame full size, the brightness and
+  saturation curve at 20 frames a second (CSV and a chart against the reference's), an MP4, the matrix sheets, `report.md` (every
+  check) and `packet.md` (the files the review gate needs). Its checks: the run went through, the palette, at most 3 flashes a second
+  (with the counter itself checked on the reference's known flashes, and each of ours set against the reference's nearest), the world untouched,
+  the frame time (perf runs: what the effect adds; a breakthrough's heaviest second at most 4 ms, one meditating cultivator under 1 ms),
+  the live particles (at most 2,000; every frame's count is logged), the curves against the reference, the first person's middle third
+  kept clear through the breath, and nothing seen through a wall.
+  - **t0 is each camera's own:** the first frame its client drew after hearing of the event (its mark's `seenAt` + 1). The server's own
+    tick, set against each client's clock, put the same moment a tick apart from one camera to the next.
+  - **The strikes on screen** are found in the frames (a patch of the picture turned far brighter and blue-white within three ticks;
+    blue, because under a shader pack a strike darkens the scene and the light coming back is as sudden) and replace the server's
+    estimate among the beats; `<view>-timing.json` beside each report gives t0, the strikes in game time and how much of the screen
+    each lit.
+  - **`review <out.jpg> <title> <rows file>`** lays out the reviewers' sheets: one row a camera and state (`label | frame@caption | ...`).
+    A label may start `crop=0.3@0.5,0.61;` (30% of each frame round that point: a far camera's player) and `size=2;` (frames twice as
+    large, the row wrapping onto as many lines).
+
+Code: `DevTools`, `VfxCapture`; client `VfxRecorder`, `dev/DevMixinPlugin`, `dev/mixin/VfxFrameMixin`
+(`defying-the-heavens.dev.mixins.json`); `tools/vfx-check/VfxCheck.java`. The classes are in every jar, asleep: without the flag nothing
+registers them (`DevToolsGameTests` checks the command is there exactly when the flag is).
+
+## Breakthrough cinematics (step B1, the grey box, 2026-11-21)
+
+A survived tribulation into a realm's first stage, by any path, plays that realm's cinematic once the rank-up is saved: after the last
+strike, so nothing of it ever plays during the strikes. Only Heavenly Being has one so far. **Until step B2 makes it look right, it plays
+only in a game started with `-Ddth.dev=true`**: everyone else keeps the old burst of sounds and particles. The chat line and the
+milestones are the same either way.
+
+- **The player's own screen:** the camera blends from their own view (wherever they were looking, first or third person) into the
+  film's 25 shots and back out to the view they had (third person is forced in between, and their own setting comes back after), black
+  bars make a 2.35:1 picture, the HUD and the music go, and the realm's title ends it. A shot that frames the pillar, the star or the
+  sky is scaled by how tall the pillar is there (to the clouds, a ceiling, or 100 blocks), so it frames them anywhere. Plain
+  placeholder shapes stand in for the art: a disc for the array, lines for the threads, a column for the pillar, discs for the vortex, a
+  figure for the soul, a sphere for the star, a ring for the shockwave, a white screen for the white-out.
+- **Everyone else** who sees the player gets the shapes in the world, from wherever they stand; their own camera and HUD are untouched.
+  Someone who comes into sight mid-way joins it where it is; someone who goes to another world drops it.
+- **The hold:** the player sits in the lotus pose where they were (in the air if they were, never kicked for floating by a server
+  that allows no flight), empty-handed (anything in use let go of, not loosed), kept there, harmed by
+  nothing that can be warded off (the void and `/kill` still can). They act on nothing either: their keys and mouse are taken (Sneak
+  to skip, chat and commands, the player list, screenshots and Esc stay), and the server refuses their blows, uses and block breaks
+  and drops the mod's acts they send (casts, abilities, strikes, a breakthrough, orders to puppets), whatever their client does. At
+  the blast (tick 528) hostile mobs within 12 blocks are thrown back, unharmed. No block is ever touched.
+- **It ends** when its length is up (the server's own clock: 790 ticks and two to spare, so the player's own screen has finished
+  handing back first), on a skip (hold Sneak for a second; a ring fills), if the
+  player leaves the game or the world they sat in, or dies, or on any error on their client; every end puts the camera, the HUD and the
+  controls back.
+- **Seen once:** each player's record keeps which realms they have seen by which path (`CinematicsSeen`, so a new life sees them anew).
+  Later breakthroughs into the same realm will get the short version, once step B4 makes it; until then it is always the full one.
+- **Settings:** `config/defying-the-heavens-client.json`: `cinematics` (`full`, `short`, `off`; sent to the server as you join),
+  `shake` (percent), `flashes` (`full`, or `reduced`: a warm glow in place of the white-out) and `reduceMotion` (no whips, no roll).
+- **The films are data:** `assets/defying-the-heavens/breakthroughs/<realm>.json`, laid over `_skeleton.json`: the shots (keyframed
+  places and look targets, or an orbit, in the frame of where the player sat and faced, eased), the shapes, the screen overlays, the
+  FOV, the shake and the title, at whole ticks. F3+T reloads them. A mistake is logged (`[DTH-CINEMATIC]`, with the file and the
+  place) and that film left out: its breakthrough then hands straight back. Each is checked against the server's `CinematicTimes`
+  (its length, blast and white-out), its shots for gaps, its shapes and overlays for what the HUD and the renderer read. Anything of
+  a film that fails as it plays (its camera, shapes or HUD) ends it on that client and puts everything back.
+
+```
+/breakthroughfx <realm> [stage] [path] [seed] [full|observer]   plays one without a tribulation (dev flag only); observer: your own
+                                                                camera kept, the shapes only, as others see it
+/breakthroughfx stop                                            ends yours at once
+```
+
+`/vfxcapture breakthrough:hb views=player,observer` records the tribulation and then the cinematic to its hand-back, every view with
+the same seed; the sheets are cut by its acts, each of its shots is a beat (named as the client played it), and the reference's curve is
+lined up on its white-out.
+
+Code: `Cinematics`, `CinematicTimes`, `ModPackets#unlessHeld`; client `cinematic/CinematicClient`, `CinematicCamera`, `CinematicHud`,
+`GreyBox`, `Sequence`, `Ease`, `CinematicSettings`, `mixin/CinematicCameraMixin` (the camera), `mixin/CinematicMouseMixin` (the
+mouse), and the existing `GameRendererMixin` (roll, FOV), `GuiMixin` (the HUD), `SoulInputMixin` (the movement keys),
+`ItemInHandLayerMixin` (empty hands) and `LotusPose`. Tests: `CinematicsGameTests`.
+
+### The hero's art, Acts 1 to 3 (step B2a, 2026-11-21)
+
+The hero's first 330 ticks are drawn for real; from tick 330 on it is still the grey box until step B2's second half (the film says
+so: `"placeholderFrom": 330`). Still only with `-Ddth.dev=true`.
+
+- **Darkness first:** a dark storm deck closes over the sky in the first four ticks (two cloud layers drifting apart, as wide as the
+  eye reaches; vanilla's own white clouds are left out while it's there), and the breakthrough player's world is graded down with it:
+  darker, less saturated, cooler after the eyes close, lit warm for a moment as the pillar strikes (the film's `grade` keys). Only the
+  gold is bright. No one's name tag is drawn in the player's own film.
+- **Act 1:** warm embers and red wisps rise off the ground; the runic array opens under the player on a warm pool of light (flame
+  swirling between its rings, its rings and runes turning one way and its small circles the other, an eight-pointed star, a red heart
+  glowing round the seated body), and a band of orange flame races out over the ground, walls of flame about a block and a half high
+  swirling at its edge, the grass behind it still warm.
+- **Act 2:** qi threads rain from under the storm (white-hot cores, orange edges, curving into the player), many hair-thin streaks with
+  them; the ground glows warm, cracks of light run out across it and real blocks tear loose round the player (copies: no block is
+  ever changed) and rise, turning, lit by the fire with its light round their edges (none parks between the camera and the player);
+  ribbons of gold arc in from both sides, rising off the ground and bowing up three to five blocks, to a white-hot point, spilling gold
+  over the grass; then everything rushes in (dense streaks and sparks, broad flame between them, two long slashes of light across the
+  frame), the push and the whip blurred outward from the player, the whip's flare a gold glow with the player still in it.
+- **Act 3:** the soul's violet light shows at the body's edges, three pulses on the heartbeat; the pillar strikes up to the clouds
+  (or the ceiling) in six ticks, a cream-white core in a gold body of streaming flame, flaring as it rises, tongues of flame climbing it
+  and licking out past its edge, specks of debris carried up, rays and a ring of dust at its foot; where it meets the cloud base a great
+  mushroom of fire billows out (pale gold at its middle to deep orange, dark smoke at its rim), the cloud base round it lit orange from
+  below, and gold veins crawl out over it, each at its own pace.
+- **Seen by everyone near** (their own view and HUD untouched, never dimmed, never over their own hand): the storm, the array, the
+  threads, the blocks, the pillar and the rest, in the world, the small ones drawn larger for someone far off. The grade, the bloom's
+  strength and the blurs are the breakthrough player's alone.
+- **Flashes: Reduced** (config `flashes`) holds the whip's flare and the pillar's strike to a warm glow, as it does the white-out.
+- **With a shader pack:** the effects are drawn into a layer of their own and laid over the frame after the pack has finished it, so
+  they look the same with Iris or without. (The pack's own clouds aren't left out: under a pack they can show past the deck's edge.)
+- **Render distance:** the deck shrinks to what the camera draws (four times the render distance); at two or three chunks the pillar's
+  top, at the clouds 128 blocks up, is past it and cut off.
+- **Never a stall or a crash:** the textures, the layer and the post chain are made ready over the first ticks in a world (and again
+  after F3+T), so the first film seen never waits on them; they are let go on leaving the world. While the films are a development
+  feature, only a development game makes them ready. Anything in the drawing that fails ends every film, puts the frame and the render
+  state back and is logged; the game plays on.
+
+How it's drawn (client `fx/`, the toolkit the later realms and meditation reuse): `Fx` (sprites, streaks, ribbons facing the camera or
+lying on a plane, rings, squares and walls laid over the ground's heights, beams; one core shader, `fx`, in three modes: light, light
+through a heat ramp that runs its cores white, and cover), `FxLayer` (the layer: half-float colour, the world's depth),
+`FxPost` (the frame: grade, bloom from the layer alone, vignette, radial blur; programs `dth_fx_down`, `dth_fx_blur`,
+`dth_cine_composite`, `dth_cine_radial`), `FxTextures` (mipmapped), `HeightField`; the hero's elements in `cinematic/HeroFx`;
+`mixin/CinematicCloudsMixin`. The textures (`textures/fx`) are generated by `java tools/fx-tex/FxTex.java <out>`.
+
 ## License
 
 This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.

@@ -45,11 +45,18 @@ public abstract class PlayerRendererMixin {
 		if (com.example.defyingtheheavens.client.CorpseBonesRenderer.draw(player, yaw, partialTick, pose, buffers, light)) ci.cancel();
 	}
 
-	/** A player in an NPC cultivator's body (Possession) carries that NPC's plate over their head, not a name tag (ClientBodies). */
+	/**
+	 * A player in an NPC cultivator's body (Possession) carries that NPC's plate over their head, not a name tag (ClientBodies). While this
+	 * client's own breakthrough cinematic plays, no one's name tag or plate is drawn: the film is a picture, not the HUD.
+	 */
 	@Inject(method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 			at = @At("HEAD"), cancellable = true)
 	private void dth$theNpcsPlate(AbstractClientPlayer player, net.minecraft.network.chat.Component name, PoseStack pose, MultiBufferSource buffers,
 								  int light, CallbackInfo ci) {
+		if (com.example.defyingtheheavens.client.cinematic.CinematicClient.own() != null) {
+			ci.cancel();
+			return;
+		}
 		if (com.example.defyingtheheavens.client.ClientBodies.drawPlate(player, pose, buffers, light)) ci.cancel();
 	}
 

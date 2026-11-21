@@ -1706,6 +1706,7 @@
   "cultivation.defying-the-heavens.hud.bar.health": "Health",
   "cultivation.defying-the-heavens.hud.bar.qi": "Qi",
   "cultivation.defying-the-heavens.hud.bar.soul": "Soul",
+  "cultivation.defying-the-heavens.hud.cinematic_skip": "Hold %s to skip",
   "cultivation.defying-the-heavens.hud.clone.in": "In your clone",
   "cultivation.defying-the-heavens.hud.clone.main": "Body %s / %s",
   "cultivation.defying-the-heavens.hud.essence_label": "Essence",

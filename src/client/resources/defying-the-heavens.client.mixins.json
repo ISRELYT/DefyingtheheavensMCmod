@@ -6,6 +6,9 @@
   "client": [
     "AbstractClientPlayerMixin",
     "BossHealthOverlayMixin",
+    "CinematicCameraMixin",
+    "CinematicCloudsMixin",
+    "CinematicMouseMixin",
     "ClientAdvancementsAccessor",
     "ClientLevelAccessor",
     "ClientLevelSkyMixin",

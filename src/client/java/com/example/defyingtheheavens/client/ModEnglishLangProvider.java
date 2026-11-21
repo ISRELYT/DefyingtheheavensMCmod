@@ -2830,6 +2830,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_MEDITATION_SLOWED, "Your years run short: your meditation slows to its own pace (×1). You may set it faster again.");
 		t.add(ModLang.SECLUSION_LINE, "Years to this realm's peak: %s (of %s left)");
 		t.add(ModLang.HUD_SPACE_YEARS, "Space: %s years spent · %s left · %s to fly home");
+		t.add(ModLang.HUD_CINEMATIC_SKIP, "Hold %s to skip");
 		t.add(ModLang.HUD_SPACE_HOME, "Home, the Overworld: %s blocks");
 		t.add(ModLang.HUD_SPACE_HOME_ABOVE, "Home, the Overworld: %s blocks, above you");
 		t.add(ModLang.HUD_SPACE_HOME_BELOW, "Home, the Overworld: %s blocks, below you");

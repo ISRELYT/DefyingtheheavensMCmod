@@ -224,6 +224,15 @@ public final class SoulRenderer {
 				BeastHeadModels.of(soul), dead && crowned);
 	}
 
+	/**
+	 * A breakthrough cinematic's player with their nascent soul's violet light showing through the body (the hero's shot 8: HeroFx):
+	 * the soul's violet edge light hugging the seated body (no veil standing off it, no wash over the skin), {@code glow} its strength
+	 * (0..1), into whatever target is bound.
+	 */
+	public static void drawInnerLight(WorldRenderContext context, Player body, float glow, float partial) {
+		drawVeil(context, body, glow, partial, true);
+	}
+
 	/** How strongly a possessed body's veil shows at its clearest (it breathes a little about this), and how far it stands off the body. */
 	private static final float VEIL_ALPHA = 1.0f, VEIL_SIZE = 1.1f;
 
@@ -232,8 +241,13 @@ public final class SoulRenderer {
 	 * light laid over the body, breathing slowly, posed and moving as the body does (it is drawn by its renderer as ever, under the
 	 * veil). As clear as a soul would be to them (ClientSoul#clarity: only under Qi Sense, or the Ghost Eye).
 	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static void drawVeil(WorldRenderContext context, Player body, float clarity, float partial) {
+		drawVeil(context, body, clarity, partial, false);
+	}
+
+	/** {@code inner}: only light hugging the body, a little larger than it (a breakthrough's soul glowing within, drawInnerLight). */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static void drawVeil(WorldRenderContext context, Player body, float clarity, float partial, boolean inner) {
 		if (soulShader == null || !(body instanceof AbstractClientPlayer client)) return; // a shader pack: only the tether shows
 		PlayerModel model = model("slim".equals(client.getModelName()));
 		if (model == null) return;
@@ -245,32 +259,40 @@ public final class SoulRenderer {
 		Vec3 at = body.getPosition(partial);
 		PoseStack pose = context.matrixStack();
 		pose.pushPose();
-		pose.translate(at.x - cam.x, at.y - cam.y - (body.isCrouching() ? 0.125 : 0), at.z - cam.z);
-		pose.mulPose(Axis.YP.rotationDegrees(180.0f - bodyYaw));
-		model.attackTime = body.getAttackAnim(partial);
-		model.riding = body.isPassenger();
-		model.young = false;
-		model.crouching = body.isCrouching();
-		model.setupAnim(body, body.walkAnimation.position(partial), Math.min(1, body.walkAnimation.speed(partial)), age,
-				Mth.wrapDegrees(headYaw - bodyYaw), pitch);
-		// A demon's body veiled whole: its beast's head and tail in the veil too, in place of a man's head.
-		BeastHeadModels.Head beast = BeastHeadModels.of(body);
-		if (beast != null) beast.follow(model);
-		model.head.visible = model.hat.visible = beast == null;
-		ResourceLocation skin = client.getSkinTextureLocation();
-		RenderSystem.setShaderTexture(0, skin);
-		RenderSystem.setShader(() -> soulShader);
-		float veil = clarity * VEIL_ALPHA * (0.85f + 0.15f * Mth.sin(age * 0.12f));
-		// Light over the body, not cover: the soul's violet edge light about it, a fainter haze beyond, and a wash of its violet on it.
-		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
-				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-		drawModel(pose, model, skin, beast, 0, 1, 1, veil, VEIL_SIZE);
-		drawModel(pose, model, skin, beast, 0, 1, 1, veil * 0.45f, VEIL_SIZE * 1.1f);
-		drawModel(pose, model, skin, beast, 1, 1, 1, veil * 0.5f, 1.02f);
-		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-		model.head.visible = model.hat.visible = true;
-		pose.popPose();
+		try { // the pose, the model's head and the blend put back whatever happens (a breakthrough's film draws this into its layer)
+			pose.translate(at.x - cam.x, at.y - cam.y - (body.isCrouching() ? 0.125 : 0), at.z - cam.z);
+			pose.mulPose(Axis.YP.rotationDegrees(180.0f - bodyYaw));
+			model.attackTime = body.getAttackAnim(partial);
+			model.riding = body.isPassenger();
+			model.young = false;
+			model.crouching = body.isCrouching();
+			model.setupAnim(body, body.walkAnimation.position(partial), Math.min(1, body.walkAnimation.speed(partial)), age,
+					Mth.wrapDegrees(headYaw - bodyYaw), pitch);
+			// A demon's body veiled whole: its beast's head and tail in the veil too, in place of a man's head.
+			BeastHeadModels.Head beast = BeastHeadModels.of(body);
+			if (beast != null) beast.follow(model);
+			model.head.visible = model.hat.visible = beast == null;
+			ResourceLocation skin = client.getSkinTextureLocation();
+			RenderSystem.setShaderTexture(0, skin);
+			RenderSystem.setShader(() -> soulShader);
+			float veil = clarity * VEIL_ALPHA * (0.85f + 0.15f * Mth.sin(age * 0.12f));
+			// Light over the body, not cover: the soul's violet edge light about it, a fainter haze beyond, and a wash of its violet on it.
+			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+			if (inner) {
+				drawModel(pose, model, skin, beast, 0, 1, 1, veil, 1.025f);
+				drawModel(pose, model, skin, beast, 0, 1, 1, veil * 0.4f, 1.06f);
+			} else {
+				drawModel(pose, model, skin, beast, 0, 1, 1, veil, VEIL_SIZE);
+				drawModel(pose, model, skin, beast, 0, 1, 1, veil * 0.45f, VEIL_SIZE * 1.1f);
+				drawModel(pose, model, skin, beast, 1, 1, 1, veil * 0.5f, 1.02f);
+			}
+		} finally {
+			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			model.head.visible = model.hat.visible = true;
+			pose.popPose();
+		}
 	}
 
 	/**
@@ -499,25 +521,31 @@ public final class SoulRenderer {
 	 */
 	private static void drawModel(PoseStack pose, PlayerModel<?> model, ResourceLocation skin, BeastHeadModels.Head beast, float red, float green,
 								  float blue, float clarity, float size) {
-		pose.pushPose();
-		pose.translate(0, 0.95f, 0);
-		pose.scale(size, size, size);
-		pose.translate(0, -0.95f, 0);
-		pose.scale(-1.0f, -1.0f, 1.0f);
-		pose.scale(0.9375f, 0.9375f, 0.9375f);
-		pose.translate(0.0f, -1.501f, 0.0f);
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-		model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
-		BufferUploader.drawWithShader(buffer.end());
-		if (beast != null) {
-			RenderSystem.setShaderTexture(0, beast.texture());
+		pose.pushPose();
+		try {
+			pose.translate(0, 0.95f, 0);
+			pose.scale(size, size, size);
+			pose.translate(0, -0.95f, 0);
+			pose.scale(-1.0f, -1.0f, 1.0f);
+			pose.scale(0.9375f, 0.9375f, 0.9375f);
+			pose.translate(0.0f, -1.501f, 0.0f);
 			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-			beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
+			model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
 			BufferUploader.drawWithShader(buffer.end());
-			RenderSystem.setShaderTexture(0, skin);
+			if (beast != null) {
+				RenderSystem.setShaderTexture(0, beast.texture());
+				buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+				beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
+				BufferUploader.drawWithShader(buffer.end());
+				RenderSystem.setShaderTexture(0, skin);
+			}
+		} catch (RuntimeException e) {
+			if (buffer.building()) buffer.end().release(); // the shared builder left free for its next user
+			throw e;
+		} finally {
+			pose.popPose();
 		}
-		pose.popPose();
 	}
 
 	/**

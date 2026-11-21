@@ -715,6 +715,8 @@ public final class ModLang {
 	/** The Cultivation tab's word of the talent race (Lifespan#seclude): the years to the realm's peak, and those left. */
 	public static final String SECLUSION_LINE = k("line.seclusion");
 	public static final String HUD_SPACE_YEARS = k("hud.space_years");
+	/** Under a breakthrough cinematic's skip ring (client CinematicHud): the key to hold, by its name. */
+	public static final String HUD_CINEMATIC_SKIP = k("hud.cinematic_skip");
 	/** In space, the way home (client TribulationHud#drawWayHome): the Overworld's distance, ahead or about, above, below. */
 	public static final String HUD_SPACE_HOME = k("hud.space_home");
 	public static final String HUD_SPACE_HOME_ABOVE = k("hud.space_home.above");

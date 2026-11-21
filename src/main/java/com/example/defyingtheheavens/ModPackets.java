@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -105,6 +106,14 @@ public final class ModPackets {
 	public static final ResourceLocation TRIBULATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "tribulation_state");
 	/** S2C: the lifespan tribulation running or not, its power, whether it waits (beyond the gap), the Netherworld's (LifespanTribulation). */
 	public static final ResourceLocation LIFESPAN_TRIBULATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "lifespan_tribulation");
+	/** S2C: a breakthrough cinematic begins for a player (Cinematics): to them and all who see them, late-comers joining mid-way. */
+	public static final ResourceLocation CINEMATIC_START = new ResourceLocation(DefyingTheHeavens.MOD_ID, "cinematic_start");
+	/** S2C: a breakthrough cinematic ends early (skipped, the player gone or moved on, its hold let go). */
+	public static final ResourceLocation CINEMATIC_END = new ResourceLocation(DefyingTheHeavens.MOD_ID, "cinematic_end");
+	/** C2S: the player skips their own cinematic (or their client could not play it): the hold let go. */
+	public static final ResourceLocation CINEMATIC_SKIP = new ResourceLocation(DefyingTheHeavens.MOD_ID, "cinematic_skip");
+	/** C2S: the player's own setting for cinematics: full, short or off (CinematicSettings on their client). */
+	public static final ResourceLocation CINEMATIC_PREF = new ResourceLocation(DefyingTheHeavens.MOD_ID, "cinematic_pref");
 	/** S2C: the years flying through space has cost this trip, the years left, and the years flying straight home would cost (AstralRealm); or none, out of space. */
 	public static final ResourceLocation SPACE_YEARS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "space_years");
 	/** C2S: the Cultivation tab's pace button: the next pace for meditating (Lifespan#cycleMeditationSpeed). */
@@ -296,6 +305,16 @@ public final class ModPackets {
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
+	/**
+	 * What a player sends to act (a cast, an ability, a strike, a breakthrough, an order to a puppet), done on the server's thread, unless
+	 * they are held in their breakthrough cinematic (Cinematics): then it is dropped, whatever their client sent.
+	 */
+	static void unlessHeld(MinecraftServer server, ServerPlayer player, Runnable act) {
+		server.execute(() -> {
+			if (!Cinematics.isPlaying(player)) act.run();
+		});
+	}
+
 	public static void registerServerReceivers() {
 		ServerPlayNetworking.registerGlobalReceiver(FORMATION_CORE_QUERY, (server, player, handler, buf, responseSender) -> {
 			BlockPos pos = buf.readBlockPos();
@@ -408,13 +427,13 @@ public final class ModPackets {
 			UUID puppet = buf.readUUID();
 			int act = buf.readVarInt();
 			String text = buf.readUtf(PuppetCommands.MESSAGE_LENGTH * 4), to = buf.readUtf(64);
-			server.execute(() -> PuppetCommands.act(player, puppet, act, text, to));
+			unlessHeld(server, player, () -> PuppetCommands.act(player, puppet, act, text, to));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(PUPPET_PILOT_ART, (server, player, handler, buf, responseSender) ->
-				server.execute(() -> PuppetPlayers.art(player)));
+				unlessHeld(server, player, () -> PuppetPlayers.art(player)));
 		ServerPlayNetworking.registerGlobalReceiver(PUPPET_SOUL_ACT, (server, player, handler, buf, responseSender) -> {
 			int act = buf.readVarInt();
-			server.execute(() -> PuppetPlayers.act(player, act));
+			unlessHeld(server, player, () -> PuppetPlayers.act(player, act));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SPEND_STAT_POINTS, (server, player, handler, buf, responseSender) -> {
 			int stat = buf.readVarInt();
@@ -438,9 +457,9 @@ public final class ModPackets {
 			server.execute(() -> ModGameRules.setSpellGriefing(player, on));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
-				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
+				(server, player, handler, buf, responseSender) -> unlessHeld(server, player, () -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
-				(server, player, handler, buf, responseSender) -> server.execute(() -> CultivationManager.tryBreakthrough(player)));
+				(server, player, handler, buf, responseSender) -> unlessHeld(server, player, () -> CultivationManager.tryBreakthrough(player)));
 		ServerPlayNetworking.registerGlobalReceiver(OBSESSION_NAME, (server, player, handler, buf, responseSender) -> {
 			FourAxis.Axis obsession = FourAxis.Axis.byIndex(buf.readVarInt());
 			boolean ghost = buf.readBoolean();
@@ -461,7 +480,7 @@ public final class ModPackets {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_ABILITY, (server, player, handler, buf, responseSender) -> {
 			int ability = buf.readVarInt();
-			server.execute(() -> CultivationManager.toggleAbility(player, ability));
+			unlessHeld(server, player, () -> CultivationManager.toggleAbility(player, ability));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SELECT_ABILITY, (server, player, handler, buf, responseSender) -> {
 			int ability = buf.readVarInt();
@@ -488,20 +507,20 @@ public final class ModPackets {
 			CultivationMethod method = CultivationMethod.byId(buf.readUtf(64));
 			server.execute(() -> CultivationMethods.practise(player, method));
 		});
-		ServerPlayNetworking.registerGlobalReceiver(MARK_TERRITORY, (server, player, handler, buf, responseSender) -> server.execute(() -> Territories.mark(player)));
+		ServerPlayNetworking.registerGlobalReceiver(MARK_TERRITORY, (server, player, handler, buf, responseSender) -> unlessHeld(server, player, () -> Territories.mark(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BEGIN_BODY_PATH, (server, player, handler, buf, responseSender) -> server.execute(() -> BodyPath.begin(player)));
-		ServerPlayNetworking.registerGlobalReceiver(SADDLE_STRIKE, (server, player, handler, buf, responseSender) -> server.execute(() -> SaddleStrikes.strike(player)));
-		ServerPlayNetworking.registerGlobalReceiver(SEIZE_SOUL, (server, player, handler, buf, responseSender) -> server.execute(() -> {
+		ServerPlayNetworking.registerGlobalReceiver(SADDLE_STRIKE, (server, player, handler, buf, responseSender) -> unlessHeld(server, player, () -> SaddleStrikes.strike(player)));
+		ServerPlayNetworking.registerGlobalReceiver(SEIZE_SOUL, (server, player, handler, buf, responseSender) -> unlessHeld(server, player, () -> {
 			if (SoulRiver.isTravelling(player.getUUID())) SoulRiverFeast.seize(player);
 			else RiftHaunting.seize(player);
 		}));
 		ServerPlayNetworking.registerGlobalReceiver(READY_SPELL, (server, player, handler, buf, responseSender) -> {
 			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
-			server.execute(() -> Spells.ready(player, spell));
+			unlessHeld(server, player, () -> Spells.ready(player, spell));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(CAST_SPELL, (server, player, handler, buf, responseSender) -> {
 			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
-			server.execute(() -> Spells.cast(player, spell));
+			unlessHeld(server, player, () -> Spells.cast(player, spell));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SET_SPELL_SLOT, (server, player, handler, buf, responseSender) -> {
 			int slot = buf.readVarInt();
@@ -510,11 +529,11 @@ public final class ModPackets {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SOUL_TETHER_STRIKE, (server, player, handler, buf, responseSender) -> {
 			int soul = buf.readVarInt();
-			server.execute(() -> SoulProjection.strikeTether(player, soul));
+			unlessHeld(server, player, () -> SoulProjection.strikeTether(player, soul));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(METEOR_STREAK, (server, player, handler, buf, responseSender) -> {
 			boolean on = buf.readBoolean(), flatOut = buf.readBoolean();
-			server.execute(() -> MeteorFlight.setStreaking(player, on, flatOut));
+			unlessHeld(server, player, () -> MeteorFlight.setStreaking(player, on, flatOut));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(METEOR_DOZE, (server, player, handler, buf, responseSender) -> {
 			int sequence = buf.readVarInt();
@@ -524,7 +543,7 @@ public final class ModPackets {
 				long pos = buf.readLong();
 				if (cleared.size() < Bulldozer.MOST_A_TICK) cleared.add(BlockPos.of(pos));
 			}
-			server.execute(() -> MeteorFlight.bulldoze(player, sequence, cleared));
+			unlessHeld(server, player, () -> MeteorFlight.bulldoze(player, sequence, cleared));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(STORAGE_ACTION, (server, player, handler, buf, responseSender) -> {
 			int action = buf.readVarInt();

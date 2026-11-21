@@ -209,6 +209,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// Qi motes and consciousness domains, on the layer Qi Sense's monochrome leaves in colour.
 		WorldRenderEvents.END.register(SenseOverlay::onWorldEnd);
 		QiSenseTreasures.register();
+		VfxRecorder.register(); // /vfxcapture's recorder (VfxCapture): only with the dev flag (DevTools), never in a player's game
+		com.example.defyingtheheavens.client.cinematic.CinematicClient.register(); // the breakthrough cinematics: their camera, screen and shapes
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
 			@Override
 			public ResourceLocation getFabricId() {

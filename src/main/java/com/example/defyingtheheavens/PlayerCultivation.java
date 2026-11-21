@@ -444,6 +444,16 @@ public class PlayerCultivation {
 	public void setObsession(FourAxis.Axis obsession) { this.obsession = obsession; }
 
 	/**
+	 * The breakthrough cinematics this cultivator has seen in full (Cinematics: "path:realm" keys). The first time a realm is reached
+	 * plays the full cinematic, every later time the short one. A spent life starts a fresh record (Lifespan), so a new life's first
+	 * breakthroughs play in full again.
+	 */
+	private final java.util.Set<String> cinematicsSeen = new java.util.HashSet<>();
+
+	public boolean hasSeenCinematic(String key) { return cinematicsSeen.contains(key); }
+	public void markCinematicSeen(String key) { cinematicsSeen.add(key); }
+
+	/**
 	 * The methods learned from Method Manuals (CultivationMethod#fromManual): how far each one's volumes reach (a realm's ordinal); and
 	 * the method each path practises (CultivationMethods#practised: none chosen, its orthodox one). The methods overhaul's phase 2.
 	 */
@@ -1590,6 +1600,11 @@ public class PlayerCultivation {
 			break;
 		}
 		if (obsession != null) tag.putString("Obsession", obsession.getId());
+		if (!cinematicsSeen.isEmpty()) {
+			net.minecraft.nbt.ListTag seen = new net.minecraft.nbt.ListTag();
+			for (String key : cinematicsSeen) seen.add(net.minecraft.nbt.StringTag.valueOf(key));
+			tag.put("CinematicsSeen", seen);
+		}
 		if (natalTreasure != null) tag.putUUID("NatalTreasure", natalTreasure);
 		if (soulWoundUntil > 0) tag.putLong("SoulWoundUntil", soulWoundUntil);
 		if (personalDisciple != null) tag.putUUID("PersonalDisciple", personalDisciple);
@@ -1742,6 +1757,8 @@ public class PlayerCultivation {
 		c.longevityPills = Math.max(0, tag.getInt("LongevityPills"));
 		c.setMeditationSpeed(tag.contains("MeditationSpeed") ? tag.getInt("MeditationSpeed") : 1);
 		c.obsession = FourAxis.Axis.byId(tag.getString("Obsession"));
+		net.minecraft.nbt.ListTag seen = tag.getList("CinematicsSeen", net.minecraft.nbt.Tag.TAG_STRING);
+		for (int i = 0; i < seen.size(); i++) c.cinematicsSeen.add(seen.getString(i));
 		CompoundTag methods = tag.getCompound("CultivationMethods");
 		CompoundTag reach = methods.getCompound("Reach"), practise = methods.getCompound("Practise");
 		for (String key : reach.getAllKeys()) {
